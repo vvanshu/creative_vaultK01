@@ -11,54 +11,54 @@ DATA_FILE = "quadrant_data.json"
 
 QUADRANT_INFO = {
     "Q1": {
-        "title": "Q1: Do First (Urgent & Important)",
-        "color": "#ff4d4d",
-        "glow": "rgba(255, 77, 77, 0.25)",
-        "bg_color": "rgba(255, 77, 77, 0.06)",
-        "border_color": "rgba(255, 77, 77, 0.4)",
+        "title": "Q1: Do First",
+        "subtitle": "Urgent & Important",
+        "color": "#d97706",
+        "badge_bg": "#ffc4b3",
+        "bg_class": "q1-bg",
         "desc": "Crises, tight college deadlines, urgent issues."
     },
     "Q2": {
-        "title": "Q2: Schedule (Important, Not Urgent)",
-        "color": "#3b82f6",
-        "glow": "rgba(59, 130, 246, 0.25)",
-        "bg_color": "rgba(59, 130, 246, 0.06)",
-        "border_color": "rgba(59, 130, 246, 0.4)",
+        "title": "Q2: Schedule",
+        "subtitle": "Important, Not Urgent",
+        "color": "#1d4ed8",
+        "badge_bg": "#b6d5ff",
+        "bg_class": "q2-bg",
         "desc": "Vibecoding, Portfolio, Content, Networking, Exercise."
     },
     "Q3": {
-        "title": "Q3: Delegate / Limit (Urgent, Not Important)",
-        "color": "#eab308",
-        "glow": "rgba(234, 179, 8, 0.25)",
-        "bg_color": "rgba(234, 179, 8, 0.06)",
-        "border_color": "rgba(234, 179, 8, 0.4)",
+        "title": "Q3: Delegate / Limit",
+        "subtitle": "Urgent, Not Important",
+        "color": "#b45309",
+        "badge_bg": "#ffe894",
+        "bg_class": "q3-bg",
         "desc": "Interruptions, minor requests, low-impact tasks."
     },
     "Q4": {
-        "title": "Q4: Eliminate (Not Urgent & Not Important)",
-        "color": "#9ca3af",
-        "glow": "rgba(156, 163, 175, 0.25)",
-        "bg_color": "rgba(156, 163, 175, 0.06)",
-        "border_color": "rgba(156, 163, 175, 0.4)",
+        "title": "Q4: Eliminate",
+        "subtitle": "Not Urgent & Not Important",
+        "color": "#6d28d9",
+        "badge_bg": "#d8c7ff",
+        "bg_class": "q4-bg",
         "desc": "Mindless scrolling, busywork, time sinks."
     }
 }
 
-PRIORITY_COLORS = {
-    "Critical": "#ef4444",
-    "High": "#f97316",
-    "Medium": "#eab308",
-    "Low": "#10b981"
+PRIORITY_BADGES = {
+    "Critical": {"bg": "#ffb3b3", "text": "#800000"},
+    "High": {"bg": "#ffd8a8", "text": "#8c3b00"},
+    "Medium": {"bg": "#fff3bf", "text": "#735c00"},
+    "Low": {"bg": "#b2f2bb", "text": "#0b5219"}
 }
 
 ENERGY_ICONS = {
-    "High Energy": "⚡ High",
-    "Medium Energy": "🔋 Medium",
-    "Low Energy": "🍃 Low"
+    "High Energy": "⚡ High Energy",
+    "Medium Energy": "🔋 Medium Energy",
+    "Low Energy": "🍃 Low Energy"
 }
 
 st.set_page_config(
-    page_title="Quadrants - Eisenhower Matrix System",
+    page_title="Quadrants - Neobrutalist Eisenhower Matrix",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -94,183 +94,196 @@ if "db" not in st.session_state:
     st.session_state.db = load_data()
 
 # -----------------------------------------------------------------------------
-# STUNNING GLASSMORPHIC DARK UI CSS
+# NEOBRUTALIST & SOFT PASTEL STYLING (MIMIC DESIGN REFERENCE)
 # -----------------------------------------------------------------------------
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-    /* Root Design Tokens */
-    :root {
-        --bg-main: #0b0f19;
-        --card-bg: rgba(18, 24, 38, 0.75);
-        --card-border: rgba(255, 255, 255, 0.08);
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --accent-glow: rgba(59, 130, 246, 0.15);
-    }
-
+    /* Global Canvas Styling */
     .stApp {
-        background-color: var(--bg-main);
-        background-image: 
-            radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.2) 0px, transparent 50%),
-            radial-gradient(at 100% 100%, rgba(17, 24, 39, 0.8) 0px, transparent 50%),
-            radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.5) 0px, transparent 100%);
-        color: var(--text-primary);
+        background-color: #f7f5ef;
+        background-image: radial-gradient(#dfd9cc 1.2px, transparent 1.2px);
+        background-size: 24px 24px;
+        color: #1e1e1e;
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    /* Top App Header Banner */
-    .app-title-container {
+    .block-container {
+        padding-top: 1.8rem;
+        padding-bottom: 2rem;
+    }
+
+    /* App Header Banner */
+    .app-header-box {
+        background: #ffffff;
+        border: 3px solid #1e1e1e;
+        box-shadow: 5px 5px 0px #1e1e1e;
+        border-radius: 20px;
+        padding: 1.2rem 1.8rem;
+        margin-bottom: 1.8rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.5rem 0 1.5rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        margin-bottom: 1.5rem;
     }
 
-    .app-title {
-        font-family: 'Outfit', sans-serif;
+    .app-title-text {
+        font-family: 'Space Grotesk', sans-serif;
         font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #ffffff 30%, #60a5fa 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        color: #1e1e1e;
+        margin: 0;
         letter-spacing: -0.02em;
-        margin: 0;
     }
 
-    .app-subtitle {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
+    .app-sub-text {
+        font-size: 0.95rem;
+        color: #4b5563;
+        font-weight: 600;
         margin-top: 0.2rem;
     }
 
-    /* Metric Glass Cards */
-    .stat-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--card-border);
-        border-radius: 14px;
-        padding: 1.1rem 1.2rem;
+    /* Neobrutalist Stat Cards */
+    .stat-card-neo {
+        border: 2.5px solid #1e1e1e;
+        box-shadow: 4px 4px 0px #1e1e1e;
+        border-radius: 18px;
+        padding: 1.1rem 1rem;
         text-align: center;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        transition: transform 0.15s ease;
     }
-    .stat-val {
-        font-family: 'Outfit', sans-serif;
-        font-size: 1.8rem;
+    .stat-card-neo:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px #1e1e1e;
+    }
+    .stat-val-neo {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 2rem;
         font-weight: 700;
-        color: #ffffff;
-        line-height: 1.1;
+        color: #1e1e1e;
+        line-height: 1;
     }
-    .stat-lbl {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
+    .stat-lbl-neo {
+        font-size: 0.78rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-top: 0.4rem;
-        font-weight: 600;
+        letter-spacing: 0.05em;
+        margin-top: 0.5rem;
+        color: #1e1e1e;
     }
 
-    /* Quadrant Container Styling */
-    .q-header-box {
-        padding: 1rem 1.2rem;
-        border-radius: 14px 14px 0 0;
-        border: 1px solid var(--card-border);
+    /* Quadrant Container Headers */
+    .q-box-neo {
+        border: 2.5px solid #1e1e1e;
+        box-shadow: 4px 4px 0px #1e1e1e;
+        border-radius: 20px 20px 0 0;
+        padding: 1.1rem 1.3rem;
         margin-bottom: 0px;
-        backdrop-filter: blur(10px);
     }
 
-    .q1-style { background: rgba(255, 77, 77, 0.08); border-color: rgba(255, 77, 77, 0.3); }
-    .q2-style { background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.3); }
-    .q3-style { background: rgba(234, 179, 8, 0.08); border-color: rgba(234, 179, 8, 0.3); }
-    .q4-style { background: rgba(156, 163, 175, 0.08); border-color: rgba(156, 163, 175, 0.3); }
+    .q1-bg { background-color: #ffdcd3; }
+    .q2-bg { background-color: #d6e8ff; }
+    .q3-bg { background-color: #fff2b2; }
+    .q4-bg { background-color: #e8dfff; }
 
-    .q-title {
-        font-family: 'Outfit', sans-serif;
+    .q-title-neo {
+        font-family: 'Space Grotesk', sans-serif;
         font-weight: 700;
-        font-size: 1.15rem;
+        font-size: 1.25rem;
+        color: #1e1e1e;
         margin: 0;
     }
-    .q-desc {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-top: 0.2rem;
-    }
-
-    /* Task Item Card */
-    .task-card {
-        background: rgba(24, 32, 49, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 12px;
-        padding: 0.9rem 1rem;
-        margin-bottom: 0.75rem;
-        transition: all 0.2s ease-in-out;
-    }
-    .task-card:hover {
-        border-color: rgba(255, 255, 255, 0.15);
-        background: rgba(30, 41, 59, 0.7);
-        transform: translateY(-1px);
-    }
-
-    /* Badges */
-    .badge {
-        display: inline-block;
-        padding: 0.18rem 0.55rem;
-        border-radius: 6px;
-        font-size: 0.72rem;
+    .q-desc-neo {
+        font-size: 0.82rem;
         font-weight: 600;
-        letter-spacing: 0.02em;
-        margin-right: 0.3rem;
-    }
-    .badge-cat {
-        background: rgba(255, 255, 255, 0.06);
-        color: #cbd5e1;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .badge-time {
-        background: rgba(59, 130, 246, 0.12);
-        color: #93c5fd;
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        color: #4b5563;
+        margin-top: 0.25rem;
     }
 
-    /* Customizing Streamlit Tabs & Inputs */
+    /* Bubbly Badges */
+    .badge-neo {
+        display: inline-block;
+        padding: 0.22rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1.5px solid #1e1e1e;
+        margin-right: 0.35rem;
+        margin-top: 0.25rem;
+        box-shadow: 1px 1px 0px #1e1e1e;
+    }
+
+    /* Streamlit Native Buttons & Inputs */
+    .stButton > button {
+        border: 2.5px solid #1e1e1e !important;
+        box-shadow: 3px 3px 0px #1e1e1e !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        transition: all 0.15s ease !important;
+        color: #1e1e1e !important;
+        background-color: #ffffff !important;
+    }
+    .stButton > button:hover {
+        transform: translate(-2px, -2px) !important;
+        box-shadow: 5px 5px 0px #1e1e1e !important;
+        background-color: #fff9e6 !important;
+    }
+
+    button[kind="primary"] {
+        background-color: #b2f2bb !important;
+        color: #1e1e1e !important;
+    }
+
+    /* Sidebar Form */
+    section[data-testid="stSidebar"] {
+        background-color: #f0ece1 !important;
+        border-right: 2.5px solid #1e1e1e !important;
+    }
+
+    div[data-testid="stForm"] {
+        background: #ffffff !important;
+        border: 2.5px solid #1e1e1e !important;
+        box-shadow: 4px 4px 0px #1e1e1e !important;
+        border-radius: 20px !important;
+        padding: 1.25rem !important;
+    }
+
+    /* Tabs Override */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(15, 23, 42, 0.6);
-        padding: 6px;
-        border-radius: 14px;
-        border: 1px solid var(--card-border);
+        gap: 10px;
+        background-color: #e5e0d3;
+        padding: 8px;
+        border-radius: 18px;
+        border: 2.5px solid #1e1e1e;
+        box-shadow: 3px 3px 0px #1e1e1e;
     }
 
     .stTabs [data-baseweb="tab"] {
-        height: 42px;
-        border-radius: 10px;
-        color: var(--text-secondary);
-        font-weight: 600;
-        font-size: 0.9rem;
-        padding: 0 18px;
+        height: 44px;
+        border-radius: 12px;
+        color: #374151;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 0 20px;
+        border: 2px solid transparent;
     }
 
     .stTabs [aria-selected="true"] {
-        background-color: rgba(59, 130, 246, 0.2) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(59, 130, 246, 0.4) !important;
+        background-color: #ffffff !important;
+        color: #1e1e1e !important;
+        border: 2.5px solid #1e1e1e !important;
+        box-shadow: 3px 3px 0px #1e1e1e !important;
     }
 
-    /* Sidebar form styling */
-    div[data-testid="stSidebarNav"] {
-        display: none;
-    }
-
-    .sidebar-streak-box {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(249, 115, 22, 0.15) 100%);
-        border: 1px solid rgba(249, 115, 22, 0.3);
-        border-radius: 14px;
+    .streak-card-neo {
+        background: #ffd8a8;
+        border: 2.5px solid #1e1e1e;
+        box-shadow: 4px 4px 0px #1e1e1e;
+        border-radius: 18px;
         padding: 1.25rem;
         text-align: center;
         margin-top: 1rem;
@@ -282,10 +295,10 @@ st.markdown("""
 # APP HEADER
 # -----------------------------------------------------------------------------
 st.markdown("""
-<div class="app-title-container">
+<div class="app-header-box">
     <div>
-        <h1 class="app-title">🎯 Quadrants System</h1>
-        <div class="app-subtitle">Eisenhower Matrix & Systemic Goal Auditor for High-Performers</div>
+        <h1 class="app-title-text">🎯 Quadrants App</h1>
+        <div class="app-sub-text">Neobrutalist Eisenhower Matrix & Goal System</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -308,7 +321,7 @@ with st.sidebar:
         priority = st.select_slider("Priority Level", options=["Low", "Medium", "High", "Critical"], value="Medium")
         energy = st.radio("Required Energy", ["High Energy", "Medium Energy", "Low Energy"], index=1, horizontal=True)
         
-        submit = st.form_submit_button("➕ Add Task to System", use_container_width=True)
+        submit = st.form_submit_button("➕ Add Task to System", use_container_width=True, type="primary")
         
         if submit:
             if not task_title.strip():
@@ -337,9 +350,9 @@ with st.sidebar:
     st.markdown("### 🔥 30-Day Vibecoding Streak")
     
     st.markdown(f"""
-    <div class="sidebar-streak-box">
-        <div style="font-size: 2.2rem; font-weight: 800; color: #f97316; line-height: 1;">🔥 {streak}</div>
-        <div style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600; margin-top: 0.3rem;">CONSECUTIVE DAYS</div>
+    <div class="streak-card-neo">
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem; font-weight: 700; color: #1e1e1e; line-height: 1;">🔥 {streak}</div>
+        <div style="font-size: 0.82rem; color: #1e1e1e; font-weight: 700; margin-top: 0.3rem; text-transform: uppercase;">Consecutive Days</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -352,7 +365,7 @@ with st.sidebar:
             st.toast("🔥 Streak updated!", icon="🎉")
             st.rerun()
     with col_s2:
-        if st.button("Reset", use_container_width=True, type="secondary"):
+        if st.button("Reset", use_container_width=True):
             st.session_state.db["vibecoding_streak"] = 0
             save_data(st.session_state.db)
             st.toast("Streak reset to 0.", icon="ℹ️")
@@ -382,34 +395,34 @@ with tab_matrix:
     q2_ratio = int((len(q2_tasks) / total_tasks * 100)) if total_tasks > 0 else 0
     total_est_hours = round(sum(t.get("est_time", 0) for t in tasks if not t.get("completed")) / 60, 1)
 
-    # Statistics Bar
+    # Neobrutalist Stat Cards Grid
     col_m1, col_m2, col_m3, col_m4 = st.columns(4)
     with col_m1:
         st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-val">{total_tasks}</div>
-            <div class="stat-lbl">Total Tasks</div>
+        <div class="stat-card-neo" style="background-color: #d6e8ff;">
+            <div class="stat-val-neo">{total_tasks}</div>
+            <div class="stat-lbl-neo">Total Tasks</div>
         </div>
         """, unsafe_allow_html=True)
     with col_m2:
         st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-val" style="color: #10b981;">{completed_tasks}</div>
-            <div class="stat-lbl">Completed</div>
+        <div class="stat-card-neo" style="background-color: #b2f2bb;">
+            <div class="stat-val-neo">{completed_tasks}</div>
+            <div class="stat-lbl-neo">Completed</div>
         </div>
         """, unsafe_allow_html=True)
     with col_m3:
         st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-val" style="color: #3b82f6;">{q2_ratio}%</div>
-            <div class="stat-lbl">Q2 Focus Ratio</div>
+        <div class="stat-card-neo" style="background-color: #e8dfff;">
+            <div class="stat-val-neo">{q2_ratio}%</div>
+            <div class="stat-lbl-neo">Q2 Focus Ratio</div>
         </div>
         """, unsafe_allow_html=True)
     with col_m4:
         st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-val" style="color: #f59e0b;">{total_est_hours}h</div>
-            <div class="stat-lbl">Pending Time</div>
+        <div class="stat-card-neo" style="background-color: #fff2b2;">
+            <div class="stat-val-neo">{total_est_hours}h</div>
+            <div class="stat-lbl-neo">Pending Time</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -419,13 +432,13 @@ with tab_matrix:
     col_bot1, col_bot2 = st.columns(2)
 
     grid_mapping = [
-        ("Q1", col_top1, "q1-style"),
-        ("Q2", col_top2, "q2-style"),
-        ("Q3", col_bot1, "q3-style"),
-        ("Q4", col_bot2, "q4-style")
+        ("Q1", col_top1),
+        ("Q2", col_top2),
+        ("Q3", col_bot1),
+        ("Q4", col_bot2)
     ]
 
-    for q_code, col, css_class in grid_mapping:
+    for q_code, col in grid_mapping:
         info = QUADRANT_INFO[q_code]
         q_tasks = [t for t in tasks if t.get("quadrant") == q_code]
         q_completed = len([t for t in q_tasks if t.get("completed")])
@@ -433,12 +446,12 @@ with tab_matrix:
 
         with col:
             st.markdown(f"""
-            <div class="q-header-box {css_class}">
+            <div class="q-box-neo {info['bg_class']}">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h4 class="q-title" style="color:{info['color']};">{info['title']}</h4>
-                    <span style="font-size: 0.8rem; font-weight: 700; color: {info['color']}; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 10px;">{q_completed}/{q_total}</span>
+                    <h4 class="q-title-neo">{info['title']} <span style="font-size: 0.85rem; opacity: 0.7;">({info['subtitle']})</span></h4>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #1e1e1e; background: #ffffff; border: 1.5px solid #1e1e1e; padding: 2px 10px; border-radius: 20px; box-shadow: 1px 1px 0px #1e1e1e;">{q_completed}/{q_total}</span>
                 </div>
-                <div class="q-desc">{info['desc']}</div>
+                <div class="q-desc-neo">{info['desc']}</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -448,8 +461,8 @@ with tab_matrix:
             else:
                 for task in q_tasks:
                     is_done = task.get("completed", False)
-                    p_color = PRIORITY_COLORS.get(task.get("priority", "Medium"), "#eab308")
-                    e_icon = ENERGY_ICONS.get(task.get("energy", "Medium Energy"), "🔋 Medium")
+                    p_badge = PRIORITY_BADGES.get(task.get("priority", "Medium"), {"bg": "#fff3bf", "text": "#735c00"})
+                    e_icon = ENERGY_ICONS.get(task.get("energy", "Medium Energy"), "🔋 Medium Energy")
                     
                     with st.container():
                         t_col1, t_col2 = st.columns([0.78, 0.22])
@@ -466,18 +479,17 @@ with tab_matrix:
                                 st.rerun()
                                 
                             st.markdown(f"""
-                            <div style="margin-left: 28px; margin-top: -6px; margin-bottom: 8px;">
-                                <span class="badge badge-cat">{task.get('category')}</span>
-                                <span class="badge badge-time">⏱️ {task.get('est_time')}m</span>
-                                <span class="badge" style="background: {p_color}22; color: {p_color}; border: 1px solid {p_color}44;">{task.get('priority')}</span>
-                                <span class="badge" style="background: rgba(255,255,255,0.04); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08);">{e_icon}</span>
+                            <div style="margin-left: 28px; margin-top: -4px; margin-bottom: 8px;">
+                                <span class="badge-neo" style="background-color: #ffffff;">{task.get('category')}</span>
+                                <span class="badge-neo" style="background-color: #e2e8f0;">⏱️ {task.get('est_time')}m</span>
+                                <span class="badge-neo" style="background-color: {p_badge['bg']}; color: {p_badge['text']};">{task.get('priority')}</span>
+                                <span class="badge-neo" style="background-color: #ffffff;">{e_icon}</span>
                             </div>
                             """, unsafe_allow_html=True)
                             
                         with t_col2:
                             pop_col1, pop_col2 = st.columns(2)
                             with pop_col1:
-                                # Quick move menu
                                 with st.popover("↔️"):
                                     st.markdown(f"**Move '{task['title']}'**")
                                     target_q = st.radio(
@@ -497,7 +509,7 @@ with tab_matrix:
                                     save_data(st.session_state.db)
                                     st.toast("Task deleted!")
                                     st.rerun()
-                        st.markdown("<hr style='margin: 4px 0 10px 0; border-color: rgba(255,255,255,0.05);'>", unsafe_allow_html=True)
+                        st.markdown("<hr style='margin: 4px 0 10px 0; border-color: #1e1e1e; opacity: 0.15;'>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # TAB 2: TASK LIST & FILTERS
@@ -552,7 +564,7 @@ with tab_list:
         st.markdown("<br>", unsafe_allow_html=True)
         btn_col1, btn_col2, btn_col3 = st.columns([1.5, 1.5, 3])
         with btn_col1:
-            if st.button("🧹 Clear Completed Tasks", use_container_width=True, type="secondary"):
+            if st.button("🧹 Clear Completed Tasks", use_container_width=True):
                 st.session_state.db["tasks"] = [t for t in tasks if not t.get("completed")]
                 save_data(st.session_state.db)
                 st.toast("Cleaned up completed tasks!")
@@ -622,24 +634,24 @@ with tab_audit:
         col_g1, col_g2, col_g3 = st.columns(3)
         with col_g1:
             st.markdown("""
-            <div class="stat-card">
-                <div class="stat-val" style="color: #60a5fa;">12 Posts</div>
-                <div class="stat-lbl">Instagram Goal (3/wk)</div>
+            <div class="stat-card-neo" style="background-color: #d6e8ff;">
+                <div class="stat-val-neo">12 Posts</div>
+                <div class="stat-lbl-neo">Instagram Goal (3/wk)</div>
             </div>
             """, unsafe_allow_html=True)
         with col_g2:
             st.markdown("""
-            <div class="stat-card">
-                <div class="stat-val" style="color: #34d399;">1 Project</div>
-                <div class="stat-lbl">Portfolio Goal</div>
+            <div class="stat-card-neo" style="background-color: #b2f2bb;">
+                <div class="stat-val-neo">1 Project</div>
+                <div class="stat-lbl-neo">Portfolio Goal</div>
             </div>
             """, unsafe_allow_html=True)
         with col_g3:
             streak = st.session_state.db.get('vibecoding_streak', 0)
             st.markdown(f"""
-            <div class="stat-card">
-                <div class="stat-val" style="color: #f97316;">{streak} / 30</div>
-                <div class="stat-lbl">Vibecoding Streak</div>
+            <div class="stat-card-neo" style="background-color: #ffd8a8;">
+                <div class="stat-val-neo">{streak} / 30</div>
+                <div class="stat-lbl-neo">Vibecoding Streak</div>
             </div>
             """, unsafe_allow_html=True)
             
