@@ -13,7 +13,7 @@ QUADRANT_INFO = {
     "Q1": {
         "title": "Q1: Do First",
         "subtitle": "Urgent & Important",
-        "color": "#d97706",
+        "color": "#991b1b",
         "badge_bg": "#ffc4b3",
         "bg_class": "q1-bg",
         "desc": "Crises, tight college deadlines, urgent issues."
@@ -21,7 +21,7 @@ QUADRANT_INFO = {
     "Q2": {
         "title": "Q2: Schedule",
         "subtitle": "Important, Not Urgent",
-        "color": "#1d4ed8",
+        "color": "#1e40af",
         "badge_bg": "#b6d5ff",
         "bg_class": "q2-bg",
         "desc": "Vibecoding, Portfolio, Content, Networking, Exercise."
@@ -29,7 +29,7 @@ QUADRANT_INFO = {
     "Q3": {
         "title": "Q3: Delegate / Limit",
         "subtitle": "Urgent, Not Important",
-        "color": "#b45309",
+        "color": "#854d0e",
         "badge_bg": "#ffe894",
         "bg_class": "q3-bg",
         "desc": "Interruptions, minor requests, low-impact tasks."
@@ -37,7 +37,7 @@ QUADRANT_INFO = {
     "Q4": {
         "title": "Q4: Eliminate",
         "subtitle": "Not Urgent & Not Important",
-        "color": "#6d28d9",
+        "color": "#5b21b6",
         "badge_bg": "#d8c7ff",
         "bg_class": "q4-bg",
         "desc": "Mindless scrolling, busywork, time sinks."
@@ -45,10 +45,10 @@ QUADRANT_INFO = {
 }
 
 PRIORITY_BADGES = {
-    "Critical": {"bg": "#ffb3b3", "text": "#800000"},
-    "High": {"bg": "#ffd8a8", "text": "#8c3b00"},
-    "Medium": {"bg": "#fff3bf", "text": "#735c00"},
-    "Low": {"bg": "#b2f2bb", "text": "#0b5219"}
+    "Critical": {"bg": "#ffcdd2", "text": "#900c3f"},
+    "High": {"bg": "#ffe0b2", "text": "#7a2700"},
+    "Medium": {"bg": "#fff9c4", "text": "#5d4037"},
+    "Low": {"bg": "#c8e6c9", "text": "#1b5e20"}
 }
 
 ENERGY_ICONS = {
@@ -94,20 +94,20 @@ if "db" not in st.session_state:
     st.session_state.db = load_data()
 
 # -----------------------------------------------------------------------------
-# NEOBRUTALIST & SOFT PASTEL STYLING (MIMIC DESIGN REFERENCE)
+# ULTRA HIGH-CONTRAST NEOBRUTALIST & SOFT PASTEL STYLING
 # -----------------------------------------------------------------------------
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
     /* Global Canvas Styling */
     .stApp {
         background-color: #f7f5ef;
-        background-image: radial-gradient(#dfd9cc 1.2px, transparent 1.2px);
+        background-image: radial-gradient(#d3cbbe 1.5px, transparent 1.5px);
         background-size: 24px 24px;
-        color: #1e1e1e;
+        color: #000000 !important;
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
@@ -116,11 +116,16 @@ st.markdown("""
         padding-bottom: 2rem;
     }
 
+    /* GLOBAL HIGH CONTRAST TYPOGRAPHY */
+    h1, h2, h3, h4, h5, h6, p, label, span, div, small, caption, strong, summary {
+        color: #000000 !important;
+    }
+
     /* App Header Banner */
     .app-header-box {
         background: #ffffff;
-        border: 3px solid #1e1e1e;
-        box-shadow: 5px 5px 0px #1e1e1e;
+        border: 3px solid #000000;
+        box-shadow: 5px 5px 0px #000000;
         border-radius: 20px;
         padding: 1.2rem 1.8rem;
         margin-bottom: 1.8rem;
@@ -131,24 +136,24 @@ st.markdown("""
 
     .app-title-text {
         font-family: 'Space Grotesk', sans-serif;
-        font-size: 2.2rem;
+        font-size: 2.3rem;
         font-weight: 700;
-        color: #1e1e1e;
+        color: #000000 !important;
         margin: 0;
         letter-spacing: -0.02em;
     }
 
     .app-sub-text {
-        font-size: 0.95rem;
-        color: #4b5563;
-        font-weight: 600;
+        font-size: 1rem;
+        color: #1a1a1a !important;
+        font-weight: 700;
         margin-top: 0.2rem;
     }
 
     /* Neobrutalist Stat Cards */
     .stat-card-neo {
-        border: 2.5px solid #1e1e1e;
-        box-shadow: 4px 4px 0px #1e1e1e;
+        border: 2.5px solid #000000;
+        box-shadow: 4px 4px 0px #000000;
         border-radius: 18px;
         padding: 1.1rem 1rem;
         text-align: center;
@@ -156,28 +161,28 @@ st.markdown("""
     }
     .stat-card-neo:hover {
         transform: translate(-2px, -2px);
-        box-shadow: 6px 6px 0px #1e1e1e;
+        box-shadow: 6px 6px 0px #000000;
     }
     .stat-val-neo {
         font-family: 'Space Grotesk', sans-serif;
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: #1e1e1e;
+        color: #000000 !important;
         line-height: 1;
     }
     .stat-lbl-neo {
-        font-size: 0.78rem;
-        font-weight: 700;
+        font-size: 0.82rem;
+        font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-top: 0.5rem;
-        color: #1e1e1e;
+        color: #000000 !important;
     }
 
     /* Quadrant Container Headers */
     .q-box-neo {
-        border: 2.5px solid #1e1e1e;
-        box-shadow: 4px 4px 0px #1e1e1e;
+        border: 2.5px solid #000000;
+        box-shadow: 4px 4px 0px #000000;
         border-radius: 20px 20px 0 0;
         padding: 1.1rem 1.3rem;
         margin-bottom: 0px;
@@ -191,82 +196,131 @@ st.markdown("""
     .q-title-neo {
         font-family: 'Space Grotesk', sans-serif;
         font-weight: 700;
-        font-size: 1.25rem;
-        color: #1e1e1e;
+        font-size: 1.3rem;
+        color: #000000 !important;
         margin: 0;
     }
     .q-desc-neo {
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #4b5563;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1a1a1a !important;
         margin-top: 0.25rem;
+    }
+
+    /* Checkbox Label Contrast Override */
+    div[data-testid="stCheckbox"] label p {
+        color: #000000 !important;
+        font-size: 1rem !important;
+        font-weight: 700 !important;
     }
 
     /* Bubbly Badges */
     .badge-neo {
         display: inline-block;
-        padding: 0.22rem 0.65rem;
+        padding: 0.25rem 0.7rem;
         border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        border: 1.5px solid #1e1e1e;
+        font-size: 0.78rem;
+        font-weight: 800;
+        border: 1.8px solid #000000;
         margin-right: 0.35rem;
         margin-top: 0.25rem;
-        box-shadow: 1px 1px 0px #1e1e1e;
+        box-shadow: 1px 1px 0px #000000;
+        color: #000000 !important;
     }
 
-    /* Streamlit Native Buttons & Inputs */
-    .stButton > button {
-        border: 2.5px solid #1e1e1e !important;
-        box-shadow: 3px 3px 0px #1e1e1e !important;
-        border-radius: 14px !important;
+    /* High Contrast Input Overrides */
+    input, textarea, select, div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+        color: #000000 !important;
         font-weight: 700 !important;
+        border: 2px solid #000000 !important;
+        border-radius: 12px !important;
+    }
+
+    div[data-baseweb="select"] * {
+        color: #000000 !important;
+        font-weight: 700 !important;
+    }
+
+    /* Streamlit Native Buttons */
+    .stButton > button {
+        border: 2.5px solid #000000 !important;
+        box-shadow: 3.5px 3.5px 0px #000000 !important;
+        border-radius: 14px !important;
+        font-weight: 800 !important;
         font-family: 'Space Grotesk', sans-serif !important;
         transition: all 0.15s ease !important;
-        color: #1e1e1e !important;
+        color: #000000 !important;
         background-color: #ffffff !important;
     }
     .stButton > button:hover {
         transform: translate(-2px, -2px) !important;
-        box-shadow: 5px 5px 0px #1e1e1e !important;
+        box-shadow: 5px 5px 0px #000000 !important;
         background-color: #fff9e6 !important;
+        color: #000000 !important;
     }
 
     button[kind="primary"] {
         background-color: #b2f2bb !important;
-        color: #1e1e1e !important;
+        color: #000000 !important;
     }
 
-    /* Sidebar Form */
+    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        background-color: #f0ece1 !important;
-        border-right: 2.5px solid #1e1e1e !important;
+        background-color: #eee9dc !important;
+        border-right: 3px solid #000000 !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #000000 !important;
     }
 
     div[data-testid="stForm"] {
         background: #ffffff !important;
-        border: 2.5px solid #1e1e1e !important;
-        box-shadow: 4px 4px 0px #1e1e1e !important;
+        border: 3px solid #000000 !important;
+        box-shadow: 4px 4px 0px #000000 !important;
         border-radius: 20px !important;
         padding: 1.25rem !important;
+    }
+
+    /* Popover High Contrast */
+    div[data-testid="stPopoverBody"] {
+        background-color: #ffffff !important;
+        border: 3px solid #000000 !important;
+        box-shadow: 5px 5px 0px #000000 !important;
+        border-radius: 16px !important;
+    }
+    div[data-testid="stPopoverBody"] * {
+        color: #000000 !important;
+        font-weight: 700 !important;
+    }
+
+    /* Expander Contrast */
+    div[data-testid="stExpander"] summary {
+        background-color: #ffffff !important;
+        border: 2px solid #000000 !important;
+        border-radius: 12px !important;
+    }
+    div[data-testid="stExpander"] summary * {
+        color: #000000 !important;
+        font-weight: 800 !important;
     }
 
     /* Tabs Override */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
-        background-color: #e5e0d3;
+        background-color: #dfd8c8;
         padding: 8px;
         border-radius: 18px;
-        border: 2.5px solid #1e1e1e;
-        box-shadow: 3px 3px 0px #1e1e1e;
+        border: 2.5px solid #000000;
+        box-shadow: 3px 3px 0px #000000;
     }
 
     .stTabs [data-baseweb="tab"] {
         height: 44px;
         border-radius: 12px;
-        color: #374151;
+        color: #000000 !important;
         font-family: 'Space Grotesk', sans-serif;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 0.95rem;
         padding: 0 20px;
         border: 2px solid transparent;
@@ -274,15 +328,15 @@ st.markdown("""
 
     .stTabs [aria-selected="true"] {
         background-color: #ffffff !important;
-        color: #1e1e1e !important;
-        border: 2.5px solid #1e1e1e !important;
-        box-shadow: 3px 3px 0px #1e1e1e !important;
+        color: #000000 !important;
+        border: 2.5px solid #000000 !important;
+        box-shadow: 3px 3px 0px #000000 !important;
     }
 
     .streak-card-neo {
         background: #ffd8a8;
-        border: 2.5px solid #1e1e1e;
-        box-shadow: 4px 4px 0px #1e1e1e;
+        border: 2.5px solid #000000;
+        box-shadow: 4px 4px 0px #000000;
         border-radius: 18px;
         padding: 1.25rem;
         text-align: center;
@@ -351,8 +405,8 @@ with st.sidebar:
     
     st.markdown(f"""
     <div class="streak-card-neo">
-        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem; font-weight: 700; color: #1e1e1e; line-height: 1;">🔥 {streak}</div>
-        <div style="font-size: 0.82rem; color: #1e1e1e; font-weight: 700; margin-top: 0.3rem; text-transform: uppercase;">Consecutive Days</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 2.6rem; font-weight: 800; color: #000000; line-height: 1;">🔥 {streak}</div>
+        <div style="font-size: 0.85rem; color: #000000; font-weight: 800; margin-top: 0.3rem; text-transform: uppercase;">Consecutive Days</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -448,8 +502,8 @@ with tab_matrix:
             st.markdown(f"""
             <div class="q-box-neo {info['bg_class']}">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h4 class="q-title-neo">{info['title']} <span style="font-size: 0.85rem; opacity: 0.7;">({info['subtitle']})</span></h4>
-                    <span style="font-size: 0.85rem; font-weight: 700; color: #1e1e1e; background: #ffffff; border: 1.5px solid #1e1e1e; padding: 2px 10px; border-radius: 20px; box-shadow: 1px 1px 0px #1e1e1e;">{q_completed}/{q_total}</span>
+                    <h4 class="q-title-neo">{info['title']} <span style="font-size: 0.9rem; opacity: 0.85; color: #000000;">({info['subtitle']})</span></h4>
+                    <span style="font-size: 0.88rem; font-weight: 800; color: #000000; background: #ffffff; border: 2px solid #000000; padding: 3px 12px; border-radius: 20px; box-shadow: 1px 1px 0px #000000;">{q_completed}/{q_total}</span>
                 </div>
                 <div class="q-desc-neo">{info['desc']}</div>
             </div>
@@ -461,7 +515,7 @@ with tab_matrix:
             else:
                 for task in q_tasks:
                     is_done = task.get("completed", False)
-                    p_badge = PRIORITY_BADGES.get(task.get("priority", "Medium"), {"bg": "#fff3bf", "text": "#735c00"})
+                    p_badge = PRIORITY_BADGES.get(task.get("priority", "Medium"), {"bg": "#fff3bf", "text": "#5d4037"})
                     e_icon = ENERGY_ICONS.get(task.get("energy", "Medium Energy"), "🔋 Medium Energy")
                     
                     with st.container():
@@ -480,10 +534,10 @@ with tab_matrix:
                                 
                             st.markdown(f"""
                             <div style="margin-left: 28px; margin-top: -4px; margin-bottom: 8px;">
-                                <span class="badge-neo" style="background-color: #ffffff;">{task.get('category')}</span>
-                                <span class="badge-neo" style="background-color: #e2e8f0;">⏱️ {task.get('est_time')}m</span>
+                                <span class="badge-neo" style="background-color: #ffffff; color: #000000;">{task.get('category')}</span>
+                                <span class="badge-neo" style="background-color: #e2e8f0; color: #000000;">⏱️ {task.get('est_time')}m</span>
                                 <span class="badge-neo" style="background-color: {p_badge['bg']}; color: {p_badge['text']};">{task.get('priority')}</span>
-                                <span class="badge-neo" style="background-color: #ffffff;">{e_icon}</span>
+                                <span class="badge-neo" style="background-color: #ffffff; color: #000000;">{e_icon}</span>
                             </div>
                             """, unsafe_allow_html=True)
                             
@@ -509,7 +563,7 @@ with tab_matrix:
                                     save_data(st.session_state.db)
                                     st.toast("Task deleted!")
                                     st.rerun()
-                        st.markdown("<hr style='margin: 4px 0 10px 0; border-color: #1e1e1e; opacity: 0.15;'>", unsafe_allow_html=True)
+                        st.markdown("<hr style='margin: 4px 0 10px 0; border-color: #000000; opacity: 0.2;'>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # TAB 2: TASK LIST & FILTERS
