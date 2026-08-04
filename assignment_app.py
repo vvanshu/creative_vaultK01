@@ -4,17 +4,17 @@ from datetime import datetime, date, time, timedelta
 
 # Page configuration - mobile-first centered viewport
 st.set_page_config(
-    page_title="Vintage Retro Assignment Tracker",
+    page_title="Assignment Tracker",
     page_icon="📜",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# 1. Custom CSS/HTML Injection for Retro Paper Aesthetics
+# 1. Custom CSS/HTML Injection for Modern Dark Theme Aesthetics
 st.markdown("""
 <style>
-    /* Import vintage typewriter fonts from Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap');
+    /* Import modern Sans font from Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
     /* Hide standard Streamlit header, footer, decoration top bar, and default menu */
     header { visibility: hidden !important; }
@@ -22,235 +22,254 @@ st.markdown("""
     div[data-testid="stDecoration"] { display: none !important; }
     #MainMenu { visibility: hidden !important; }
 
-    /* Set the viewport desk canvas and base typography */
+    /* Set the viewport dark canvas and base typography */
     .stApp {
-        background-color: #EFEAD8 !important;
-        background-image: radial-gradient(#d3c5ab 1.2px, transparent 1.2px) !important;
-        background-size: 24px 24px !important;
-        color: #2E251E !important;
-        font-family: 'Courier Prime', 'Courier New', monospace !important;
+        background-color: #0F172A !important;
+        color: #F8FAFC !important;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
 
-    /* Style the main ledger sheet block (the notebook page) */
+    /* Style the main container (the dark panel card) */
     .block-container {
-        background-color: #FAF6ED !important;
-        border: 3px solid #2E251E !important;
-        box-shadow: 10px 10px 0px #2E251E !important;
-        padding: 30px 25px 30px 45px !important;
+        background-color: #1E293B !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+        padding: 30px 24px !important;
         margin: 25px auto !important;
-        max-width: 540px !important;
+        max-width: 520px !important;
+        border-radius: 16px !important;
         position: relative !important;
     }
 
-    /* Ledger vertical margin line (red double line style) */
-    .block-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 32px;
-        width: 3px;
-        height: 100%;
-        border-left: 1px solid #C25953;
-        border-right: 1px solid #C25953;
-        opacity: 0.75;
-        z-index: 10;
-        pointer-events: none;
-    }
-
-    /* Custom headers matching typed documents */
+    /* Modern Headers */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Special Elite', cursive, monospace !important;
-        color: #2E251E !important;
-        font-weight: bold !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        color: #F8FAFC !important;
+        font-weight: 700 !important;
         margin-top: 15px !important;
         margin-bottom: 10px !important;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: -0.5px !important;
     }
 
-    /* Input textboxes and numbers matching typewriter sheets */
+    /* Input textboxes and numbers matching dark theme */
     input, textarea {
-        background-color: #FCFAF6 !important;
-        color: #2E251E !important;
-        border: 2px solid #2E251E !important;
-        border-radius: 0px !important;
-        font-family: 'Courier Prime', monospace !important;
+        background-color: #0F172A !important;
+        color: #F8FAFC !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        font-family: inherit !important;
         padding: 8px 12px !important;
     }
     input:focus, textarea:focus {
-        border-color: #C25953 !important;
-        box-shadow: none !important;
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+        outline: none !important;
     }
 
     /* Custom labels styles for streamlit input components */
     label {
-        font-family: 'Special Elite', monospace !important;
-        color: #2E251E !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        color: #94A3B8 !important;
         font-size: 0.85rem !important;
-        letter-spacing: 0.5px;
+        font-weight: 600 !important;
+        letter-spacing: 0.2px;
+        margin-bottom: 4px !important;
     }
 
-    /* Streamlit form box custom retro styling */
+    /* Streamlit form box custom dark styling */
     div[data-testid="stForm"] {
-        border: 2px solid #2E251E !important;
-        border-radius: 0px !important;
-        background-color: transparent !important;
-        padding: 15px !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+        background-color: #0F172A !important;
+        padding: 20px !important;
         box-shadow: none !important;
     }
 
     /* Streamlit expander component overhaul */
     .streamlit-expanderHeader {
-        background-color: #FAF6ED !important;
-        border: 2px solid #2E251E !important;
-        border-radius: 0px !important;
-        color: #2E251E !important;
-        font-family: 'Special Elite', monospace !important;
-        margin-bottom: 2px !important;
-        transition: background-color 0.15s ease;
+        background-color: #1E293B !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        color: #F8FAFC !important;
+        font-family: inherit !important;
+        font-weight: 600 !important;
+        margin-bottom: 4px !important;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
     }
     .streamlit-expanderHeader:hover {
-        background-color: #F1EAD8 !important;
+        background-color: #243049 !important;
+        border-color: #475569 !important;
     }
     .streamlit-expanderContent {
-        background-color: #FAF6ED !important;
-        border-left: 2px solid #2E251E !important;
-        border-right: 2px solid #2E251E !important;
-        border-bottom: 2px solid #2E251E !important;
+        background-color: #1E293B !important;
+        border-left: 1px solid #334155 !important;
+        border-right: 1px solid #334155 !important;
+        border-bottom: 1px solid #334155 !important;
         border-top: none !important;
-        border-radius: 0px !important;
+        border-radius: 0 0 8px 8px !important;
         padding: 15px !important;
     }
 
-    /* Flat block buttons with zero-radius and solid drop shadows */
+    /* Streamlit default buttons overrides */
     .stButton > button {
-        border: 2px solid #2E251E !important;
-        background-color: #FCFAF6 !important;
-        color: #2E251E !important;
-        border-radius: 0px !important;
-        font-family: 'Special Elite', monospace !important;
-        font-weight: bold !important;
+        border: 1px solid #475569 !important;
+        background-color: #1E293B !important;
+        color: #F8FAFC !important;
+        border-radius: 8px !important;
+        font-family: inherit !important;
+        font-weight: 600 !important;
         font-size: 0.85rem !important;
-        box-shadow: 4px 4px 0px #2E251E !important;
-        transition: all 0.1s ease-in-out !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease-in-out !important;
         width: 100% !important;
         padding: 6px 12px !important;
     }
     .stButton > button:hover {
-        background-color: #F1EAD8 !important;
-        color: #2E251E !important;
-        transform: translate(1px, 1px) !important;
-        box-shadow: 3px 3px 0px #2E251E !important;
-        border-color: #2E251E !important;
+        background-color: #0F172A !important;
+        color: #3B82F6 !important;
+        border-color: #3B82F6 !important;
     }
     .stButton > button:active {
-        background-color: #2E251E !important;
-        color: #FAF6ED !important;
-        transform: translate(3px, 3px) !important;
-        box-shadow: 1px 1px 0px #2E251E !important;
+        background-color: #3B82F6 !important;
+        color: #FFFFFF !important;
+        border-color: #3B82F6 !important;
     }
 
-    /* Styling for typewriter selectboxes and date input fields */
+    /* Highlight class for primary submit buttons */
+    div[data-testid="stFormSubmitButton"] .stButton > button {
+        background-color: #3B82F6 !important;
+        border-color: #2563EB !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stFormSubmitButton"] .stButton > button:hover {
+        background-color: #2563EB !important;
+        border-color: #1D4ED8 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Styling for selectboxes, date input, calendar widgets in dark theme */
     div[data-baseweb="select"] > div {
-        background-color: #FCFAF6 !important;
-        color: #2E251E !important;
-        border: 2px solid #2E251E !important;
-        border-radius: 0px !important;
+        background-color: #0F172A !important;
+        color: #F8FAFC !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
     }
     
-    /* Calendar portal adjustments */
+    /* Calendar popover element styling */
     div[data-baseweb="calendar"] {
-        background-color: #FAF6ED !important;
-        border: 2px solid #2E251E !important;
-        font-family: 'Courier Prime', monospace !important;
-        border-radius: 0px !important;
+        background-color: #1E293B !important;
+        border: 1px solid #475569 !important;
+        font-family: inherit !important;
+        border-radius: 8px !important;
+        color: #F8FAFC !important;
     }
     div[data-baseweb="calendar"] button {
-        border-radius: 0px !important;
-        color: #2E251E !important;
+        border-radius: 8px !important;
+        color: #F8FAFC !important;
     }
     div[data-baseweb="calendar"] button:hover {
-        background-color: #F1EAD8 !important;
+        background-color: #334155 !important;
+        color: #FFFFFF !important;
+    }
+    div[data-baseweb="calendar"] [aria-selected="true"] {
+        background-color: #3B82F6 !important;
+        color: #FFFFFF !important;
     }
 
-    /* Official paper record card elements */
+    /* Selectbox list/dropdown items contrast */
+    div[data-baseweb="menu"] {
+        background-color: #1E293B !important;
+        border: 1px solid #475569 !important;
+    }
+    div[data-baseweb="menu"] li {
+        color: #F8FAFC !important;
+    }
+    div[data-baseweb="menu"] li:hover, div[data-baseweb="menu"] li[aria-selected="true"] {
+        background-color: #334155 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Modern clean card structure */
     .ledger-card {
-        border: 2px solid #2E251E;
-        background-color: #FCFAF6;
-        padding: 15px;
+        border: 1px solid #334155;
+        background-color: #0F172A;
+        padding: 16px;
         margin-top: 15px;
         margin-bottom: 5px;
-        box-shadow: 4px 4px 0px #2E251E;
-        position: relative;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .ledger-subject {
-        font-family: 'Special Elite', monospace;
-        font-size: 0.85rem;
-        color: #7A6B58;
-        font-weight: bold;
-        letter-spacing: 1px;
+        font-family: inherit;
+        font-size: 0.75rem;
+        color: #94A3B8;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .ledger-title {
-        font-family: 'Courier Prime', monospace;
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #1E1815;
+        font-family: inherit;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #F8FAFC;
         margin: 6px 0;
     }
     .ledger-tag {
-        background-color: #F1EAD8;
-        border: 1px solid #2E251E;
-        padding: 2px 6px;
-        font-size: 0.75rem;
-        font-family: 'Courier Prime', monospace;
+        background-color: #1E293B;
+        border: 1px solid #334155;
+        color: #94A3B8;
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        font-family: inherit;
+        border-radius: 6px;
         margin-right: 5px;
         display: inline-block;
-        font-weight: bold;
+        font-weight: 500;
     }
     
-    /* Stamp style ink overlays */
-    .stamp-critical {
-        border: 3px double #B23B25;
-        color: #B23B25;
-        padding: 2px 8px;
-        font-family: 'Special Elite', monospace;
-        font-size: 0.85rem;
-        font-weight: bold;
-        display: inline-block;
-        transform: rotate(-3deg);
-        text-shadow: 1px 1px 0px rgba(178, 59, 37, 0.08);
+    /* Clean rounded priority badges */
+    .badge-high {
+        background-color: rgba(239, 68, 68, 0.15) !important;
+        border: 1px solid #EF4444 !important;
+        color: #F87171 !important;
+        padding: 2px 8px !important;
+        border-radius: 9999px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
     }
-    .stamp-pending {
-        border: 2px solid #2E251E;
-        color: #2E251E;
-        padding: 2px 8px;
-        font-family: 'Special Elite', monospace;
-        font-size: 0.85rem;
-        font-weight: bold;
-        display: inline-block;
-        transform: rotate(2deg);
+    .badge-medium {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+        border: 1px solid #3B82F6 !important;
+        color: #60A5FA !important;
+        padding: 2px 8px !important;
+        border-radius: 9999px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
     }
-    .stamp-steady {
-        border: 2px dashed #7A7268;
-        color: #7A7268;
-        padding: 2px 8px;
-        font-family: 'Special Elite', monospace;
-        font-size: 0.85rem;
-        font-weight: bold;
-        display: inline-block;
+    .badge-low {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        border: 1px solid #10B981 !important;
+        color: #34D399 !important;
+        padding: 2px 8px !important;
+        border-radius: 9999px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
     }
-    
-    /* Scrollbars matching analog iron frames */
+
+    /* Scrollbars matching modern slate paneling */
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
     }
     ::-webkit-scrollbar-track {
-        background: #FAF6ED;
+        background: #1E293B;
     }
     ::-webkit-scrollbar-thumb {
-        background: #2E251E;
-        border-radius: 0px;
+        background: #475569;
+        border-radius: 3px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -290,26 +309,26 @@ if "assignments" not in st.session_state:
 # Display reactive state messages if present (shows success/deletion feedback post-rerun)
 if "just_added" in st.session_state:
     st.markdown(f"""
-    <div style="border: 2px solid #2E251E; background-color: #E8F5E9; color: #1B5E20; padding: 10px; margin-bottom: 15px; font-family: 'Courier Prime', monospace; font-size: 0.85rem;">
-        [✓ COMMIT SUCCESS] {st.session_state["just_added"]}
+    <div style="border: 1px solid #10B981; background-color: rgba(16, 185, 129, 0.1); color: #34D399; padding: 12px; margin-bottom: 15px; border-radius: 8px; font-size: 0.9rem;">
+        <strong>Success:</strong> {st.session_state["just_added"]}
     </div>
     """, unsafe_allow_html=True)
     del st.session_state["just_added"]
 
 if "status_msg" in st.session_state:
     st.markdown(f"""
-    <div style="border: 2px solid #2E251E; background-color: #FAF2E6; color: #7A5B35; padding: 10px; margin-bottom: 15px; font-family: 'Courier Prime', monospace; font-size: 0.85rem;">
-        [⚙ LEDGER STATE UPDATE] {st.session_state["status_msg"]}
+    <div style="border: 1px solid #3B82F6; background-color: rgba(59, 130, 246, 0.1); color: #60A5FA; padding: 12px; margin-bottom: 15px; border-radius: 8px; font-size: 0.9rem;">
+        <strong>Status:</strong> {st.session_state["status_msg"]}
     </div>
     """, unsafe_allow_html=True)
     del st.session_state["status_msg"]
 
 # 3. Main Header Section
 st.markdown("""
-<div style="text-align: center; border-bottom: 2px dashed #2E251E; padding-bottom: 12px; margin-bottom: 15px;">
-    <h1 style="margin: 0; font-size: 2.1rem; letter-spacing: -1px; line-height: 1.1;">ASSIGNMENT LEDGER</h1>
-    <div style="font-family: 'Special Elite', monospace; font-size: 0.85rem; color: #7A6B58; margin-top: 4px;">
-        ANALOG LOGBOOK & PRIORITY MANIFEST // V1.0
+<div style="text-align: center; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px;">
+    <h1 style="margin: 0; font-size: 2.1rem; letter-spacing: -1px; line-height: 1.1;">Assignment Tracker</h1>
+    <div style="font-size: 0.85rem; color: #94A3B8; margin-top: 4px;">
+        Prioritized Task Management in Modern Dark Theme
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -346,40 +365,38 @@ total_hours = sum([t["estimated_hours"] for t in active_tasks])
 critical_count = sum([1 for t in active_tasks if (t["score"] >= 8.0 or t["days_left"] <= 1.5)])
 
 st.markdown(f"""
-<div style="border: 2px dashed #2E251E; padding: 12px 15px; margin-bottom: 20px; background-color: #FCFAF6;">
-    <div style="display: flex; justify-content: space-between; font-family: 'Special Elite', monospace; font-size: 0.8rem; line-height: 1.4;">
-        <div>ACTIVE RECORDS: <span style="font-weight: bold;">{pending_count}</span></div>
-        <div>PENDING WORKLOAD: <span style="font-weight: bold;">{total_hours:.1f} HRS</span></div>
+<div style="border: 1px solid #334155; padding: 12px 15px; margin-bottom: 20px; background-color: #0F172A; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; line-height: 1.4;">
+        <div>Active Assignments: <span style="font-weight: bold; color: #3B82F6;">{pending_count}</span></div>
+        <div>Total Workload: <span style="font-weight: bold; color: #3B82F6;">{total_hours:.1f} hrs</span></div>
     </div>
-    <div style="display: flex; justify-content: space-between; font-family: 'Special Elite', monospace; font-size: 0.8rem; margin-top: 4px; line-height: 1.4;">
-        <div>CRITICAL URGENT: <span style="font-weight: bold; color: #B23B25;">{critical_count}</span></div>
-        <div>LEDGER FEED: <span style="font-weight: bold;">PRIORITIZED DESC</span></div>
+    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 4px; line-height: 1.4;">
+        <div>Critical Items: <span style="font-weight: bold; color: #EF4444;">{critical_count}</span></div>
+        <div>Sort Mode: <span style="font-weight: bold; color: #94A3B8;">Urgency Score</span></div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div style='text-align: center; color: #7A6B58; margin: 10px 0 15px 0;'>==================================================</div>", unsafe_allow_html=True)
-
 # 6. Expanding Data Entry Form
-with st.expander("[+] FILE NEW RECORD", expanded=False):
+with st.expander("[+] Create Assignment", expanded=False):
     with st.form("new_record_form", clear_on_submit=True):
-        title = st.text_input("TASK TITLE", placeholder="e.g. Draft blueprints for steam engine")
-        subject = st.text_input("LOG DEPT / SUBJECT", placeholder="e.g. Thermodynamics")
+        title = st.text_input("Title", placeholder="e.g. Draft blueprints for steam engine")
+        subject = st.text_input("Subject / Course", placeholder="e.g. Thermodynamics")
         
         col_date, col_hrs = st.columns(2)
         with col_date:
-            due_date = st.date_input("DEADLINE DATE", value=date.today())
+            due_date = st.date_input("Due Date", value=date.today())
         with col_hrs:
-            est_hours = st.number_input("EST. WORKLOAD (HRS)", min_value=0.1, max_value=120.0, value=1.0, step=0.5)
+            est_hours = st.number_input("Estimated Hours", min_value=0.1, max_value=120.0, value=1.0, step=0.5)
             
-        tags_input = st.text_input("METADATA TAGS (comma-separated)", placeholder="e.g. BLUEPRINT, LAB")
+        tags_input = st.text_input("Tags (comma-separated)", placeholder="e.g. BLUEPRINT, LAB")
         
-        submitted = st.form_submit_button("COMMIT TO LEDGER")
+        submitted = st.form_submit_button("Add Assignment")
         if submitted:
             if not title.strip():
                 st.markdown("""
-                <div style="border: 2px solid #B23B25; background-color: #FFEBEE; color: #B23B25; padding: 8px 12px; margin-top: 10px; font-family: 'Courier Prime', monospace; font-size: 0.85rem;">
-                    [!] VALIDATION ERROR: RECORD TITLE CANNOT BE VOID!
+                <div style="border: 1px solid #EF4444; background-color: rgba(239, 68, 68, 0.1); color: #F87171; padding: 12px; margin-top: 10px; border-radius: 8px; font-size: 0.85rem;">
+                    <strong>Error:</strong> Assignment title cannot be blank!
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -401,16 +418,16 @@ with st.expander("[+] FILE NEW RECORD", expanded=False):
                 }
                 
                 st.session_state.assignments.append(new_task)
-                st.session_state["just_added"] = f"RECORD #{new_id} ('{title.strip()}') COMMITTED"
+                st.session_state["just_added"] = f"Assignment #{new_id} added successfully!"
                 st.rerun()
 
-# 7. Active Ledger Render Loop
-st.markdown("<h3 style='margin-top: 15px; font-size: 1.15rem; text-decoration: underline;'>[ PENDING LEDGER QUEUE ]</h3>", unsafe_allow_html=True)
+# 7. Active Tasks Render Loop
+st.markdown("<h3 style='margin-top: 20px; font-size: 1.15rem; border-bottom: 1px solid #334155; padding-bottom: 5px;'>Pending Assignments</h3>", unsafe_allow_html=True)
 
 if not active_tasks:
     st.markdown("""
-    <div style="text-align: center; padding: 30px; font-style: italic; color: #7A6B58; border: 2px dashed #2E251E; background-color: #FCFAF6; margin-top: 15px; font-family: 'Courier Prime', monospace;">
-        -- NO ACTIVE RECORDS DETECTED IN LEDGER --
+    <div style="text-align: center; padding: 30px; font-style: italic; color: #94A3B8; border: 1px dashed #334155; background-color: #0F172A; margin-top: 15px; border-radius: 8px;">
+        -- No active assignments --
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -420,30 +437,30 @@ else:
         
         # Decide stamping labels
         if score >= 8.0 or days_left <= 1.5:
-            stamp_class = "stamp-critical"
-            stamp_text = "[ CRITICAL ]"
-            urgency_color = "#B23B25"
+            stamp_class = "badge-high"
+            stamp_text = "High Priority"
+            urgency_color = "#F87171"
         elif score >= 3.0:
-            stamp_class = "stamp-pending"
-            stamp_text = "[ PENDING ]"
-            urgency_color = "#2E251E"
+            stamp_class = "badge-medium"
+            stamp_text = "Medium Priority"
+            urgency_color = "#60A5FA"
         else:
-            stamp_class = "stamp-steady"
-            stamp_text = "[ STEADY ]"
-            urgency_color = "#7A7268"
+            stamp_class = "badge-low"
+            stamp_text = "Low Priority"
+            urgency_color = "#34D399"
             
         # Parse time-remaining labels nicely
         if item["overdue"]:
-            days_left_str = "<span style='color: #B23B25; font-weight: bold;'>OVERDUE</span>"
+            days_left_str = "<span style='color: #EF4444; font-weight: bold;'>OVERDUE</span>"
         elif days_left < 1.0:
             hours_left = days_left * 24.0
             if hours_left < 1.0:
                 mins_left = hours_left * 60.0
-                days_left_str = f"<strong>{int(mins_left)} MINS LEFT</strong>"
+                days_left_str = f"<strong>{int(mins_left)} mins left</strong>"
             else:
-                days_left_str = f"<strong>{hours_left:.1f} HRS LEFT</strong>"
+                days_left_str = f"<strong>{hours_left:.1f} hrs left</strong>"
         else:
-            days_left_str = f"<strong>{days_left:.1f} DAYS LEFT</strong>"
+            days_left_str = f"<strong>{days_left:.1f} days left</strong>"
             
         tags_html = " ".join([f"<span class='ledger-tag'>#{t}</span>" for t in item["tags"]])
         
@@ -451,14 +468,14 @@ else:
         card_html = f"""
         <div class="ledger-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span class="ledger-subject">DEPT: {item['subject'].upper()}</span>
+                <span class="ledger-subject">Course: {item['subject'].upper()}</span>
                 <span class="{stamp_class}">{stamp_text}</span>
             </div>
             <div class="ledger-title">* {item['title']}</div>
-            <div style="font-family: 'Courier Prime', monospace; font-size: 0.85rem; color: #544B40; line-height: 1.4; margin: 8px 0;">
-                DEADLINE: {item['due_date'].strftime('%Y-%m-%d')} ({days_left_str})<br>
-                WORKLOAD: {item['estimated_hours']:.1f} HOURS | 
-                URGENCY INDEX: <span style="font-weight: bold; color: {urgency_color};">{score:.2f}</span>
+            <div style="font-size: 0.85rem; color: #94A3B8; line-height: 1.4; margin: 8px 0;">
+                Due: {item['due_date'].strftime('%Y-%m-%d')} ({days_left_str})<br>
+                Est. Hours: {item['estimated_hours']:.1f} | 
+                Urgency Score: <span style="font-weight: bold; color: {urgency_color};">{score:.2f}</span>
             </div>
             <div>{tags_html}</div>
         </div>
@@ -468,45 +485,44 @@ else:
         # Buttons for immediate completion or scrap action
         btn_col1, btn_col2 = st.columns([1, 1])
         with btn_col1:
-            if st.button("✓ STAMP COMPLETED", key=f"comp_{item['id']}", use_container_width=True):
+            if st.button("✓ Complete", key=f"comp_{item['id']}", use_container_width=True):
                 for o_idx, orig in enumerate(st.session_state.assignments):
                     if orig["id"] == item["id"]:
                         st.session_state.assignments[o_idx]["completed"] = True
-                st.session_state["status_msg"] = f"RECORD #{item['id']} ARCHIVED"
+                st.session_state["status_msg"] = f"Assignment #{item['id']} marked complete"
                 st.rerun()
         with btn_col2:
-            if st.button("✗ SCRAP RECORD", key=f"scrap_{item['id']}", use_container_width=True):
+            if st.button("✗ Delete", key=f"scrap_{item['id']}", use_container_width=True):
                 for o_idx, orig in enumerate(st.session_state.assignments):
                     if orig["id"] == item["id"]:
                         st.session_state.assignments.pop(o_idx)
                         break
-                st.session_state["status_msg"] = f"RECORD #{item['id']} SCRAPPED PERMANENTLY"
+                st.session_state["status_msg"] = f"Assignment #{item['id']} deleted"
                 st.rerun()
-
-st.markdown("<div style='text-align: center; color: #7A6B58; margin: 15px 0 10px 0;'>==================================================</div>", unsafe_allow_html=True)
 
 # 8. Archive Section (Completed Tasks Repositorium)
 archived_tasks = [t for t in st.session_state.assignments if t["completed"]]
 
-with st.expander(f"[#] ARCHIVE REPOSITORIUM ({len(archived_tasks)})", expanded=False):
+st.write("")
+with st.expander(f"[#] Completed Archive ({len(archived_tasks)})", expanded=False):
     if not archived_tasks:
         st.markdown("""
-        <div style="text-align: center; padding: 15px; font-style: italic; color: #7A6B58; font-family: 'Courier Prime', monospace; font-size: 0.85rem;">
-            -- ARCHIVE VOID --
+        <div style="text-align: center; padding: 15px; font-style: italic; color: #94A3B8; font-size: 0.85rem;">
+            -- Archive empty --
         </div>
         """, unsafe_allow_html=True)
     else:
         for idx, item in enumerate(archived_tasks):
             tags_html = " ".join([f"<span class='ledger-tag'>#{t}</span>" for t in item["tags"]])
             card_html = f"""
-            <div class="ledger-card" style="opacity: 0.65; background-color: #F1EAD8; border-style: dashed; box-shadow: none;">
+            <div class="ledger-card" style="opacity: 0.65; border-style: dashed; box-shadow: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <span class="ledger-subject" style="text-decoration: line-through;">DEPT: {item['subject'].upper()}</span>
-                    <span style="border: 2px dashed #7A6B58; color: #7A6B58; padding: 2px 6px; font-family: 'Special Elite', monospace; font-size: 0.75rem; font-weight: bold;">[ ARCHIVED ]</span>
+                    <span class="ledger-subject" style="text-decoration: line-through;">Course: {item['subject'].upper()}</span>
+                    <span style="border: 1px dashed #94A3B8; color: #94A3B8; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Completed</span>
                 </div>
-                <div class="ledger-title" style="text-decoration: line-through; color: #544B40;">* {item['title']}</div>
-                <div style="font-family: 'Courier Prime', monospace; font-size: 0.8rem; color: #7A6B58; margin: 5px 0;">
-                    RESOLVED RECORD | WORKLOAD: {item['estimated_hours']:.1f} HRS
+                <div class="ledger-title" style="text-decoration: line-through; color: #94A3B8;">* {item['title']}</div>
+                <div style="font-size: 0.8rem; color: #64748B; margin: 5px 0;">
+                    Completed | Workload: {item['estimated_hours']:.1f} hrs
                 </div>
                 <div>{tags_html}</div>
             </div>
@@ -516,30 +532,28 @@ with st.expander(f"[#] ARCHIVE REPOSITORIUM ({len(archived_tasks)})", expanded=F
             # Action controls for individual archived tasks
             btn_col1, btn_col2 = st.columns([1, 1])
             with btn_col1:
-                if st.button("↺ RESTORE RECORD", key=f"rest_{item['id']}", use_container_width=True):
+                if st.button("↺ Restore", key=f"rest_{item['id']}", use_container_width=True):
                     for o_idx, orig in enumerate(st.session_state.assignments):
                         if orig["id"] == item["id"]:
                             st.session_state.assignments[o_idx]["completed"] = False
-                    st.session_state["status_msg"] = f"RECORD #{item['id']} RESTORED"
+                    st.session_state["status_msg"] = f"Assignment #{item['id']} restored"
                     st.rerun()
             with btn_col2:
-                if st.button("☠ PURGE RECORD", key=f"purge_{item['id']}", use_container_width=True):
+                if st.button("☠ Delete", key=f"purge_{item['id']}", use_container_width=True):
                     for o_idx, orig in enumerate(st.session_state.assignments):
                         if orig["id"] == item["id"]:
                             st.session_state.assignments.pop(o_idx)
                             break
-                    st.session_state["status_msg"] = f"RECORD #{item['id']} PURGED"
+                    st.session_state["status_msg"] = f"Assignment #{item['id']} deleted forever"
                     st.rerun()
 
-st.markdown("<div style='text-align: center; color: #7A6B58; margin: 15px 0 10px 0;'>==================================================</div>", unsafe_allow_html=True)
-
 # 9. System Control Panel & Plaintext Export
-st.markdown("<h4 style='font-size: 0.95rem; text-align: center; margin-bottom: 12px; letter-spacing: 0.5px;'>[ LEDGER SYSTEM CONTROL PANEL ]</h4>", unsafe_allow_html=True)
+st.markdown("<h4 style='font-size: 0.95rem; text-align: center; margin-top: 25px; margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 20px;'>Settings & Tools</h4>", unsafe_allow_html=True)
 
 col_ctrl1, col_ctrl2 = st.columns([1, 1])
 
 with col_ctrl1:
-    if st.button("SEED INITIAL RECORDS", help="Load reference retro data"):
+    if st.button("Load Demo Data", help="Load reference retro data"):
         st.session_state.assignments = [
             {
                 "id": 1,
@@ -569,66 +583,66 @@ with col_ctrl1:
                 "completed": False
             }
         ]
-        st.session_state["status_msg"] = "TEST RECORDS INSTALLED"
+        st.session_state["status_msg"] = "Demo data loaded"
         st.rerun()
 
 with col_ctrl2:
-    if st.button("PURGE ACTIVE LEDGER", help="Wipe all active log entries"):
+    if st.button("Delete All Tasks", help="Wipe all active log entries"):
         st.session_state.assignments = []
-        st.session_state["status_msg"] = "ALL LEDGER ENTRIES SCRAPPED"
+        st.session_state["status_msg"] = "All assignments deleted"
         st.rerun()
 
 # Compile the plaintext document matching paper ledger exports
 report_lines = []
 report_lines.append("==================================================")
-report_lines.append("              OFFICIAL LEDGER REPORT")
+report_lines.append("             ASSIGNMENT STATUS REPORT")
 report_lines.append(f"        GENERATED: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 report_lines.append("==================================================")
 report_lines.append("")
-report_lines.append("[ ACTIVE PENDING RECORDS ]")
+report_lines.append("[ ACTIVE ASSIGNMENTS ]")
 report_lines.append("-" * 50)
 
 if not active_tasks:
-    report_lines.append("-- NO ACTIVE RECORDS DETECTED --")
+    report_lines.append("-- NO ACTIVE ASSIGNMENTS DETECTED --")
 else:
     for item in active_tasks:
-        stamp_label = "STEADY"
+        stamp_label = "Low"
         if item["score"] >= 8.0 or item["days_left"] <= 1.5:
-            stamp_label = "CRITICAL"
+            stamp_label = "High"
         elif item["score"] >= 3.0:
-            stamp_label = "PENDING"
+            stamp_label = "Medium"
         
-        report_lines.append(f"ID: #{item['id']} | DEPT: {item['subject'].upper()}")
+        report_lines.append(f"ID: #{item['id']} | Course: {item['subject'].upper()}")
         report_lines.append(f"TASK: {item['title']}")
         report_lines.append(f"DUE : {item['due_date'].strftime('%Y-%m-%d')} | REMAINING: {item['days_left']:.2f} DAYS")
-        report_lines.append(f"EST : {item['estimated_hours']:.1f} HRS | URGENCY INDEX: {item['score']:.2f} [{stamp_label}]")
+        report_lines.append(f"EST : {item['estimated_hours']:.1f} HRS | URGENCY: {item['score']:.2f} [{stamp_label}]")
         report_lines.append(f"TAGS: {', '.join(item['tags'])}")
         report_lines.append("-" * 50)
 
 report_lines.append("")
-report_lines.append("[ ARCHIVED RESOLVED RECORDS ]")
+report_lines.append("[ COMPLETED ASSIGNMENTS ]")
 report_lines.append("-" * 50)
 if not archived_tasks:
-    report_lines.append("-- NO ARCHIVED RECORDS DETECTED --")
+    report_lines.append("-- NO COMPLETED ASSIGNMENTS DETECTED --")
 else:
     for item in archived_tasks:
-        report_lines.append(f"ID: #{item['id']} | DEPT: {item['subject'].upper()}")
+        report_lines.append(f"ID: #{item['id']} | Course: {item['subject'].upper()}")
         report_lines.append(f"TASK: {item['title']}")
         report_lines.append(f"TAGS: {', '.join(item['tags'])}")
         report_lines.append("-" * 50)
 
 report_lines.append("")
 report_lines.append("==================================================")
-report_lines.append("              END OF LEDGER SHEET")
+report_lines.append("              END OF REPORT")
 report_lines.append("==================================================")
 
 report_text = "\n".join(report_lines)
 
 st.write("")
 st.download_button(
-    label="💾 DOWNLOAD ASCII MANIFEST",
+    label="💾 Download Text Export",
     data=report_text,
-    file_name=f"ledger_manifest_{date.today().strftime('%Y%m%d')}.txt",
+    file_name=f"assignment_manifest_{date.today().strftime('%Y%m%d')}.txt",
     mime="text/plain",
     use_container_width=True
 )
