@@ -1,37 +1,31 @@
-# 🎯 Minimalist Challenge Tracker
+# ⚡ LifeOS: Personal RPG Productivity App
 
-A clean, mobile-friendly, and minimalist Challenge Tracker application built with Python and Streamlit. Designed to help you track habits, consistency, and multi-day challenges (e.g., 7-day, 30-day, 60-day, or custom challenges) with zero friction.
+A minimal, Apple/iOS-inspired RPG Productivity web application built with **Python**, **Streamlit**, and **SQLite**. LifeOS turns life goals into quests, awards XP, levels up your character, unlocks real-world perks, visualizes transformation journey maps, and guides weekly reflection reviews.
 
-## ✨ Features
+---
 
-- **Quick Challenge Creation**: Define your challenge name and select standard durations (7, 30, 60 days) or input a custom number of days.
-- **Interactive Day Grid**: Clickable circles render the calendar of days in a clean, responsive layout. Click a day circle to instantly toggle between completed and incomplete.
-- **Real-Time Progress Tracking**: Calculates completed days, remaining days, and percentage of completion, updated dynamically as you check off items.
-- **Reset and Delete Options**: Restart your current progress or delete the challenge completely to start fresh.
-- **Aesthetic Premium Dark UI**: Custom-styled glassmorphic elements designed for seamless display across mobile and desktop.
+## ✨ Key Features
 
-## 🚀 How to Run Locally
+- **👤 User Onboarding & Identity**: Customize your Hero name, Avatar, Current Identity, Future Vision Identity, and campaign duration.
+- **⚡ RPG Quest Dashboard**: View character level, available XP balance, total XP, level progress bar, and interactive daily/weekly tasks.
+- **🎯 Goal Center**: Breakdown life goals into final targets, monthly milestones, weekly actions, daily quests, and weekly hours allocated.
+- **🗺️ Transformation Journey Map**: Visual node pipeline tracking progress from Current Identity → Future Vision Identity.
+- **🎁 Perk Vault & Reward Store**: Define and unlock Small, Medium, and Big rewards using accumulated XP.
+- **📝 Weekly Review**: Guided reflection questionnaire with automated quest log highlights and +50 XP review bonuses.
 
-1. **Clone the Repository**:
-   ```bash
-   git clone <repo-url>
-   cd creative_vaultK01
-   ```
+---
 
-2. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🚀 How to Run
 
-3. **Start the Application**:
-   ```bash
-   streamlit run app.py
-   ```
+```bash
+# Activate Virtual Environment (Windows)
+.\venv\Scripts\activate
 
-## ☁️ How to Deploy
+# Launch LifeOS Streamlit App
+streamlit run lifeos_app.py
+```
 
-You can host this project for free on **Streamlit Community Cloud**:
-1. Push your code to a public GitHub repository.
-2. Sign in to [share.streamlit.io](https://share.streamlit.io/) with your GitHub account.
-3. Click **New App**, select this repository, specify the branch, and set the file path to `app.py`.
-4. Click **Deploy!**
+Alternatively, you can also run:
+```bash
+streamlit run lifeos.py
+```
