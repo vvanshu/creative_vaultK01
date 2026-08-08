@@ -24,7 +24,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
 h1, h2, h3, h4, h5, h6 {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif !important;
     color: #0F172A !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
     letter-spacing: -0.4px !important;
 }
 
@@ -36,12 +36,12 @@ p, span, label, li, td, th {
 /* Form Field Labels & Radio Text */
 div[data-testid="stMarkdownContainer"] p {
     color: #0F172A !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
 }
 
 label[data-testid="stWidgetLabel"] p {
     color: #0F172A !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     font-size: 0.95rem !important;
 }
 
@@ -136,7 +136,7 @@ label[data-testid="stWidgetLabel"] p {
 div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea {
     color: #0F172A !important;
     font-size: 0.95rem !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
 }
 
 div[data-baseweb="input"] > div, div[data-baseweb="textarea"] > div, div[data-baseweb="select"] > div {
@@ -180,10 +180,10 @@ button[aria-selected="true"][data-baseweb="tab"] p {
 /* Checkboxes */
 div[data-testid="stCheckbox"] label p {
     color: #0F172A !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 
-/* Hide Branding */
+/* Hide Streamlit Menu/Footer */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 </style>
