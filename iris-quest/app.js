@@ -706,6 +706,15 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
     }
   };
 
+  const deleteReview = (id) => {
+    if (confirm('Are you sure you want to delete this weekly report log?')) {
+      const nr = reviews.filter(r => r.id !== id);
+      LS.set('irisquest_reviews', nr);
+      setReviews(nr);
+      toast('Weekly review log removed.');
+    }
+  };
+
   const submitReview = (e) => {
     e.preventDefault();
     const r = { id: genId(), weekStart: weekStr, completed: comp || autoSummary, failed: fail, nextMission: next, createdAt: new Date().toISOString() };
@@ -773,6 +782,9 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                     <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-green)' }}>Completed</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.completed}</p></div>
                     <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-orange)' }}>Obstacles</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.failed || 'None logged.'}</p></div>
                     <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-purple)' }}>Next Mission</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.nextMission || '—'}</p></div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14, borderTop: '1px solid var(--border-system)', paddingTop: 10 }}>
+                    <button className="btn-danger-text" onClick={() => deleteReview(r.id)}>🗑️ Delete Review</button>
                   </div>
                 </div>
               ))}
