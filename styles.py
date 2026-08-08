@@ -177,7 +177,34 @@ button[aria-selected="true"][data-baseweb="tab"] p {
     color: #0284C7 !important;
 }
 
-/* Checkboxes */
+/* Crisp Black Outline Stroke Checkboxes & Radio Circles */
+div[data-baseweb="checkbox"] span:first-child,
+div[data-baseweb="checkbox"] div:first-child {
+    background-color: #FFFFFF !important;
+    border: 2px solid #000000 !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+div[data-baseweb="checkbox"] input:checked + div,
+div[data-baseweb="checkbox"] input:checked + span {
+    background-color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+div[data-baseweb="radio"] span:first-child,
+div[data-baseweb="radio"] div:first-child {
+    background-color: #FFFFFF !important;
+    border: 2px solid #000000 !important;
+    border-radius: 50% !important;
+}
+
+div[data-baseweb="radio"] input:checked + div,
+div[data-baseweb="radio"] input:checked + span {
+    border: 2px solid #000000 !important;
+    background-color: #000000 !important;
+}
+
 div[data-testid="stCheckbox"] label p {
     color: #0F172A !important;
     font-weight: 700 !important;
