@@ -1,31 +1,31 @@
 :root {
-  /* Premium iOS Light Palette */
-  --bg-system: #F8F8FA;
-  --bg-card: rgba(255, 255, 255, 0.94);
-  --border-system: rgba(0, 0, 0, 0.06);
-  --shadow-premium: 0 12px 36px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+  /* ODYSSEY Premium iOS Light System */
+  --bg-system: #F2F2F7;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border-system: rgba(0, 0, 0, 0.05);
+  --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.03), 0 1px 4px rgba(0, 0, 0, 0.02);
   
-  /* Color Accents (Apple Palette) */
-  --accent-purple: #5856D6;
-  --accent-green: #34C759;
+  /* Calm iOS Accent Colors */
+  --accent-indigo: #5856D6;
+  --accent-emerald: #34C759;
   --accent-orange: #FF9500;
   --accent-blue: #007AFF;
   --accent-pink: #FF2D55;
   --accent-grey: #8E8E93;
   
-  /* Text Contrast Hierarchy */
+  /* Text Hierarchy */
   --text-primary: #1C1C1E;
   --text-secondary: #8E8E93;
-  --text-tertiary: #AEAEB2;
+  --text-muted: #C7C7CC;
   
-  /* Layout Spec */
+  /* Layout Specs */
   --radius-card: 20px;
   --radius-button: 14px;
-  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-apple: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --transition-ios: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* 1. Base Styles & Typography */
+/* Base resets & styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -35,26 +35,26 @@
 
 body {
   background-color: var(--bg-system);
-  font-family: var(--font-system);
+  font-family: var(--font-apple);
   color: var(--text-primary);
   line-height: 1.5;
+  padding-bottom: 95px; /* bottom navigation bar space */
   overflow-x: hidden;
-  padding-bottom: 90px; /* Space for bottom tab bar */
 }
 
-/* Apple SF Pro Typography Hierarchy */
+/* SF Pro Typography Styles */
 .large-title {
   font-size: 34px;
   font-weight: 700;
-  letter-spacing: -1px;
+  letter-spacing: -1.2px;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .title {
   font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.6px;
   color: var(--text-primary);
 }
 
@@ -63,7 +63,7 @@ body {
   font-weight: 600;
   letter-spacing: -0.2px;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .body-text {
@@ -78,47 +78,47 @@ body {
   color: var(--text-secondary);
 }
 
-/* 2. Layout Container */
+/* Main Container Frame */
 .app-container {
-  max-width: 600px; /* Centered iOS iPhone/iPad frame view for premium feel */
+  max-width: 520px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 20px 16px;
   min-height: 100vh;
   position: relative;
 }
 
-/* 3. Cards System */
+/* Premium Apple Fitness Inspired Cards */
 .premium-card {
   background: var(--bg-card);
   border-radius: var(--radius-card);
   padding: 20px;
   border: 1px solid var(--border-system);
   box-shadow: var(--shadow-premium);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .premium-card:active {
   transform: scale(0.995);
 }
 
-/* 4. Bottom Tab Bar Navigation */
+/* Bottom Dock Tab Navigation */
 .bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   border-top: 1px solid var(--border-system);
   display: flex;
   justify-content: space-around;
   align-items: center;
   height: 80px;
-  padding-bottom: 12px; /* iOS safe area spacing */
+  padding-bottom: 12px;
   z-index: 1000;
 }
 
@@ -133,27 +133,27 @@ body {
   height: 100%;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .nav-tab-btn.active {
-  color: var(--accent-purple);
+  color: var(--accent-indigo);
 }
 
 .nav-tab-icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   margin-bottom: 4px;
   stroke: currentColor;
-  stroke-width: 2.2;
+  stroke-width: 2;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .nav-tab-btn.active .nav-tab-icon {
-  stroke: var(--accent-purple);
+  stroke: var(--accent-indigo);
   transform: translateY(-1px);
 }
 
@@ -162,11 +162,11 @@ body {
   font-weight: 500;
 }
 
-/* 5. Button Designs */
+/* iOS Primary & Secondary Buttons */
 .btn-primary {
   width: 100%;
   height: 52px;
-  background-color: var(--accent-purple);
+  background-color: var(--accent-indigo);
   color: #FFFFFF;
   border: none;
   border-radius: var(--radius-button);
@@ -177,13 +177,12 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 16px rgba(88, 86, 214, 0.2);
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .btn-primary:active {
   transform: scale(0.97);
-  background-color: #4745B0;
+  background-color: #4341B0;
 }
 
 .btn-secondary {
@@ -199,7 +198,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .btn-secondary:active {
@@ -208,8 +207,8 @@ body {
 }
 
 .btn-icon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   background: rgba(0, 0, 0, 0.04);
@@ -218,12 +217,11 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .btn-icon:active {
   transform: scale(0.9);
-  background: rgba(0, 0, 0, 0.08);
 }
 
 .btn-danger-text {
@@ -234,16 +232,11 @@ body {
   font-weight: 600;
   cursor: pointer;
   padding: 8px 0;
-  transition: var(--transition-smooth);
 }
 
-.btn-danger-text:active {
-  opacity: 0.6;
-}
-
-/* 6. Form Styling */
+/* iOS Style Form */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-label {
@@ -258,30 +251,30 @@ body {
 
 .form-input, .form-select, .form-textarea {
   width: 100%;
-  height: 50px;
+  height: 48px;
   border-radius: 12px;
   border: 1px solid var(--border-system);
   background-color: rgba(0, 0, 0, 0.02);
   padding: 0 16px;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-primary);
   outline: none;
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .form-textarea {
-  height: 100px;
-  padding: 14px 16px;
+  height: 90px;
+  padding: 12px 16px;
   resize: none;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: var(--accent-purple);
+  border-color: var(--accent-indigo);
   background-color: #FFFFFF;
   box-shadow: 0 0 0 4px rgba(88, 86, 214, 0.1);
 }
 
-/* 7. Quest Items (Task Design) */
+/* Quest & Checklist List */
 .quest-item {
   display: flex;
   align-items: center;
@@ -289,12 +282,8 @@ body {
   background: #FFFFFF;
   border-radius: 16px;
   border: 1px solid var(--border-system);
-  margin-bottom: 12px;
-  transition: var(--transition-smooth);
-}
-
-.quest-item:active {
-  transform: scale(0.99);
+  margin-bottom: 10px;
+  transition: var(--transition-ios);
 }
 
 .quest-checkbox {
@@ -308,12 +297,12 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .quest-checkbox.checked {
-  background-color: var(--accent-purple);
-  border-color: var(--accent-purple);
+  background-color: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 .quest-checkbox-icon {
@@ -324,11 +313,6 @@ body {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  display: none;
-}
-
-.quest-checkbox.checked .quest-checkbox-icon {
-  display: block;
 }
 
 .quest-info {
@@ -349,84 +333,121 @@ body {
 .quest-meta {
   font-size: 13px;
   color: var(--text-secondary);
-  margin-top: 2px;
 }
 
 .quest-xp-badge {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--accent-purple);
-  margin-right: 12px;
+  color: var(--accent-indigo);
 }
 
-/* 8. Progress Elements */
-.ios-progress-container {
-  margin-top: 8px;
-}
-
-.ios-progress-track {
-  width: 100%;
-  height: 8px;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.ios-progress-fill {
-  height: 100%;
-  background-color: var(--accent-purple);
-  border-radius: 4px;
-  width: 0;
-  transition: width 0.6s cubic-bezier(0.1, 0.8, 0.25, 1);
-}
-
-/* Circular Progress Ring */
-.progress-ring-container {
+/* Dynamic Illustrated Avatar Evolving Border System */
+.avatar-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto;
+  display: inline-block;
 }
 
-.progress-ring-bg {
-  stroke: rgba(0, 0, 0, 0.04);
-}
-
-.progress-ring-indicator {
-  stroke: var(--accent-purple);
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.1, 0.8, 0.25, 1);
-}
-
-.progress-ring-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-/* 9. Avatar Container & Design */
-.memoji-avatar {
-  width: 80px;
-  height: 80px;
+.avatar-ring {
+  width: 94px;
+  height: 94px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #E5E5EA 0%, #D1D1D6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 3px solid #FFFFFF;
+  background: transparent;
+  border: 3px solid var(--border-system);
+  transition: var(--transition-ios);
 }
 
-/* 10. Segmented Controls (iOS Tabs) */
+.avatar-ring.lvl-novice { border-color: var(--accent-grey); }
+.avatar-ring.lvl-builder { border-color: var(--accent-blue); }
+.avatar-ring.lvl-creator { border-color: var(--accent-indigo); }
+.avatar-ring.lvl-sage { border-color: var(--accent-orange); }
+
+.avatar-main {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Onboarding Infographic */
+.infographic-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.infographic-step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  border: 1px solid var(--border-system);
+}
+
+.infographic-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-indigo);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* Life Timeline Log */
+.timeline-container {
+  position: relative;
+  padding-left: 20px;
+  margin-top: 16px;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-system);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-indigo);
+  border: 2px solid #FFFFFF;
+}
+
+/* Segmented Tabs (Segmented Control) */
 .segmented-control {
   display: flex;
   background-color: rgba(0, 0, 0, 0.04);
   border-radius: 9px;
   padding: 2px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .segmented-btn {
@@ -439,7 +460,7 @@ body {
   color: var(--text-primary);
   border-radius: 7px;
   cursor: pointer;
-  transition: var(--transition-smooth);
+  transition: var(--transition-ios);
 }
 
 .segmented-btn.active {
@@ -447,74 +468,69 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* 11. Custom Accents & Badges */
+/* iOS Badge Badges */
 .ios-badge {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.ios-badge-purple { background-color: rgba(88, 86, 214, 0.1); color: var(--accent-purple); }
-.ios-badge-green { background-color: rgba(52, 199, 89, 0.1); color: var(--accent-green); }
-.ios-badge-orange { background-color: rgba(255, 149, 0, 0.1); color: var(--accent-orange); }
-.ios-badge-blue { background-color: rgba(0, 122, 255, 0.1); color: var(--accent-blue); }
-.ios-badge-pink { background-color: rgba(255, 45, 85, 0.1); color: var(--accent-pink); }
+.ios-badge-purple { background-color: rgba(88, 86, 214, 0.08); color: var(--accent-indigo); }
+.ios-badge-green { background-color: rgba(52, 199, 89, 0.08); color: var(--accent-emerald); }
+.ios-badge-orange { background-color: rgba(255, 149, 0, 0.08); color: var(--accent-orange); }
+.ios-badge-blue { background-color: rgba(0, 122, 255, 0.08); color: var(--accent-blue); }
+.ios-badge-pink { background-color: rgba(255, 45, 85, 0.08); color: var(--accent-pink); }
 
-/* 12. Toast Box */
+/* Circular Rings & Linear Progress */
+.ios-progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ios-progress-fill {
+  height: 100%;
+  background-color: var(--accent-indigo);
+  border-radius: 4px;
+  width: 0;
+  transition: width 0.5s cubic-bezier(0.1, 0.8, 0.25, 1);
+}
+
+/* Toast message alert */
 .toast {
   position: fixed;
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(28, 28, 30, 0.9);
+  background: rgba(28, 28, 30, 0.95);
   color: #FFFFFF;
   padding: 12px 24px;
   border-radius: 24px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 10000;
-  animation: toastFadeIn 0.3s cubic-bezier(0.1, 0.8, 0.25, 1);
+  animation: toastIn 0.25s cubic-bezier(0.1, 0.8, 0.25, 1);
 }
 
-@keyframes toastFadeIn {
-  from { transform: translate(-50%, 20px); opacity: 0; }
+@keyframes toastIn {
+  from { transform: translate(-50%, 15px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }
 
-/* 13. Goal Progress Box */
-.goal-progress-bar-container {
-  margin-top: 14px;
-}
-
-.goal-progress-bar-track {
-  width: 100%;
-  height: 6px;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.goal-progress-bar-fill {
-  height: 100%;
-  background-color: var(--accent-purple);
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-/* 14. Empty states */
+/* Empty states */
 .empty-state {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 10px;
   color: var(--text-secondary);
 }
 
 .empty-state-icon {
-  font-size: 40px;
+  font-size: 32px;
   margin-bottom: 8px;
 }

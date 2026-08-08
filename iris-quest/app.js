@@ -1,4 +1,4 @@
-/* ===== HELPERS ===== */
+/* ===== DATA PERSISTENCE HELPERS ===== */
 const LS = {
   get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
@@ -10,8 +10,10 @@ const calcLevel = (xp) => {
   const currentXp = xp % 100;
   const nextXp = 100;
   const progress = Math.min(1, currentXp / 100);
-  const titles = ['Novice','Apprentice','Builder','Architect','Strategist','Creator','Legend','Sovereign'];
-  return { level, currentXp, nextXp, progress, title: titles[Math.min(titles.length-1, Math.floor((level-1)/3))] };
+  const titles = ['Novice','Scholar','Builder','Strategist','Architect','Creator','Master','Sage'];
+  const title = titles[Math.min(titles.length-1, Math.floor((level-1)/3))];
+  const rankClass = level >= 7 ? 'lvl-sage' : level >= 4 ? 'lvl-creator' : level >= 2 ? 'lvl-builder' : 'lvl-novice';
+  return { level, currentXp, nextXp, progress, title, rankClass };
 };
 
 /* ===== TOAST ===== */
@@ -26,91 +28,187 @@ function Onboarding({ onComplete }) {
   const [cur, setCur] = React.useState('');
   const [fut, setFut] = React.useState('');
   const [avatar, setAvatar] = React.useState('👨‍💻');
-  
+  const [hair, setHair] = React.useState('Cropped');
+  const [accessory, setAccessory] = React.useState('Clean');
+  const [showInfo, setShowInfo] = React.useState(false);
+  const [tempProfile, setTempProfile] = React.useState(null);
+
   const submit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
     const p = { 
       name: name.trim(), 
-      avatar: avatar, 
-      currentIdentity: cur.trim() || 'Novice Developer', 
-      futureIdentity: fut.trim() || 'Tech Architect', 
+      avatar, 
+      hair, 
+      accessory,
+      currentIdentity: cur.trim() || 'Aspiring Creator', 
+      futureIdentity: fut.trim() || 'Master Builder', 
       totalXp: 0, 
       spentXp: 0, 
       createdAt: new Date().toISOString() 
     };
+    
+    // Seed default ODYSSEY goals, tasks, and rewards
     LS.set('irisquest_profile', p);
     LS.set('irisquest_goals', [
       {
         id: 'g-seed-1',
-        name: 'Build Portfolio Website',
+        name: 'Design & Code Odyssey MVP',
         duration: '90 Days',
-        finalTarget: 'Launch professional portfolio showing 3 flagship apps',
-        monthlyTarget: 'Complete design and seed data for apps',
-        weeklyActions: 'Write code 15 hours per week\nRefine design system',
-        hoursPerWeek: 15,
+        finalTarget: 'Launch a high fidelity life OS app with visual journey maps',
+        monthlyTarget: 'Complete functional modular frontend prototype',
+        weeklyActions: 'Develop clean React components\nRefine premium iOS style CSS',
+        hoursPerWeek: 12,
         category: 'Creative',
         createdAt: new Date().toISOString()
       }
     ]);
     LS.set('irisquest_tasks', [
-      { id: 't-seed-1', goalId: 'g-seed-1', title: 'Complete high contrast layout', difficulty: 'Medium', xpValue: 30, taskType: 'daily', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() },
-      { id: 't-seed-2', goalId: 'g-seed-1', title: 'Write copy for about page', difficulty: 'Small', xpValue: 10, taskType: 'daily', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() }
+      { id: 't-seed-1', goalId: 'g-seed-1', title: 'Stylize outline stroke checkboxes', difficulty: 'Small', xpValue: 10, taskType: 'daily', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() },
+      { id: 't-seed-2', goalId: 'g-seed-1', title: 'Create interactive onboarding flow infographic', difficulty: 'Medium', xpValue: 30, taskType: 'daily', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() },
+      { id: 't-seed-3', goalId: 'g-seed-1', title: 'Refine visual Journey Map paths', difficulty: 'Large', xpValue: 100, taskType: 'weekly', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() }
     ]);
     LS.set('irisquest_rewards', [
-      { id: 'r-seed-1', name: '15-minute coffee break', category: 'Break', xpCost: 50, expiryDate: 'Permanent', isClaimed: false, claimedAt: null },
-      { id: 'r-seed-2', name: 'Watch favorite podcast episode', category: 'Entertainment', xpCost: 150, expiryDate: 'Weekend', isClaimed: false, claimedAt: null }
+      { id: 'r-seed-1', name: 'Premium coffee break session', category: 'Break', xpCost: 50, expiryDate: 'Permanent', isClaimed: false, claimedAt: null },
+      { id: 'r-seed-2', name: 'Unwind with custom soundscape play', category: 'Experience', xpCost: 100, expiryDate: 'Today', isClaimed: false, claimedAt: null }
     ]);
     LS.set('irisquest_reviews', []);
-    onComplete(p);
+    
+    setTempProfile(p);
+    setShowInfo(true);
   };
 
-  return (
-    <div className="app-container" style={{ display: 'flex', alignItems: 'center', minHeight: '80vh' }}>
-      <div className="premium-card" style={{ width: '100%', padding: '32px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: 12 }}>🛡️</div>
-          <h1 className="large-title" style={{ marginBottom: 4 }}>IRIS QUEST</h1>
-          <p className="caption">Premium RPG Productivity Operating System</p>
+  if (showInfo) {
+    return (
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', minHeight: '90vh' }}>
+        <div className="premium-card" style={{ width: '100%', padding: '32px 24px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={{ fontSize: '3rem', marginBottom: 8 }}>🧭</div>
+            <h2 className="title" style={{ fontSize: '24px' }}>Your ODYSSEY Blueprint</h2>
+            <p className="caption" style={{ marginTop: 4 }}>How the OS maps your transformation journey</p>
+          </div>
+          
+          <div className="infographic-container">
+            <div className="infographic-step">
+              <div className="infographic-number">1</div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Goal Campaigns</h4>
+                <p className="caption" style={{ marginTop: 2 }}>Initialize high-level goals with custom campaign durations.</p>
+              </div>
+            </div>
+            <div className="infographic-step">
+              <div className="infographic-number">2</div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Journey Maps</h4>
+                <p className="caption" style={{ marginTop: 2 }}>The OS generates custom node pipelines automatically from milestones.</p>
+              </div>
+            </div>
+            <div className="infographic-step">
+              <div className="infographic-number">3</div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Actions & Quests</h4>
+                <p className="caption" style={{ marginTop: 2 }}>Break down weekly items into checkable daily and weekly quests.</p>
+              </div>
+            </div>
+            <div className="infographic-step">
+              <div className="infographic-number">4</div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>XP & Perks</h4>
+                <p className="caption" style={{ marginTop: 2 }}>Complete items to level up your avatar status and claim custom perks.</p>
+              </div>
+            </div>
+            <div className="infographic-step">
+              <div className="infographic-number">5</div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Future Self</h4>
+                <p className="caption" style={{ marginTop: 2 }}>Track achievements and watch your identity evolve into its destination.</p>
+              </div>
+            </div>
+          </div>
+          
+          <button className="btn-primary" onClick={() => onComplete(tempProfile)}>
+            Enter Odyssey 🧭
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-container" style={{ display: 'flex', alignItems: 'center', minHeight: '90vh' }}>
+      <div className="premium-card" style={{ width: '100%', padding: '32px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: 8 }}>🧭</div>
+          <h1 className="large-title" style={{ marginBottom: 4 }}>ODYSSEY</h1>
+          <p className="caption">Personal Life Journey System</p>
+        </div>
+        
         <form onSubmit={submit}>
           <div className="form-group">
-            <label className="form-label">Avatar Emoji</label>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', margin: '12px 0 20px' }}>
-              {['👨‍💻', '👩‍🎨', '🧠', '⚡', '🏋️', '🚀'].map(emoji => (
+            <label className="form-label">Select Identity Base Style</label>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', margin: '10px 0' }}>
+              {[
+                { emoji: '👨‍💻', label: 'Developer' },
+                { emoji: '👩‍🎨', label: 'Designer' },
+                { emoji: '✍️', label: 'Writer' },
+                { emoji: '📊', label: 'Strategist' },
+                { emoji: '🏋️', label: 'Athlete' },
+                { emoji: '🧘', label: 'Sage' }
+              ].map(item => (
                 <button
-                  key={emoji}
+                  key={item.label}
                   type="button"
-                  onClick={() => setAvatar(emoji)}
+                  onClick={() => setAvatar(item.emoji)}
                   style={{
-                    fontSize: '2rem',
-                    width: '56px',
-                    height: '56px',
+                    fontSize: '1.8rem',
+                    width: '50px',
+                    height: '50px',
                     borderRadius: '50%',
-                    border: avatar === emoji ? '2.5px solid var(--accent-purple)' : '1px solid var(--border-system)',
-                    background: avatar === emoji ? 'rgba(88, 86, 214, 0.08)' : '#FFFFFF',
+                    border: avatar === item.emoji ? '2.5px solid var(--accent-indigo)' : '1px solid var(--border-system)',
+                    background: avatar === item.emoji ? 'rgba(88, 86, 214, 0.08)' : '#FFFFFF',
                     cursor: 'pointer',
-                    transition: 'var(--transition-smooth)'
+                    transition: 'var(--transition-ios)'
                   }}
+                  title={item.label}
                 >
-                  {emoji}
+                  {item.emoji}
                 </button>
               ))}
             </div>
           </div>
+
+          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div className="form-group">
+              <label className="form-label">Hair Style</label>
+              <select className="form-select" value={hair} onChange={e=>setHair(e.target.value)}>
+                <option>Cropped</option><option>Swept</option><option>Waves</option><option>Topknot</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Accessories</label>
+              <select className="form-select" value={accessory} onChange={e=>setAccessory(e.target.value)}>
+                <option>Clean</option><option>Frames</option><option>Wire-rim</option><option>Headband</option>
+              </select>
+            </div>
+          </div>
+
           <div className="form-group">
-            <label className="form-label">Hero / Designer Name</label>
+            <label className="form-label">Hero Name</label>
             <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Alex Vance" required />
           </div>
-          <div className="form-group">
-            <label className="form-label">Current Identity</label>
-            <input className="form-input" value={cur} onChange={e=>setCur(e.target.value)} placeholder="e.g. Aspiring Builder" required />
+
+          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="form-group">
+              <label className="form-label">Current Identity</label>
+              <input className="form-input" value={cur} onChange={e=>setCur(e.target.value)} placeholder="Student" required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Future Identity</label>
+              <input className="form-input" value={fut} onChange={e=>setFut(e.target.value)} placeholder="Creator" required />
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">Future Identity Target</label>
-            <input className="form-input" value={fut} onChange={e=>setFut(e.target.value)} placeholder="e.g. Lead Product Architect" required />
-          </div>
-          <button className="btn-primary" type="submit" style={{ marginTop: 12 }}>⚡ Begin Your Quest</button>
+
+          <button className="btn-primary" type="submit" style={{ marginTop: 12 }}>⚡ Map Your Journey</button>
         </form>
       </div>
     </div>
@@ -118,7 +216,7 @@ function Onboarding({ onComplete }) {
 }
 
 /* ===== HOME PAGE ===== */
-function HomePage({ profile, tasks, goals, setPage, setProfile, toast }) {
+function HomePage({ profile, tasks, goals, setPage }) {
   const lv = calcLevel(profile.totalXp);
   const avail = profile.totalXp - profile.spentXp;
   const xpNeeded = lv.nextXp - lv.currentXp;
@@ -132,31 +230,49 @@ function HomePage({ profile, tasks, goals, setPage, setProfile, toast }) {
   const nextQuest = todayTasks[0];
   const goalName = (gid) => { const g = goals.find(g => g.id === gid); return g ? g.name : ''; };
 
+  // Calculate overall goal journey progress metrics
+  const getGoalProgress = (gid) => {
+    const linked = tasks.filter(t => t.goalId === gid);
+    if (linked.length === 0) return 0;
+    const completed = linked.filter(t => t.isCompleted).length;
+    return Math.round((completed / linked.length) * 100);
+  };
+
   return (
     <div>
-      <div className="section-header">
-        <h1 className="large-title" style={{ margin: 0 }}>Home</h1>
-        <div className="memoji-avatar" style={{ width: 52, height: 52, fontSize: '26px' }}>{profile.avatar}</div>
-      </div>
-
-      {/* Profile Overview Card */}
-      <div className="premium-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div>
-            <h2 className="title" style={{ fontSize: '21px' }}>{profile.name}</h2>
-            <p className="caption" style={{ marginTop: 2 }}>{profile.currentIdentity} ➔ <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>{profile.futureIdentity}</span></p>
+      {/* Top Profile Header */}
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <h1 className="large-title" style={{ margin: 0, fontSize: '28px' }}>Odyssey</h1>
+          <p className="caption">Welcome back, {profile.name}</p>
+        </div>
+        <div className="avatar-wrapper">
+          <div className={`avatar-ring ${lv.rankClass}`}>
+            <div className="avatar-main">{profile.avatar}</div>
           </div>
-          <span className="ios-badge ios-badge-purple" style={{ fontSize: '13px', padding: '6px 14px' }}>Lvl {lv.level}</span>
         </div>
       </div>
 
-      {/* Today's Quest Highlights Card */}
+      {/* Identity Summary Card */}
+      <div className="premium-card">
+        <span className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', color: 'var(--accent-indigo)' }}>Identity Transformation</span>
+        <h2 style={{ fontSize: '18px', marginTop: 4 }}>{profile.currentIdentity}</h2>
+        <p className="caption" style={{ margin: '2px 0 12px' }}>Destination Target: <b>{profile.futureIdentity}</b></p>
+        
+        <div style={{ display: 'flex', gap: 8, fontSize: '12px', flexWrap: 'wrap' }}>
+          <span className="ios-badge ios-badge-purple">Lvl {lv.level} · {lv.title}</span>
+          <span className="ios-badge ios-badge-orange">{profile.hair} Style</span>
+          <span className="ios-badge ios-badge-blue">{profile.accessory} Accessory</span>
+        </div>
+      </div>
+
+      {/* Today's Quest Highlights (Apple Fitness Rings style) */}
       <div className="premium-card" style={{ cursor: 'pointer' }} onClick={() => setPage('quests')}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 className="section-header" style={{ margin: 0 }}>Today's Quest Status</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <h3 className="section-header" style={{ margin: 0 }}>Today's Quests</h3>
           <span className="caption" style={{ fontWeight: 600 }}>{completedTodayCount}/{totalTodayCount} Cleared</span>
         </div>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <div className="progress-ring-container" style={{ width: 80, height: 80 }}>
             <svg width="80" height="80" viewBox="0 0 80 80">
               <circle className="progress-ring-bg" cx="40" cy="40" r="34" strokeWidth="6" fill="none" />
@@ -179,30 +295,33 @@ function HomePage({ profile, tasks, goals, setPage, setProfile, toast }) {
           <div style={{ flexGrow: 1 }}>
             {nextQuest ? (
               <>
-                <p className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', color: 'var(--accent-purple)' }}>Next Up</p>
-                <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{nextQuest.title}</h4>
+                <p className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', color: 'var(--accent-indigo)' }}>Active Focus</p>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{nextQuest.title}</h4>
                 <p className="caption" style={{ marginTop: 2 }}>{goalName(nextQuest.goalId) || 'General'}</p>
               </>
             ) : (
               <>
-                <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--accent-green)' }}>All Daily Quests Cleared!</h4>
-                <p className="caption" style={{ marginTop: 2 }}>Outstanding job. Reward yourself in the shop!</p>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-emerald)' }}>All Daily Quests Completed!</h4>
+                <p className="caption" style={{ marginTop: 2 }}>Your calendar is fully cleared.</p>
               </>
             )}
           </div>
         </div>
       </div>
 
-      {/* XP Card - Large Metrics */}
-      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F3FF 100%)', borderColor: 'rgba(88, 86, 214, 0.15)' }}>
+      {/* Large XP Progression Card */}
+      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF9FF 100%)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
           <div>
-            <div style={{ fontSize: '38px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{profile.totalXp} XP</div>
-            <p className="caption" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)', marginTop: 8 }}>
-              {xpNeeded} XP until Level {lv.level + 1}
+            <div style={{ fontSize: '36px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{profile.totalXp} XP</div>
+            <p className="caption" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)', marginTop: 6 }}>
+              {xpNeeded} XP until Lvl {lv.level + 1}
             </p>
           </div>
-          <span className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Level {lv.level} Progress</span>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-emerald)' }}>⚡ {avail}</div>
+            <p className="caption">Available Balance</p>
+          </div>
         </div>
         <div className="ios-progress-container">
           <div className="ios-progress-track">
@@ -210,11 +329,34 @@ function HomePage({ profile, tasks, goals, setPage, setProfile, toast }) {
           </div>
         </div>
       </div>
+
+      {/* Goal Journey Progress previews */}
+      {goals.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <h3 className="section-header" style={{ marginBottom: 12 }}>Active Campaigns Map</h3>
+          {goals.map(g => {
+            const prog = getGoalProgress(g.id);
+            return (
+              <div className="premium-card" key={g.id} style={{ padding: '16px 20px', cursor: 'pointer' }} onClick={() => setPage('goals')}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{g.name.toUpperCase()}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-indigo)' }}>{prog}%</span>
+                </div>
+                <div className="ios-progress-container">
+                  <div className="ios-progress-track" style={{ height: '6px' }}>
+                    <div className="ios-progress-fill" style={{ width: prog + '%' }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-/* ===== GOALS PAGE ===== */
+/* ===== GOALS & JOURNEY MAP PAGE ===== */
 function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   const [tab, setTab] = React.useState('list');
   const [name, setName] = React.useState('');
@@ -260,7 +402,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
       setTasks(allTasks);
     }
     setName(''); setFt(''); setMt(''); setWa('');
-    toast('Campaign initialized!');
+    toast('Odyssey campaign launched!');
     setTab('list');
   };
 
@@ -269,7 +411,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
     LS.set('irisquest_goals', ng); setGoals(ng);
     const nt = tasks.filter(t=>t.goalId!==id);
     LS.set('irisquest_tasks', nt); setTasks(nt);
-    toast('Goal deleted.');
+    toast('Goal and linked journeys deleted.');
   };
 
   // Helper: calculate progress percentage for a specific goal based on linked tasks
@@ -289,17 +431,17 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   return (
     <div>
       <div className="section-header">
-        <h1 className="large-title" style={{ margin: 0 }}>Goals</h1>
+        <h1 className="large-title" style={{ margin: 0 }}>Journeys</h1>
       </div>
 
       <div className="segmented-control">
-        <button className={'segmented-btn'+(tab==='list'?' active':'')} onClick={()=>setTab('list')}>Active Goals</button>
-        <button className={'segmented-btn'+(tab==='create'?' active':'')} onClick={()=>setTab('create')}>Create Goal</button>
+        <button className={'segmented-btn'+(tab==='list'?' active':'')} onClick={()=>setTab('list')}>Journey Maps</button>
+        <button className={'segmented-btn'+(tab==='create'?' active':'')} onClick={()=>setTab('create')}>Create Campaign</button>
       </div>
 
       {tab === 'list' ? (
         goals.length === 0 ? (
-          <div className="empty-state"><div className="empty-state-icon">🎯</div><p>No active goals. Add one above.</p></div>
+          <div className="empty-state"><div className="empty-state-icon">🧭</div><p>No active journey maps. Initialize a campaign.</p></div>
         ) : (
           goals.map(g => {
             const prog = getGoalProgress(g.id);
@@ -307,42 +449,92 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                                g.category === 'Health' ? 'ios-badge-green' :
                                g.category === 'Finance' ? 'ios-badge-orange' :
                                g.category === 'Creative' ? 'ios-badge-purple' : 'ios-badge-pink';
+            
+            // Journey stages automatically generated based on goal details and duration
+            const milestones = [
+              { label: 'Start Campaign', done: true },
+              { label: g.monthlyTarget || 'Midpoint Target', done: prog >= 33 },
+              { label: 'Scaling Stage', done: prog >= 66 },
+              { label: g.finalTarget || 'Destination Reach', done: prog >= 100 }
+            ];
+
             return (
-              <div className="premium-card" key={g.id}>
+              <div className="premium-card" key={g.id} style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className={`ios-badge ${badgeClass}`}>{g.category}</span>
                   <span className="caption" style={{ fontWeight: 600 }}>{g.hoursPerWeek} hrs / week</span>
                 </div>
-                <h3 className="title" style={{ fontSize: '20px', marginBottom: 6 }}>{g.name.toUpperCase()}</h3>
-                <p className="caption" style={{ marginBottom: 16 }}>⏱️ {g.duration}</p>
                 
-                <div className="goal-progress-bar-container" style={{ marginBottom: 20 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                    <span>Progress</span>
-                    <span>{prog}%</span>
-                  </div>
-                  <div className="goal-progress-bar-track">
-                    <div className="goal-progress-bar-fill" style={{ width: prog+'%' }} />
+                <h3 className="title" style={{ fontSize: '20px', marginBottom: 4, letterSpacing: '-0.4px' }}>{g.name.toUpperCase()}</h3>
+                <p className="caption" style={{ marginBottom: 16 }}>Timeline Horizon: <b>{g.duration}</b></p>
+                
+                {/* SVG Visual Journey Map Path - calm adventure aesthetic */}
+                <div style={{ margin: '20px 0', padding: '10px 0', position: 'relative' }}>
+                  <svg width="100%" height="80" style={{ overflow: 'visible' }}>
+                    {/* Background Connection Path Line */}
+                    <line x1="10%" y1="40" x2="90%" y2="40" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
+                    
+                    {/* Active Completed Progress Line */}
+                    <line x1="10%" y1="40" x2={`${10 + (prog * 0.8)}%`} y2="40" stroke="var(--accent-indigo)" strokeWidth="4" />
+                    
+                    {/* Milestones Nodes */}
+                    {milestones.map((milestone, idx) => {
+                      const cx = 10 + (idx * 26.66);
+                      const isCompleted = milestone.done;
+                      return (
+                        <g key={idx}>
+                          <circle 
+                            cx={`${cx}%`} 
+                            cy="40" 
+                            r={isCompleted ? '10' : '8'} 
+                            fill={isCompleted ? 'var(--accent-indigo)' : '#FFFFFF'} 
+                            stroke={isCompleted ? 'var(--accent-indigo)' : 'var(--border-system)'} 
+                            strokeWidth="2" 
+                          />
+                          {isCompleted && (
+                            <circle cx={`${cx}%`} cy="40" r="5" fill="#FFFFFF" />
+                          )}
+                          <text 
+                            x={`${cx}%`} 
+                            y="70" 
+                            textAnchor="middle" 
+                            fontSize="9" 
+                            fontWeight="700" 
+                            fill={isCompleted ? 'var(--text-primary)' : 'var(--text-secondary)'}
+                            style={{ maxWidth: '60px' }}
+                          >
+                            {idx === 0 ? 'Start' : idx === 3 ? 'Dest' : `M${idx}`}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+
+                <div className="goal-progress-bar-container" style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyBetween: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                    <span>Journey Complete</span>
+                    <span style={{ float: 'right' }}>{prog}%</span>
                   </div>
                 </div>
 
-                <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-system)', marginBottom: 16 }}>
-                  <p className="caption" style={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent-purple)' }}>Next Action</p>
-                  <p className="body-text" style={{ fontWeight: 500, fontSize: '14px', marginTop: 2 }}>{getNextAction(g.id)}</p>
+                <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-system)', marginBottom: 16 }}>
+                  <p className="caption" style={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent-indigo)' }}>Active Objective</p>
+                  <p className="body-text" style={{ fontWeight: 600, fontSize: '14px', marginTop: 2 }}>{getNextAction(g.id)}</p>
                 </div>
 
-                <button className="btn-danger-text" onClick={()=>deleteGoal(g.id)}>🗑️ Delete Goal</button>
+                <button className="btn-danger-text" onClick={()=>deleteGoal(g.id)}>🗑️ Delete Campaign</button>
               </div>
             );
           })
         )
       ) : (
         <div className="premium-card">
-          <h3 className="section-header" style={{ marginBottom: 16 }}>Create New Goal Campaign</h3>
+          <h3 className="section-header" style={{ marginBottom: 16 }}>Create Transformation Campaign</h3>
           <form onSubmit={addGoal}>
             <div className="form-group">
               <label className="form-label">Goal Name</label>
-              <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Launch Portfolio App" required />
+              <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Master Design System Architecture" required />
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>
@@ -351,7 +543,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Duration</label>
+              <label className="form-label">Duration Horizon</label>
               <select className="form-select" value={dur} onChange={e=>setDur(e.target.value)}>
                 <option>30 Days</option><option>60 Days</option><option>90 Days</option><option>180 Days</option><option>1 Year</option>
               </select>
@@ -361,7 +553,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
               <input className="form-input" type="number" min={1} max={168} value={hrs} onChange={e=>setHrs(+e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Final Target (Destination)</label>
+              <label className="form-label">Final Target Milestone</label>
               <input className="form-input" value={ft} onChange={e=>setFt(e.target.value)} placeholder="e.g. Live portfolio link with 3 case studies" required />
             </div>
             <div className="form-group">
@@ -369,10 +561,10 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
               <input className="form-input" value={mt} onChange={e=>setMt(e.target.value)} placeholder="e.g. Design assets complete" />
             </div>
             <div className="form-group">
-              <label className="form-label">Weekly Actions (1 per line to seed weekly quests)</label>
-              <textarea className="form-textarea" value={wa} onChange={e=>setWa(e.target.value)} placeholder="e.g. Code 15 hours&#10;Write 1 case study draft" />
+              <label className="form-label">Weekly Actions (1 per line to seed quests)</label>
+              <textarea className="form-textarea" value={wa} onChange={e=>setWa(e.target.value)} placeholder="e.g. Complete 2 layouts&#10;Write 1 case study writeup" />
             </div>
-            <button className="btn-primary" type="submit">🎯 Create Goal Campaign</button>
+            <button className="btn-primary" type="submit">🎯 Initialize Journey Map</button>
           </form>
         </div>
       )}
@@ -380,7 +572,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   );
 }
 
-/* ===== QUESTS PAGE ===== */
+/* ===== QUESTS BOARD PAGE ===== */
 function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
   const [tab, setTab] = React.useState('active');
   const [title, setTitle] = React.useState('');
@@ -413,7 +605,7 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
     const updated = tasks.filter(t => t.id !== id);
     LS.set('irisquest_tasks', updated);
     setTasks(updated);
-    toast('Quest removed.');
+    toast('Quest deleted.');
   };
 
   const addTask = (e) => {
@@ -456,14 +648,16 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="empty-state"><div className="empty-state-icon">{tab==='archive'?'📦':'⚔️'}</div><p>No quests here.</p></div>
+        <div className="empty-state"><div className="empty-state-icon">{tab==='archive'?'📦':'⚔️'}</div><p>All objectives complete.</p></div>
       ) : (
         filtered.map(t => (
           <div key={t.id} className={'quest-item' + (t.isCompleted?' completed':'')}>
             <div className={'quest-checkbox'+(t.isCompleted?' checked':'')} onClick={()=>toggleTask(t.id)}>
-              <svg className="quest-checkbox-icon" viewBox="0 0 12 12">
-                <path d="M2.5 6L5 8.5L9.5 3.5" />
-              </svg>
+              {t.isCompleted && (
+                <svg className="quest-checkbox-icon" viewBox="0 0 12 12">
+                  <path d="M2.5 6L5 8.5L9.5 3.5" />
+                </svg>
+              )}
             </div>
             <div className="quest-info">
               <div className="quest-title">{t.title}</div>
@@ -473,34 +667,34 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
               </div>
             </div>
             <span className="quest-xp-badge">+{t.xpValue} XP</span>
-            <button className="btn-icon" style={{ width: 28, height: 28, borderRadius: '50%' }} onClick={()=>deleteTask(t.id)}>✕</button>
+            <button className="btn-icon" style={{ width: 28, height: 28, borderRadius: '50%', marginLeft: 10 }} onClick={()=>deleteTask(t.id)}>✕</button>
           </div>
         ))
       )}
 
-      {/* Quick Add Quest form */}
+      {/* Add custom quest form */}
       <div className="premium-card" style={{ marginTop: 24 }}>
-        <h3 className="section-header" style={{ marginBottom: 16 }}>➕ Quick Add Quest</h3>
+        <h3 className="section-header" style={{ marginBottom: 16 }}>➕ Initialize Quest</h3>
         <form onSubmit={addTask}>
           <div className="form-group">
             <label className="form-label">Quest Description</label>
-            <input className="form-input" value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Core layout styling" required />
+            <input className="form-input" value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Design details iteration" required />
           </div>
           <div className="form-group">
-            <label className="form-label">Difficulty</label>
+            <label className="form-label">Difficulty Tier</label>
             <select className="form-select" value={diff} onChange={e=>setDiff(e.target.value)}>
               <option>Small</option><option>Medium</option><option>Large</option>
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Quest Type</label>
+            <label className="form-label">Quest Timeline</label>
             <select className="form-select" value={ttype} onChange={e=>setTtype(e.target.value)}>
               <option value="daily">Daily</option><option value="weekly">Weekly</option>
             </select>
           </div>
           {goals.length > 0 && (
             <div className="form-group">
-              <label className="form-label">Goal Link</label>
+              <label className="form-label">Link Campaign</label>
               <select className="form-select" value={goalId} onChange={e=>setGoalId(e.target.value)}>
                 <option value="">None</option>
                 {goals.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}
@@ -514,7 +708,7 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
   );
 }
 
-/* ===== REWARDS PAGE ===== */
+/* ===== REWARDS STORE PAGE ===== */
 function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
   const [tab, setTab] = React.useState('shop');
   const [filter, setFilter] = React.useState('All');
@@ -532,7 +726,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
     LS.set('irisquest_profile', np); setProfile(np);
     const nr = rewards.map(rw => rw.id===id ? { ...rw, isClaimed: true, claimedAt: new Date().toISOString() } : rw);
     LS.set('irisquest_rewards', nr); setRewards(nr);
-    toast('🎁 Reward Unlocked!');
+    toast('🎁 Perk claimed successfully!');
   };
 
   const addReward = (e) => {
@@ -541,7 +735,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
     const r = { id: genId(), name: rn.trim(), category: rc, xpCost: rxp, expiryDate: rexp.trim(), isClaimed: false, claimedAt: null };
     const nr = [r, ...rewards];
     LS.set('irisquest_rewards', nr); setRewards(nr); setRn(''); setRexp('');
-    toast('Reward added to list.'); setTab('shop');
+    toast('Reward cataloged.'); setTab('shop');
   };
 
   const deleteReward = (id) => {
@@ -560,10 +754,10 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
   return (
     <div>
       <div className="section-header">
-        <h1 className="large-title" style={{ margin: 0 }}>Rewards</h1>
+        <h1 className="large-title" style={{ margin: 0 }}>Perks</h1>
       </div>
 
-      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #FFFFFF, #FFF9F0)', borderColor: 'rgba(255, 149, 0, 0.15)' }}>
+      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #FFFFFF, #FAF9FF)', borderColor: 'rgba(88, 86, 214, 0.15)' }}>
         <div>
           <span className="ios-badge ios-badge-orange">Perk Vault</span>
           <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Claim Perks</h2>
@@ -575,8 +769,8 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
       </div>
 
       <div className="segmented-control">
-        <button className={'segmented-btn'+(tab==='shop'?' active':'')} onClick={()=>setTab('shop')}>Storefront</button>
-        <button className={'segmented-btn'+(tab==='add'?' active':'')} onClick={()=>setTab('add')}>Add Custom Reward</button>
+        <button className={'segmented-btn'+(tab==='shop'?' active':'')} onClick={()=>setTab('shop')}>Perk Catalog</button>
+        <button className={'segmented-btn'+(tab==='add'?' active':'')} onClick={()=>setTab('add')}>Catalog Custom Perk</button>
       </div>
 
       {tab === 'shop' ? (
@@ -604,10 +798,10 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
           </div>
 
           {rewards.filter(tierFilter).length === 0 ? (
-            <div className="empty-state"><div className="empty-state-icon">🎁</div><p>No perks available.</p></div>
+            <div className="empty-state"><div className="empty-state-icon">🎁</div><p>No perks in this catalog tier.</p></div>
           ) : (
             rewards.filter(tierFilter).map(r => (
-              <div className={'premium-card' + (r.isClaimed?' claimed-reward':'')} key={r.id} style={{ opacity: r.isClaimed ? 0.6 : 1 }}>
+              <div className="premium-card" key={r.id} style={{ opacity: r.isClaimed ? 0.6 : 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className="ios-badge ios-badge-pink">{r.category}</span>
                   <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {r.xpCost} XP</span>
@@ -635,11 +829,11 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
         </>
       ) : (
         <div className="premium-card">
-          <h3 className="section-header" style={{ marginBottom: 16 }}>Add Custom Perk</h3>
+          <h3 className="section-header" style={{ marginBottom: 16 }}>Catalog Custom Perk</h3>
           <form onSubmit={addReward}>
             <div className="form-group">
               <label className="form-label">Reward Name</label>
-              <input className="form-input" value={rn} onChange={e=>setRn(e.target.value)} placeholder="e.g. Afternoon film pass" required />
+              <input className="form-input" value={rn} onChange={e=>setRn(e.target.value)} placeholder="e.g. 15 min rest period" required />
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>
@@ -652,10 +846,10 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
               <input className="form-input" type="number" min={10} value={rxp} onChange={e=>setRxp(+e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Expiry Date / Restriction</label>
-              <input className="form-input" value={rexp} onChange={e=>setRexp(e.target.value)} placeholder="e.g. This Saturday" />
+              <label className="form-label">Expiry Restriction</label>
+              <input className="form-input" value={rexp} onChange={e=>setRexp(e.target.value)} placeholder="e.g. Wednesday afternoons only" />
             </div>
-            <button className="btn-primary" style={{ background: 'var(--accent-orange)', boxShadow: 'none' }} type="submit">🎁 Add Reward to Vault</button>
+            <button className="btn-primary" style={{ background: 'var(--accent-orange)', boxShadow: 'none' }} type="submit">🎁 Catalog Perk</button>
           </form>
         </div>
       )}
@@ -663,10 +857,14 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
   );
 }
 
-/* ===== PROFILE & WEEKLY REVIEW PAGE ===== */
+/* ===== PROFILE & TIMELINE PAGE ===== */
 function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
+  
+  const [hair, setHair] = React.useState(profile.hair || 'Cropped');
+  const [accessory, setAccessory] = React.useState(profile.accessory || 'Clean');
+
   const [showReview, setShowReview] = React.useState(false);
 
   // Weekly review form fields
@@ -682,9 +880,9 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
   const updateIdentity = (e) => {
     e.preventDefault();
-    const np = { ...profile, currentIdentity: ci, futureIdentity: fi };
+    const np = { ...profile, currentIdentity: ci, futureIdentity: fi, hair, accessory };
     LS.set('irisquest_profile', np); setProfile(np);
-    toast('Identity mapping updated.');
+    toast('Profile and Identity customization updated.');
   };
 
   const softReset = () => {
@@ -706,15 +904,6 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
     }
   };
 
-  const deleteReview = (id) => {
-    if (confirm('Are you sure you want to delete this weekly report log?')) {
-      const nr = reviews.filter(r => r.id !== id);
-      LS.set('irisquest_reviews', nr);
-      setReviews(nr);
-      toast('Weekly review log removed.');
-    }
-  };
-
   const submitReview = (e) => {
     e.preventDefault();
     const r = { id: genId(), weekStart: weekStr, completed: comp || autoSummary, failed: fail, nextMission: next, createdAt: new Date().toISOString() };
@@ -727,35 +916,108 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
     setShowReview(false);
   };
 
+  const deleteReview = (id) => {
+    if (confirm('Are you sure you want to delete this weekly report log?')) {
+      const nr = reviews.filter(r => r.id !== id);
+      LS.set('irisquest_reviews', nr);
+      setReviews(nr);
+      toast('Weekly review log removed.');
+    }
+  };
+
+  // Dynamically assemble chronological timeline entries of all accomplishments
+  const timelineEntries = React.useMemo(() => {
+    const list = [];
+    
+    // Add completed tasks
+    tasks.filter(t => t.isCompleted && t.completedAt).forEach(t => {
+      list.push({
+        id: t.id,
+        date: new Date(t.completedAt),
+        title: `Objective Cleared: ${t.title}`,
+        desc: `Earned +${t.xpValue} XP`,
+        icon: '✅'
+      });
+    });
+
+    // Add claimed rewards
+    rewards.filter(r => r.isClaimed && r.claimedAt).forEach(r => {
+      list.push({
+        id: r.id,
+        date: new Date(r.claimedAt),
+        title: `Perk Unlocked: ${r.name}`,
+        desc: `Spent ${r.xpCost} XP`,
+        icon: '🎁'
+      });
+    });
+
+    // Add completed reviews
+    reviews.forEach(r => {
+      if (r.createdAt) {
+        list.push({
+          id: r.id,
+          date: new Date(r.createdAt),
+          title: `Weekly Reflection: ${r.weekStart}`,
+          desc: `Completed review milestone. Earned +50 XP bonus.`,
+          icon: '📝'
+        });
+      }
+    });
+
+    // Sort descending by date
+    return list.sort((a, b) => b.date - a.date);
+  }, [tasks, rewards, reviews]);
+
+  const lv = calcLevel(profile.totalXp);
+
   return (
     <div>
       <div className="section-header">
-        <h1 className="large-title" style={{ margin: 0 }}>Profile</h1>
+        <h1 className="large-title" style={{ margin: 0 }}>System Settings</h1>
       </div>
 
       {!showReview ? (
         <>
-          {/* Identity Overview */}
+          {/* Identity Customization Profile Display */}
           <div className="premium-card" style={{ textAlign: 'center' }}>
-            <div className="memoji-avatar" style={{ margin: '0 auto 16px', width: 90, height: 90, fontSize: '3rem' }}>{profile.avatar}</div>
+            <div className="avatar-wrapper" style={{ margin: '0 auto 16px' }}>
+              <div className={`avatar-ring ${lv.rankClass}`}>
+                <div className="avatar-main">{profile.avatar}</div>
+              </div>
+            </div>
             <h2 className="title" style={{ fontSize: '22px' }}>{profile.name}</h2>
-            <p className="caption" style={{ marginTop: 4 }}>{profile.currentIdentity} ➔ <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>{profile.futureIdentity}</span></p>
+            <p className="caption" style={{ marginTop: 4 }}>{profile.currentIdentity} ➔ <span style={{ color: 'var(--accent-indigo)', fontWeight: 600 }}>{profile.futureIdentity}</span></p>
             <div style={{ marginTop: 12 }}>
-              <span className="ios-badge ios-badge-purple" style={{ fontSize: '13px' }}>Total XP Earned: {profile.totalXp}</span>
+              <span className="ios-badge ios-badge-purple" style={{ fontSize: '13px' }}>Lvl {lv.level} · {lv.title}</span>
             </div>
           </div>
 
-          {/* Weekly Review Prompt Box */}
+          {/* Weekly Review Prompts */}
           <div className="premium-card" style={{ background: 'rgba(88,86,214,0.04)', borderColor: 'rgba(88,86,214,0.15)' }}>
-            <h3 className="section-header" style={{ marginBottom: 6 }}>Weekly Reflection Campaign</h3>
-            <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Reflect on weekly highlights, bottlenecks and log your strategy. Grants +50 XP bonus.</p>
+            <h3 className="section-header" style={{ marginBottom: 6 }}>Weekly Reflection Log</h3>
+            <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review milestones, assess obstacles and plan next week's campaign. Grants +50 XP.</p>
             <button className="btn-primary" style={{ marginTop: 16, height: '46px' }} onClick={()=>setShowReview(true)}>Write Weekly Review</button>
           </div>
 
-          {/* Edit Identity */}
+          {/* Edit Customization options */}
           <div className="premium-card">
-            <h3 className="section-header" style={{ marginBottom: 16 }}>Edit Identity Mapping</h3>
+            <h3 className="section-header" style={{ marginBottom: 16 }}>Customize Avatar & Identity</h3>
             <form onSubmit={updateIdentity}>
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">Hair Style</label>
+                  <select className="form-select" value={hair} onChange={e=>setHair(e.target.value)}>
+                    <option>Cropped</option><option>Swept</option><option>Waves</option><option>Topknot</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Accessories</label>
+                  <select className="form-select" value={accessory} onChange={e=>setAccessory(e.target.value)}>
+                    <option>Clean</option><option>Frames</option><option>Wire-rim</option><option>Headband</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Current Identity</label>
                 <input className="form-input" value={ci} onChange={e=>setCi(e.target.value)} required />
@@ -764,14 +1026,40 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                 <label className="form-label">Future Identity Target</label>
                 <input className="form-input" value={fi} onChange={e=>setFi(e.target.value)} required />
               </div>
-              <button className="btn-secondary" type="submit">Update Identity</button>
+              <button className="btn-secondary" type="submit">Update Character Profile</button>
             </form>
+          </div>
+
+          {/* Life Timeline log */}
+          <div className="premium-card">
+            <h3 className="section-header" style={{ marginBottom: 12 }}>Life Timeline Log</h3>
+            {timelineEntries.length === 0 ? (
+              <p className="caption">Accomplishments, rewards, and milestones cleared will appear here chronologically.</p>
+            ) : (
+              <div className="timeline-container">
+                <div className="timeline-line" />
+                {timelineEntries.slice(0, 10).map((entry, idx) => (
+                  <div className="timeline-item" key={entry.id + '-' + idx}>
+                    <div className="timeline-dot" />
+                    <div style={{ marginLeft: 10 }}>
+                      <span className="caption" style={{ fontSize: '11px', fontWeight: 600 }}>
+                        {entry.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>
+                        {entry.icon} {entry.title}
+                      </h4>
+                      <p className="caption" style={{ marginTop: 2 }}>{entry.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Past reviews */}
           {reviews.length > 0 && (
             <div style={{ marginTop: 24 }}>
-              <h3 className="section-header" style={{ marginBottom: 12 }}>Review Log</h3>
+              <h3 className="section-header" style={{ marginBottom: 12 }}>Reflection Logs</h3>
               {reviews.map(r => (
                 <div className="premium-card" key={r.id}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -779,9 +1067,9 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                     <span className="caption">{r.createdAt?.slice(0,10)}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-green)' }}>Completed</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.completed}</p></div>
+                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-emerald)' }}>Accomplished</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.completed}</p></div>
                     <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-orange)' }}>Obstacles</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.failed || 'None logged.'}</p></div>
-                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-purple)' }}>Next Mission</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.nextMission || '—'}</p></div>
+                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-indigo)' }}>Strategy</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.nextMission || '—'}</p></div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14, borderTop: '1px solid var(--border-system)', paddingTop: 10 }}>
                     <button className="btn-danger-text" onClick={() => deleteReview(r.id)}>🗑️ Delete Review</button>
@@ -791,11 +1079,11 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             </div>
           )}
 
-          {/* Reset Control Panel */}
+          {/* Reset controls */}
           <div className="premium-card" style={{ marginTop: 24, border: '1.5px solid rgba(255, 45, 85, 0.15)' }}>
-            <h3 className="section-header" style={{ color: 'var(--accent-pink)', marginBottom: 16 }}>⚠️ System Maintenance</h3>
+            <h3 className="section-header" style={{ color: 'var(--accent-pink)', marginBottom: 16 }}>⚠️ System Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <button className="btn-secondary" style={{ color: 'var(--text-primary)' }} onClick={softReset}>🔄 Soft Reset (XP & tasks)</button>
+              <button className="btn-secondary" style={{ color: 'var(--text-primary)' }} onClick={softReset}>🔄 Soft Reset (XP & quests)</button>
               <button className="btn-primary" style={{ background: 'var(--accent-pink)', boxShadow: 'none' }} onClick={fullReset}>🚨 Full System Format</button>
             </div>
           </div>
@@ -813,13 +1101,13 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             </div>
             <div className="form-group">
               <label className="form-label">What failed or caused friction?</label>
-              <textarea className="form-textarea" value={fail} onChange={e=>setFail(e.target.value)} placeholder="e.g. Distracted, scope creep" required />
+              <textarea className="form-textarea" value={fail} onChange={e=>setFail(e.target.value)} placeholder="e.g. Time management, technical blockages" required />
             </div>
             <div className="form-group">
               <label className="form-label">What is next week's mission?</label>
-              <textarea className="form-textarea" value={next} onChange={e=>setNext(e.target.value)} placeholder="e.g. Launch design system case study" required />
+              <textarea className="form-textarea" value={next} onChange={e=>setNext(e.target.value)} placeholder="e.g. Draft Odyssey visual map layouts" required />
             </div>
-            <button className="btn-primary" type="submit">📝 Finalize & Earn +50 XP</button>
+            <button className="btn-primary" type="submit">📝 Log Reflection & Earn +50 XP</button>
           </form>
         </div>
       )}
@@ -827,7 +1115,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
   );
 }
 
-/* ===== MAIN APP ===== */
+/* ===== MAIN APP NAVIGATION ===== */
 function App() {
   const [profile, setProfile] = React.useState(LS.get('irisquest_profile'));
   const [goals, setGoals] = React.useState(LS.get('irisquest_goals') || []);
@@ -845,14 +1133,14 @@ function App() {
     <div className="app-container">
       {toastMsg && <Toast message={toastMsg} onClose={()=>setToastMsg(null)} />}
 
-      {/* Pages render container */}
-      {page === 'home' && <HomePage profile={profile} tasks={tasks} goals={goals} setPage={setPage} setProfile={setProfile} toast={showToast} />}
+      {/* Dynamic Subpages */}
+      {page === 'home' && <HomePage profile={profile} tasks={tasks} goals={goals} setPage={setPage} />}
       {page === 'goals' && <GoalsPage goals={goals} setGoals={setGoals} tasks={tasks} setTasks={setTasks} toast={showToast} />}
       {page === 'quests' && <QuestsPage profile={profile} tasks={tasks} goals={goals} setTasks={setTasks} setProfile={setProfile} toast={showToast} />}
       {page === 'rewards' && <RewardsPage profile={profile} setProfile={setProfile} rewards={rewards} setRewards={setRewards} toast={showToast} />}
       {page === 'profile' && <ProfilePage profile={profile} setProfile={setProfile} tasks={tasks} setTasks={setTasks} rewards={rewards} setRewards={setRewards} reviews={reviews} setReviews={setReviews} toast={showToast} />}
 
-      {/* iOS Floating Bottom Navigation */}
+      {/* Floating Bottom Nav */}
       <nav className="bottom-nav">
         <button className={'nav-tab-btn'+(page==='home'?' active':'')} onClick={()=>setPage('home')}>
           <svg className="nav-tab-icon" viewBox="0 0 24 24">
@@ -864,10 +1152,10 @@ function App() {
         <button className={'nav-tab-btn'+(page==='goals'?' active':'')} onClick={()=>setPage('goals')}>
           <svg className="nav-tab-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="2" />
+            <path d="M16.2 7.8l-2 2M7.8 16.2l2-2" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
           </svg>
-          <span className="nav-tab-label">Goals</span>
+          <span className="nav-tab-label">Journeys</span>
         </button>
         <button className={'nav-tab-btn'+(page==='quests'?' active':'')} onClick={()=>setPage('quests')}>
           <svg className="nav-tab-icon" viewBox="0 0 24 24">
@@ -883,14 +1171,14 @@ function App() {
             <path d="M12 8H7.5a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8z" />
             <path d="M12 8h4.5a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8z" />
           </svg>
-          <span className="nav-tab-label">Rewards</span>
+          <span className="nav-tab-label">Perks</span>
         </button>
         <button className={'nav-tab-btn'+(page==='profile'?' active':'')} onClick={()=>setPage('profile')}>
           <svg className="nav-tab-icon" viewBox="0 0 24 24">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-          <span className="nav-tab-label">Profile</span>
+          <span className="nav-tab-label">Settings</span>
         </button>
       </nav>
     </div>
