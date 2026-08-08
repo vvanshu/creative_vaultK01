@@ -1,0 +1,748 @@
+:root {
+  /* Soft pastel palette */
+  --bg: #F0F2F5;
+  --card: #FFFFFF;
+  --primary: #6C5CE7;
+  --primary-light: #A29BFE;
+  --accent-green: #00B894;
+  --accent-orange: #FDCB6E;
+  --accent-rose: #FD79A8;
+  --accent-blue: #74B9FF;
+  
+  /* Text colors */
+  --text-primary: #2D3436;
+  --text-secondary: #636E72;
+  --text-muted: #B2BEC3;
+  
+  /* Structural colors */
+  --border: #DFE6E9;
+  --shadow: rgba(0, 0, 0, 0.06);
+
+  /* Font */
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+}
+
+/* 2. Reset & Base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* 3. Layout */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.app-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: white;
+  border-radius: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+
+.app-header .logo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header .logo-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--accent-blue));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.app-header .logo-text h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.app-header .logo-text p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* 4. Navigation */
+.nav-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  background-color: white;
+  border-radius: 16px;
+  padding: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px var(--shadow);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.nav-btn:hover {
+  background-color: #F0F2F5;
+}
+
+.nav-btn.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+.nav-btn .nav-icon {
+  font-size: 1.3rem;
+}
+
+/* 5. Cards */
+.card {
+  background-color: white;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px var(--shadow);
+  margin-bottom: 20px;
+  transition: transform 0.15s;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* 6. Badge/Pill */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.badge-purple {
+  background-color: rgba(108, 92, 231, 0.12);
+  color: #6C5CE7;
+  border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.badge-green {
+  background-color: rgba(0, 184, 148, 0.12);
+  color: #00B894;
+  border: 1px solid rgba(0, 184, 148, 0.2);
+}
+
+.badge-orange {
+  background-color: rgba(253, 203, 110, 0.2);
+  color: #E17055;
+  border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
+.badge-blue {
+  background-color: rgba(116, 185, 255, 0.15);
+  color: #0984E3;
+  border: 1px solid rgba(116, 185, 255, 0.25);
+}
+
+.badge-rose {
+  background-color: rgba(253, 121, 168, 0.12);
+  color: #E84393;
+  border: 1px solid rgba(253, 121, 168, 0.2);
+}
+
+/* 7. Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background-color: #EDF2F7;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--primary), var(--accent-green));
+  transition: width 0.4s ease;
+}
+
+/* 8. Profile Banner */
+.profile-banner {
+  background-color: white;
+  border-radius: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px var(--shadow);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent-blue));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3);
+  flex-shrink: 0;
+}
+
+.profile-info {
+  flex-grow: 1;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background-color: #F8F9FA;
+  border-radius: 12px;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 90px;
+  border: 1px solid var(--border);
+}
+
+.stat-box .stat-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.stat-box .stat-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 9. Task Item */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background-color: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.task-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 12px rgba(108, 92, 231, 0.1);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+  background-color: #F8F9FA;
+}
+
+.task-item.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid #1E293B;
+  background-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+  color: transparent;
+}
+
+.task-check:hover {
+  border-color: var(--primary);
+}
+
+.task-check.checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.task-info {
+  flex-grow: 1;
+}
+
+.task-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.task-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.task-xp {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.task-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.task-delete:hover {
+  background-color: rgba(253, 121, 168, 0.15);
+  color: var(--accent-rose);
+}
+
+/* 10. Reward Card */
+.reward-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reward-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reward-cost {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.reward-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.reward-expiry {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.reward-claimed {
+  opacity: 0.55;
+}
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* 11. Form Styles */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: white;
+  outline: none;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* 12. Buttons */
+.btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #5A4BD1;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: rgba(253, 121, 168, 0.15);
+  color: #E84393;
+}
+
+.btn-danger:hover {
+  background-color: rgba(253, 121, 168, 0.25);
+}
+
+.btn-secondary {
+  background-color: #F0F2F5;
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background-color: #E2E8F0;
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 13. Journey Node */
+.journey-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.journey-node {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background-color: white;
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  position: relative;
+}
+
+.journey-node.completed {
+  border-color: var(--accent-green);
+  background-color: rgba(0, 184, 148, 0.03);
+}
+
+.journey-node.active {
+  border-color: var(--primary);
+  background-color: rgba(108, 92, 231, 0.03);
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.12);
+}
+
+.journey-connector {
+  width: 2px;
+  height: 28px;
+  background-color: var(--border);
+  margin-left: 38px;
+}
+
+.journey-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.journey-icon.completed {
+  background-color: rgba(0, 184, 148, 0.15);
+}
+
+.journey-icon.active {
+  background-color: rgba(108, 92, 231, 0.15);
+}
+
+.journey-icon.locked {
+  background-color: #F0F2F5;
+}
+
+/* 14. Review Card */
+.review-entry {
+  background-color: white;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+
+.review-section h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.review-section p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  white-space: pre-line;
+}
+
+.review-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* 15. Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background-color: #F0F2F5;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  background-color: transparent;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.tab-btn.active {
+  background-color: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 16. Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state .empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* 17. Toast notification */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: white;
+  border-radius: 14px;
+  padding: 14px 22px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 18. Section Header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* 19. Responsive */
+@media (max-width: 768px) {
+  .profile-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .profile-stats {
+    justify-content: center;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .rewards-grid {
+    grid-template-columns: 1fr;
+  }
+  .nav-bar {
+    padding: 6px;
+    gap: 4px;
+  }
+  .nav-btn {
+    min-width: 64px;
+    padding: 8px 10px;
+    font-size: 0.7rem;
+  }
+  .app-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
