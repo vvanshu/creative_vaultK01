@@ -117,8 +117,6 @@ def init_db():
 
 # Helper Math for RPG Level
 def calculate_level_info(total_xp):
-    # Level formula: Level = floor(total_xp / 100) + 1
-    # Each level requires 100 XP
     level = math.floor(total_xp / 100) + 1
     current_level_xp = total_xp % 100
     next_level_xp = 100
@@ -183,12 +181,10 @@ def update_xp(xp_change, action_type, description=""):
         conn.close()
         return False
 
-    total_xp = row["total_xp"]
+    total_xp = max(0, row["total_xp"] + (xp_change if action_type == "earn" else 0))
     spent_xp = row["spent_xp"]
 
-    if action_type == "earn":
-        total_xp += xp_change
-    elif action_type == "spend":
+    if action_type == "spend":
         available_xp = total_xp - spent_xp
         if available_xp < xp_change:
             conn.close()
@@ -201,6 +197,29 @@ def update_xp(xp_change, action_type, description=""):
     conn.commit()
     conn.close()
     return True
+
+def reset_progress(full_reset=False):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if full_reset:
+        cursor.execute("DELETE FROM profile")
+        cursor.execute("DELETE FROM goals")
+        cursor.execute("DELETE FROM journey_stages")
+        cursor.execute("DELETE FROM tasks")
+        cursor.execute("DELETE FROM rewards")
+        cursor.execute("DELETE FROM weekly_reviews")
+        cursor.execute("DELETE FROM xp_logs")
+    else:
+        # Soft reset: reset XP to 0 and uncheck all tasks
+        cursor.execute("UPDATE profile SET total_xp = 0, spent_xp = 0")
+        cursor.execute("UPDATE tasks SET is_completed = 0, completed_at = NULL")
+        cursor.execute("UPDATE rewards SET is_claimed = 0, claimed_at = NULL")
+        cursor.execute("UPDATE journey_stages SET is_completed = 0")
+        cursor.execute("DELETE FROM xp_logs")
+
+    conn.commit()
+    conn.close()
 
 # Goals CRUD
 def get_goals():
@@ -220,7 +239,6 @@ def create_goal(name, duration, final_target, monthly_target, weekly_actions, da
     """, (name, duration, final_target, monthly_target, weekly_actions, daily_tasks, hours_allocated, category))
     goal_id = cursor.lastrowid
 
-    # Create default Journey Stages based on profile identity & goal targets
     profile = get_profile()
     start_ident = profile["current_identity"] if profile else "Novice"
     end_ident = profile["future_identity"] if profile else "Master"
@@ -238,7 +256,6 @@ def create_goal(name, duration, final_target, monthly_target, weekly_actions, da
         VALUES (?, ?, ?, ?, ?, ?)
         """, (goal_id, stage_order, title, desc, req_xp, is_comp))
 
-    # Generate initial daily/weekly tasks automatically if provided
     if daily_tasks:
         for t in daily_tasks.split("\n"):
             t_clean = t.strip("- *").strip()
@@ -384,7 +401,6 @@ def claim_reward(reward_id):
         conn.close()
         return False, "Reward already claimed or not found."
 
-    # Try spending XP
     success = update_xp(reward["xp_cost"], "spend", f"Claimed Reward: {reward['name']}")
     if not success:
         conn.close()
@@ -433,7 +449,6 @@ def seed_default_data_if_empty():
             future_identity="Master Systems Architect",
             goal_duration="90 Days"
         )
-        # Add seed goal
         goal_id = create_goal(
             name="Build & Ship LifeOS MVP",
             duration="90 Days",
@@ -444,7 +459,6 @@ def seed_default_data_if_empty():
             hours_allocated=15.0,
             category="Career & Coding"
         )
-        # Add default rewards
         create_reward("15-min Espresso & Music Break", "Small", 50, "Anytime")
         create_reward("Watch an Episode of Favorite Show", "Small", 100, "Weekend")
         create_reward("Gourmet Dinner / Cheat Meal", "Medium", 250, "This Sunday")
