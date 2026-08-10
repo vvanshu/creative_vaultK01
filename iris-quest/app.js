@@ -1564,7 +1564,14 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
 /* ===== MAIN APP NAVIGATION ===== */
 function App() {
-  const [profile, setProfile] = React.useState(LS.get('irisquest_profile'));
+  const [profile, setProfile] = React.useState(() => {
+    const p = LS.get('irisquest_profile');
+    if (p && !p.avatarType) {
+      localStorage.removeItem('irisquest_profile');
+      return null;
+    }
+    return p;
+  });
   const [goals, setGoals] = React.useState(LS.get('irisquest_goals') || []);
   const [tasks, setTasks] = React.useState(LS.get('irisquest_tasks') || []);
   const [rewards, setRewards] = React.useState(LS.get('irisquest_rewards') || []);

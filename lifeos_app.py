@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 
-# Set page config for wide, clean, full-screen viewport
+# Set page config for wide, clean, full-screen viewport (v1.0.4)
 st.set_page_config(
     page_title="IRIS QUEST — RPG Productivity",
     page_icon="🛡️",
