@@ -22,7 +22,7 @@ function Toast({ message, onClose }) {
   return <div className="toast">{message}</div>;
 }
 
-/* ===== ONBOARDING (STEPS 1 - 6) ===== */
+/* ===== ONBOARDING (STEPS 1 - 6 SCREEN BY SCREEN) ===== */
 function Onboarding({ onComplete }) {
   const [step, setStep] = React.useState(1);
   
@@ -47,14 +47,36 @@ function Onboarding({ onComplete }) {
     'Independent Creator', 'Researcher', 'Entrepreneur', 'Expert'
   ];
 
-  // Step 3: Goals Setup
+  // Step 3: Goals Setup (Screen by Screen)
   const [tempGoals, setTempGoals] = React.useState([
-    { id: 'g1', name: 'Portfolio Journey', duration: '6 months', customDuration: '' }
+    { id: 'g1', name: '', duration: '6 months', customDuration: '' }
   ]);
+  const [goalIndex, setGoalIndex] = React.useState(0);
 
-  const addGoalRow = () => {
-    if (tempGoals.length >= 3) return;
-    setTempGoals([...tempGoals, { id: 'g' + (tempGoals.length + 1), name: '', duration: '6 months', customDuration: '' }]);
+  const handleGoalNext = (addAnother) => {
+    const currentGoalName = tempGoals[goalIndex].name.trim();
+    if (!currentGoalName) return;
+
+    if (addAnother && tempGoals.length < 3) {
+      const newId = 'g' + (tempGoals.length + 1);
+      const newGoals = [...tempGoals];
+      newGoals.push({ id: newId, name: '', duration: '6 months', customDuration: '' });
+      setTempGoals(newGoals);
+      setGoalIndex(goalIndex + 1);
+    } else {
+      // Proceed to milestones step
+      const defaultMilestones = {};
+      tempGoals.forEach(g => {
+        defaultMilestones[g.id] = {
+          monthlyTarget: 'Complete 1 project',
+          weeklyCommitment: '2 hours/week',
+          weeklyGoal: 'Design'
+        };
+      });
+      setMilestones(defaultMilestones);
+      setMilestoneIndex(0);
+      setStep(4);
+    }
   };
 
   const updateGoalField = (index, field, value) => {
@@ -63,25 +85,34 @@ function Onboarding({ onComplete }) {
     setTempGoals(updated);
   };
 
-  const removeGoalRow = (index) => {
-    setTempGoals(tempGoals.filter((_, i) => i !== index));
-  };
-
-  // Step 4: Milestones Setup
+  // Step 4: Milestones Setup (Screen by Screen)
   const [milestones, setMilestones] = React.useState({});
+  const [milestoneIndex, setMilestoneIndex] = React.useState(0);
   const milestoneChips = ['Research', 'Design', 'Prototype', 'Document'];
 
-  const initMilestones = () => {
-    const defaultMilestones = {};
-    tempGoals.forEach(g => {
-      defaultMilestones[g.id] = {
-        monthlyTarget: 'Complete 1 project',
-        weeklyCommitment: '2 hours/week',
-        weeklyGoal: 'Design'
-      };
-    });
-    setMilestones(defaultMilestones);
-    setStep(4);
+  const handleMilestoneNext = () => {
+    if (milestoneIndex < tempGoals.length - 1) {
+      setMilestoneIndex(milestoneIndex + 1);
+    } else {
+      // Proceed to quests step
+      const initialQuests = {};
+      const initialTitles = {};
+      const initialDiffs = {};
+      tempGoals.forEach(g => {
+        const weeklyAction = milestones[g.id]?.weeklyGoal || 'Research';
+        initialQuests[g.id] = [
+          { id: genId(), title: `${weeklyAction} competitors`, difficulty: 'Small' },
+          { id: genId(), title: `Define core ${weeklyAction.toLowerCase()} problem`, difficulty: 'Medium' }
+        ];
+        initialTitles[g.id] = '';
+        initialDiffs[g.id] = 'Medium';
+      });
+      setWeek1Quests(initialQuests);
+      setNewQuestTitle(initialTitles);
+      setNewQuestDiff(initialDiffs);
+      setQuestIndex(0);
+      setStep(5);
+    }
   };
 
   const updateMilestone = (goalId, field, value) => {
@@ -94,29 +125,18 @@ function Onboarding({ onComplete }) {
     });
   };
 
-  // Step 5: Quests Creation
+  // Step 5: Quests Creation (Screen by Screen)
   const [week1Quests, setWeek1Quests] = React.useState({});
   const [newQuestTitle, setNewQuestTitle] = React.useState({});
   const [newQuestDiff, setNewQuestDiff] = React.useState({});
+  const [questIndex, setQuestIndex] = React.useState(0);
 
-  const initQuestsStep = () => {
-    const initialQuests = {};
-    const initialTitles = {};
-    const initialDiffs = {};
-    tempGoals.forEach(g => {
-      // Seed some default week 1 tasks based on milestone choices or clean defaults
-      const weeklyAction = milestones[g.id]?.weeklyGoal || 'Research';
-      initialQuests[g.id] = [
-        { id: genId(), title: `${weeklyAction} competitors`, difficulty: 'Small' },
-        { id: genId(), title: `Define core ${weeklyAction.toLowerCase()} problem`, difficulty: 'Medium' }
-      ];
-      initialTitles[g.id] = '';
-      initialDiffs[g.id] = 'Medium';
-    });
-    setWeek1Quests(initialQuests);
-    setNewQuestTitle(initialTitles);
-    setNewQuestDiff(initialDiffs);
-    setStep(5);
+  const handleQuestNext = () => {
+    if (questIndex < tempGoals.length - 1) {
+      setQuestIndex(questIndex + 1);
+    } else {
+      setStep(6);
+    }
   };
 
   const addQuest = (goalId) => {
@@ -188,7 +208,6 @@ function Onboarding({ onComplete }) {
 
   // Compile final state to enter dashboard
   const finalizeOdyssey = () => {
-    // 1. Profile
     const profileData = {
       name: name.trim() || 'Alex',
       avatar: avatarEmoji,
@@ -200,14 +219,13 @@ function Onboarding({ onComplete }) {
       createdAt: new Date().toISOString()
     };
 
-    // 2. Goals
     const goalsData = tempGoals.map(tg => {
       const ms = milestones[tg.id] || {};
       return {
         id: tg.id,
         name: tg.name || 'My Campaign Journey',
         duration: tg.duration === 'Custom' ? (tg.customDuration || 'Custom') : tg.duration,
-        finalTarget: ms.monthlyTarget || 'Build Milestone App', // Seed final target
+        finalTarget: ms.monthlyTarget || 'Build Milestone App',
         monthlyTarget: ms.monthlyTarget || 'First checkpoint',
         weeklyActions: ms.weeklyGoal || 'Research & Design',
         hoursPerWeek: parseInt(ms.weeklyCommitment) || 5,
@@ -216,7 +234,6 @@ function Onboarding({ onComplete }) {
       };
     });
 
-    // 3. Tasks / Quests
     const tasksData = [];
     tempGoals.forEach(tg => {
       const qList = week1Quests[tg.id] || [];
@@ -235,7 +252,6 @@ function Onboarding({ onComplete }) {
       });
     });
 
-    // 4. Rewards
     const selectedPresetsData = rewardPresets
       .filter(rp => selectedRewardIds.includes(rp.id))
       .map(rp => ({
@@ -250,7 +266,6 @@ function Onboarding({ onComplete }) {
 
     const allRewards = [...selectedPresetsData, ...customRewards];
 
-    // Save to LocalStorage
     LS.set('irisquest_profile', profileData);
     LS.set('irisquest_goals', goalsData);
     LS.set('irisquest_tasks', tasksData);
@@ -327,7 +342,7 @@ function Onboarding({ onComplete }) {
               </div>
             </div>
 
-            <button className="btn-primary" type="submit" style={{ marginTop: 10 }}>Continue</button>
+            <button className="btn-primary" type="submit">Continue</button>
           </form>
         </div>
       )}
@@ -348,7 +363,7 @@ function Onboarding({ onComplete }) {
               { icon: '⚡', title: 'XP', desc: 'Progress you earn' },
               { icon: '🎁', title: 'REWARDS', desc: 'Experiences you unlock' },
               { icon: '🛡️', title: 'FUTURE SELF', desc: 'The person you become' }
-            ].map((node, idx) => (
+            ].map((node) => (
               <div key={node.title} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                 <div style={{ fontSize: '1.8rem', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', borderRadius: '12px', border: '1px solid var(--border-system)' }}>
                   {node.icon}
@@ -365,210 +380,203 @@ function Onboarding({ onComplete }) {
         </div>
       )}
 
-      {/* STEP 3: GOAL CREATION SCREEN */}
+      {/* STEP 3: GOAL CREATION SCREEN (One by One) */}
       {step === 3 && (
         <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
           <div style={{ marginBottom: 16 }}>
+            <span className="ios-badge ios-badge-purple" style={{ marginBottom: 8 }}>Journey Campaign {goalIndex + 1} of {tempGoals.length}</span>
             <h2 className="title" style={{ fontSize: '22px' }}>What journeys are you building?</h2>
-            <p className="caption">Map up to 3 main life campaigns</p>
+            <p className="caption">Map out your campaigns one by one (Max 3)</p>
           </div>
 
-          {tempGoals.map((g, idx) => (
-            <div key={g.id} className="premium-card" style={{ padding: 14, border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(0,0,0,0.01)', position: 'relative' }}>
-              {tempGoals.length > 1 && (
-                <button 
-                  type="button" 
-                  onClick={() => removeGoalRow(idx)} 
-                  style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', color: 'var(--accent-pink)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                >
-                  Remove
-                </button>
-              )}
-              
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: '11px' }}>Journey {idx + 1} Name</label>
+          <div className="premium-card" style={{ padding: 14, border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(0,0,0,0.01)' }}>
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '11px' }}>Journey Name</label>
+              <input 
+                className="form-input" 
+                value={tempGoals[goalIndex].name} 
+                onChange={e => updateGoalField(goalIndex, 'name', e.target.value)} 
+                placeholder="e.g. Portfolio Journey" 
+                required 
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '11px' }}>Duration</label>
+              <select 
+                className="form-select" 
+                value={tempGoals[goalIndex].duration} 
+                onChange={e => updateGoalField(goalIndex, 'duration', e.target.value)}
+              >
+                <option>3 months</option>
+                <option>6 months</option>
+                <option>1 year</option>
+                <option>Custom</option>
+              </select>
+              {tempGoals[goalIndex].duration === 'Custom' && (
                 <input 
                   className="form-input" 
-                  value={g.name} 
-                  onChange={e => updateGoalField(idx, 'name', e.target.value)} 
-                  placeholder="e.g. Portfolio Development" 
+                  style={{ marginTop: 8 }} 
+                  value={tempGoals[goalIndex].customDuration} 
+                  onChange={e => updateGoalField(goalIndex, 'customDuration', e.target.value)} 
+                  placeholder="e.g. 45 Days" 
                   required 
                 />
-              </div>
+              )}
+            </div>
+          </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '11px' }}>Duration</label>
-                <select 
-                  className="form-select" 
-                  value={g.duration} 
-                  onChange={e => updateGoalField(idx, 'duration', e.target.value)}
-                >
-                  <option>3 months</option>
-                  <option>6 months</option>
-                  <option>1 year</option>
-                  <option>Custom</option>
-                </select>
-                {g.duration === 'Custom' && (
-                  <input 
-                    className="form-input" 
-                    style={{ marginTop: 8 }} 
-                    value={g.customDuration} 
-                    onChange={e => updateGoalField(idx, 'customDuration', e.target.value)} 
-                    placeholder="e.g. 45 Days" 
-                    required 
-                  />
-                )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {tempGoals.length < 3 && (
+              <button 
+                className="btn-secondary" 
+                type="button" 
+                onClick={() => handleGoalNext(true)}
+                disabled={!tempGoals[goalIndex].name.trim()}
+              >
+                ➕ Add another journey
+              </button>
+            )}
+            
+            <button 
+              className="btn-primary" 
+              onClick={() => handleGoalNext(false)}
+              disabled={!tempGoals[goalIndex].name.trim()}
+            >
+              Set Milestones
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 4: GOAL MILESTONE SETUP (One by One) */}
+      {step === 4 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
+          <div style={{ marginBottom: 16 }}>
+            <span className="ios-badge ios-badge-purple" style={{ marginBottom: 8 }}>Milestones {milestoneIndex + 1} of {tempGoals.length}</span>
+            <h2 className="title" style={{ fontSize: '22px' }}>Define Campaign Milestones</h2>
+            <p className="caption">Establish checkpoints for each journey campaign</p>
+          </div>
+
+          <div className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)', marginBottom: 20 }}>
+            <h4 className="section-header" style={{ marginBottom: 12, color: 'var(--accent-indigo)' }}>
+              {tempGoals[milestoneIndex].name}
+            </h4>
+
+            <div className="form-group">
+              <label className="form-label">Monthly Target Milestone</label>
+              <input 
+                className="form-input" 
+                value={milestones[tempGoals[milestoneIndex].id]?.monthlyTarget} 
+                onChange={e => updateMilestone(tempGoals[milestoneIndex].id, 'monthlyTarget', e.target.value)} 
+                placeholder="e.g. Complete 1 project" 
+                required 
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Weekly Hour Commitment</label>
+              <select 
+                className="form-select" 
+                value={milestones[tempGoals[milestoneIndex].id]?.weeklyCommitment} 
+                onChange={e => updateMilestone(tempGoals[milestoneIndex].id, 'weeklyCommitment', e.target.value)}
+              >
+                <option>2 hours/week</option>
+                <option>5 hours/week</option>
+                <option>10 hours/week</option>
+                <option>20 hours/week</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Weekly Objective / Action Type</label>
+              <input 
+                className="form-input" 
+                value={milestones[tempGoals[milestoneIndex].id]?.weeklyGoal} 
+                onChange={e => updateMilestone(tempGoals[milestoneIndex].id, 'weeklyGoal', e.target.value)} 
+                placeholder="e.g. Design" 
+                required 
+              />
+              
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                {milestoneChips.map(chip => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => updateMilestone(tempGoals[milestoneIndex].id, 'weeklyGoal', chip)}
+                    className="ios-badge ios-badge-blue"
+                    style={{ border: 'none', cursor: 'pointer' }}
+                  >
+                    {chip}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
 
-          {tempGoals.length < 3 && (
-            <button 
-              className="btn-secondary" 
-              type="button" 
-              onClick={addGoalRow} 
-              style={{ height: '44px', marginBottom: 16, fontSize: '14px' }}
-            >
-              ➕ Add another journey
-            </button>
-          )}
-
-          <button 
-            className="btn-primary" 
-            onClick={initMilestones}
-            disabled={tempGoals.some(g => !g.name.trim())}
-          >
-            Set Milestones
+          <button className="btn-primary" onClick={handleMilestoneNext}>
+            {milestoneIndex < tempGoals.length - 1 ? 'Next Campaign Milestones' : 'Create Weekly Quests'}
           </button>
         </div>
       )}
 
-      {/* STEP 4: GOAL MILESTONE SETUP */}
-      {step === 4 && (
-        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
-          <div style={{ marginBottom: 16 }}>
-            <h2 className="title" style={{ fontSize: '22px' }}>Goal Milestone Setup</h2>
-            <p className="caption">Define target focus for each journey</p>
-          </div>
-
-          {tempGoals.map(g => (
-            <div key={g.id} className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)' }}>
-              <h4 className="section-header" style={{ marginBottom: 10, color: 'var(--accent-indigo)' }}>
-                {g.name || 'Journey Campaign'}
-              </h4>
-
-              <div className="form-group">
-                <label className="form-label">Monthly Target Milestone</label>
-                <input 
-                  className="form-input" 
-                  value={milestones[g.id]?.monthlyTarget} 
-                  onChange={e => updateMilestone(g.id, 'monthlyTarget', e.target.value)} 
-                  placeholder="e.g. Complete 1 project" 
-                  required 
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Weekly Hour Commitment</label>
-                <select 
-                  className="form-select" 
-                  value={milestones[g.id]?.weeklyCommitment} 
-                  onChange={e => updateMilestone(g.id, 'weeklyCommitment', e.target.value)}
-                >
-                  <option>2 hours/week</option>
-                  <option>5 hours/week</option>
-                  <option>10 hours/week</option>
-                  <option>20 hours/week</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Weekly Objective / Action Type</label>
-                <input 
-                  className="form-input" 
-                  value={milestones[g.id]?.weeklyGoal} 
-                  onChange={e => updateMilestone(g.id, 'weeklyGoal', e.target.value)} 
-                  placeholder="e.g. Design" 
-                  required 
-                />
-                
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                  {milestoneChips.map(chip => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => updateMilestone(g.id, 'weeklyGoal', chip)}
-                      className="ios-badge ios-badge-blue"
-                      style={{ border: 'none', cursor: 'pointer' }}
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          <button className="btn-primary" onClick={initQuestsStep}>Create Weekly Quests</button>
-        </div>
-      )}
-
-      {/* STEP 5: WEEK 1 QUEST CREATION */}
+      {/* STEP 5: WEEK 1 QUEST CREATION (One by One) */}
       {step === 5 && (
         <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
           <div style={{ marginBottom: 16 }}>
+            <span className="ios-badge ios-badge-purple" style={{ marginBottom: 8 }}>Quests {questIndex + 1} of {tempGoals.length}</span>
             <h2 className="title" style={{ fontSize: '20px' }}>What actions will you complete this week?</h2>
-            <p className="caption">Define Week 1 quests for each journey</p>
+            <p className="caption">Input initial tasks to start your campaign quests</p>
           </div>
 
-          {tempGoals.map(g => (
-            <div key={g.id} className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)' }}>
-              <h4 className="section-header" style={{ marginBottom: 8, color: 'var(--accent-indigo)' }}>
-                {g.name}
-              </h4>
+          <div className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)', marginBottom: 20 }}>
+            <h4 className="section-header" style={{ marginBottom: 8, color: 'var(--accent-indigo)' }}>
+              {tempGoals[questIndex].name}
+            </h4>
 
-              {/* Tasks List */}
-              <div style={{ margin: '8px 0' }}>
-                {(week1Quests[g.id] || []).map(q => (
-                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 6 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 500 }}>{q.title} <span className="caption">({q.difficulty})</span></div>
-                    <button type="button" onClick={() => removeQuest(g.id, q.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', fontSize: '13px', cursor: 'pointer' }}>✕</button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Inline task creator */}
-              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                <input 
-                  className="form-input" 
-                  style={{ flexGrow: 1, height: '40px' }} 
-                  value={newQuestTitle[g.id]} 
-                  onChange={e => setNewQuestTitle({ ...newQuestTitle, [g.id]: e.target.value })} 
-                  placeholder="Add task item..." 
-                />
-                <select 
-                  className="form-select" 
-                  style={{ width: '90px', height: '40px', padding: '0 8px' }} 
-                  value={newQuestDiff[g.id]} 
-                  onChange={e => setNewQuestDiff({ ...newQuestDiff, [g.id]: e.target.value })}
-                >
-                  <option>Small</option>
-                  <option>Medium</option>
-                  <option>Large</option>
-                </select>
-                <button 
-                  type="button" 
-                  className="btn-primary" 
-                  style={{ width: '40px', height: '40px', padding: 0 }} 
-                  onClick={() => addQuest(g.id)}
-                >
-                  ＋
-                </button>
-              </div>
+            {/* Tasks List */}
+            <div style={{ margin: '8px 0' }}>
+              {(week1Quests[tempGoals[questIndex].id] || []).map(q => (
+                <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 6 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{q.title} <span className="caption">({q.difficulty})</span></div>
+                  <button type="button" onClick={() => removeQuest(tempGoals[questIndex].id, q.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', fontSize: '13px', cursor: 'pointer' }}>✕</button>
+                </div>
+              ))}
             </div>
-          ))}
 
-          <button className="btn-primary" onClick={() => setStep(6)}>Select Rewards</button>
+            {/* Inline task creator */}
+            <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              <input 
+                className="form-input" 
+                style={{ flexGrow: 1, height: '40px' }} 
+                value={newQuestTitle[tempGoals[questIndex].id]} 
+                onChange={e => setNewQuestTitle({ ...newQuestTitle, [tempGoals[questIndex].id]: e.target.value })} 
+                placeholder="Add quest details..." 
+              />
+              <select 
+                className="form-select" 
+                style={{ width: '90px', height: '40px', padding: '0 8px' }} 
+                value={newQuestDiff[tempGoals[questIndex].id]} 
+                onChange={e => setNewQuestDiff({ ...newQuestDiff, [tempGoals[questIndex].id]: e.target.value })}
+              >
+                <option>Small</option>
+                <option>Medium</option>
+                <option>Large</option>
+              </select>
+              <button 
+                type="button" 
+                className="btn-primary" 
+                style={{ width: '40px', height: '40px', padding: 0 }} 
+                onClick={() => addQuest(tempGoals[questIndex].id)}
+              >
+                ＋
+              </button>
+            </div>
+          </div>
+
+          <button className="btn-primary" onClick={handleQuestNext}>
+            {questIndex < tempGoals.length - 1 ? 'Next Campaign Quests' : 'Select Rewards'}
+          </button>
         </div>
       )}
 
@@ -623,7 +631,7 @@ function Onboarding({ onComplete }) {
                   className="form-input" 
                   value={crName} 
                   onChange={e=>setCrName(e.target.value)} 
-                  placeholder="Reward Name (e.g. Unwind day off)" 
+                  placeholder="Reward Name (e.g. Afternoon off)" 
                 />
               </div>
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -775,22 +783,45 @@ function HomePage({ profile, tasks, goals, setPage }) {
         </div>
       </div>
 
-      {/* Goal Journey Progress Maps */}
+      {/* Goal Journey Progress Maps (Horizontal visual pathways) */}
       {goals.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <h3 className="section-header" style={{ marginBottom: 12 }}>Journey Maps Progress</h3>
+        <div style={{ marginTop: 24, marginBottom: 20 }}>
+          <h3 className="section-header" style={{ marginBottom: 12 }}>Active Campaigns Map</h3>
           {goals.map(g => {
             const prog = getGoalProgress(g.id);
+            const milestones = [
+              { label: 'Start', done: true },
+              { label: 'M1', done: prog >= 33 },
+              { label: 'M2', done: prog >= 66 },
+              { label: 'Dest', done: prog >= 100 }
+            ];
             return (
               <div className="premium-card" key={g.id} style={{ padding: '16px 20px', cursor: 'pointer' }} onClick={() => setPage('goals')}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{g.name.toUpperCase()}</span>
                   <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-indigo)' }}>{prog}%</span>
                 </div>
-                <div className="ios-progress-container">
-                  <div className="ios-progress-track" style={{ height: '6px' }}>
-                    <div className="ios-progress-fill" style={{ width: prog + '%' }} />
-                  </div>
+                
+                {/* Visual horizontal pipeline for dashboard */}
+                <div style={{ position: 'relative', margin: '14px 0 10px' }}>
+                  <svg width="100%" height="32" style={{ overflow: 'visible' }}>
+                    <line x1="5%" y1="16" x2="95%" y2="16" stroke="rgba(0,0,0,0.06)" strokeWidth="3" />
+                    <line x1="5%" y1="16" x2={`${5 + (prog * 0.9)}%`} y2="16" stroke="var(--accent-indigo)" strokeWidth="3" />
+                    {milestones.map((ms, idx) => {
+                      const cx = 5 + (idx * 30);
+                      return (
+                        <circle 
+                          key={idx}
+                          cx={`${cx}%`} 
+                          cy="16" 
+                          r={ms.done ? '6' : '5'} 
+                          fill={ms.done ? 'var(--accent-indigo)' : '#FFFFFF'} 
+                          stroke={ms.done ? 'var(--accent-indigo)' : 'var(--border-system)'} 
+                          strokeWidth="2" 
+                        />
+                      );
+                    })}
+                  </svg>
                 </div>
               </div>
             );
@@ -1196,7 +1227,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
           <span className="ios-badge ios-badge-orange">Perk Vault</span>
           <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Claim Perks</h2>
         </div>
-        <div style={{ textAlignment: 'right' }}>
+        <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {avail} XP</div>
           <p className="caption">Available Balance</p>
         </div>
