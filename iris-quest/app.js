@@ -22,200 +22,649 @@ function Toast({ message, onClose }) {
   return <div className="toast">{message}</div>;
 }
 
-/* ===== ONBOARDING ===== */
+/* ===== ONBOARDING (STEPS 1 - 6) ===== */
 function Onboarding({ onComplete }) {
+  const [step, setStep] = React.useState(1);
+  
+  // Step 1: Identity Launchpad
   const [name, setName] = React.useState('');
-  const [cur, setCur] = React.useState('');
-  const [fut, setFut] = React.useState('');
-  const [avatar, setAvatar] = React.useState('👨‍💻');
-  const [hair, setHair] = React.useState('Cropped');
-  const [accessory, setAccessory] = React.useState('Clean');
-  const [showInfo, setShowInfo] = React.useState(false);
-  const [tempProfile, setTempProfile] = React.useState(null);
+  const [avatarType, setAvatarType] = React.useState('Minimal Human');
+  const [avatarEmoji, setAvatarEmoji] = React.useState('👤');
+  const [curId, setCurId] = React.useState('');
+  const [futId, setFutId] = React.useState('');
 
-  const submit = (e) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    const p = { 
-      name: name.trim(), 
-      avatar, 
-      hair, 
-      accessory,
-      currentIdentity: cur.trim() || 'Aspiring Creator', 
-      futureIdentity: fut.trim() || 'Master Builder', 
-      totalXp: 0, 
-      spentXp: 0, 
-      createdAt: new Date().toISOString() 
-    };
-    
-    // Seed default ODYSSEY goals, tasks, and rewards
-    LS.set('irisquest_profile', p);
-    LS.set('irisquest_goals', [
-      {
-        id: 'g-seed-1',
-        name: 'Design & Code Odyssey MVP',
-        duration: '90 Days',
-        finalTarget: 'Launch a high fidelity life OS app with visual journey maps',
-        monthlyTarget: 'Complete functional modular frontend prototype',
-        weeklyActions: 'Develop clean React components\nRefine premium iOS style CSS',
-        hoursPerWeek: 12,
-        category: 'Creative',
-        createdAt: new Date().toISOString()
-      }
-    ]);
-    LS.set('irisquest_tasks', [
-      { id: 't-seed-1', goalId: 'g-seed-1', title: 'Stylize outline stroke checkboxes', difficulty: 'Small', xpValue: 10, taskType: 'daily', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() },
-      { id: 't-seed-2', goalId: 'g-seed-1', title: 'Create interactive onboarding flow infographic', difficulty: 'Medium', xpValue: 30, taskType: 'daily', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() },
-      { id: 't-seed-3', goalId: 'g-seed-1', title: 'Refine visual Journey Map paths', difficulty: 'Large', xpValue: 100, taskType: 'weekly', isCompleted: false, completedAt: null, createdAt: new Date().toISOString() }
-    ]);
-    LS.set('irisquest_rewards', [
-      { id: 'r-seed-1', name: 'Premium coffee break session', category: 'Break', xpCost: 50, expiryDate: 'Permanent', isClaimed: false, claimedAt: null },
-      { id: 'r-seed-2', name: 'Unwind with custom soundscape play', category: 'Experience', xpCost: 100, expiryDate: 'Today', isClaimed: false, claimedAt: null }
-    ]);
-    LS.set('irisquest_reviews', []);
-    
-    setTempProfile(p);
-    setShowInfo(true);
+  const avatarOptions = [
+    { type: 'Minimal Human', emoji: '👤' },
+    { type: 'Creative Designer', emoji: '🎨' },
+    { type: 'Explorer', emoji: '🧭' },
+    { type: 'Builder', emoji: '🛠️' },
+    { type: 'Entrepreneur', emoji: '📈' },
+    { type: 'AI Creator', emoji: '🤖' }
+  ];
+
+  const suggestedChips = [
+    'Product Designer', 'Creative Director', 'Founder', 'AI Creator',
+    'Independent Creator', 'Researcher', 'Entrepreneur', 'Expert'
+  ];
+
+  // Step 3: Goals Setup
+  const [tempGoals, setTempGoals] = React.useState([
+    { id: 'g1', name: 'Portfolio Journey', duration: '6 months', customDuration: '' }
+  ]);
+
+  const addGoalRow = () => {
+    if (tempGoals.length >= 3) return;
+    setTempGoals([...tempGoals, { id: 'g' + (tempGoals.length + 1), name: '', duration: '6 months', customDuration: '' }]);
   };
 
-  if (showInfo) {
-    return (
-      <div className="app-container" style={{ display: 'flex', alignItems: 'center', minHeight: '90vh' }}>
-        <div className="premium-card" style={{ width: '100%', padding: '32px 24px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: '3rem', marginBottom: 8 }}>🧭</div>
-            <h2 className="title" style={{ fontSize: '24px' }}>Your ODYSSEY Blueprint</h2>
-            <p className="caption" style={{ marginTop: 4 }}>How the OS maps your transformation journey</p>
-          </div>
-          
-          <div className="infographic-container">
-            <div className="infographic-step">
-              <div className="infographic-number">1</div>
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Goal Campaigns</h4>
-                <p className="caption" style={{ marginTop: 2 }}>Initialize high-level goals with custom campaign durations.</p>
-              </div>
-            </div>
-            <div className="infographic-step">
-              <div className="infographic-number">2</div>
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Journey Maps</h4>
-                <p className="caption" style={{ marginTop: 2 }}>The OS generates custom node pipelines automatically from milestones.</p>
-              </div>
-            </div>
-            <div className="infographic-step">
-              <div className="infographic-number">3</div>
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Actions & Quests</h4>
-                <p className="caption" style={{ marginTop: 2 }}>Break down weekly items into checkable daily and weekly quests.</p>
-              </div>
-            </div>
-            <div className="infographic-step">
-              <div className="infographic-number">4</div>
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>XP & Perks</h4>
-                <p className="caption" style={{ marginTop: 2 }}>Complete items to level up your avatar status and claim custom perks.</p>
-              </div>
-            </div>
-            <div className="infographic-step">
-              <div className="infographic-number">5</div>
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Future Self</h4>
-                <p className="caption" style={{ marginTop: 2 }}>Track achievements and watch your identity evolve into its destination.</p>
-              </div>
-            </div>
-          </div>
-          
-          <button className="btn-primary" onClick={() => onComplete(tempProfile)}>
-            Enter Odyssey 🧭
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const updateGoalField = (index, field, value) => {
+    const updated = [...tempGoals];
+    updated[index][field] = value;
+    setTempGoals(updated);
+  };
+
+  const removeGoalRow = (index) => {
+    setTempGoals(tempGoals.filter((_, i) => i !== index));
+  };
+
+  // Step 4: Milestones Setup
+  const [milestones, setMilestones] = React.useState({});
+  const milestoneChips = ['Research', 'Design', 'Prototype', 'Document'];
+
+  const initMilestones = () => {
+    const defaultMilestones = {};
+    tempGoals.forEach(g => {
+      defaultMilestones[g.id] = {
+        monthlyTarget: 'Complete 1 project',
+        weeklyCommitment: '2 hours/week',
+        weeklyGoal: 'Design'
+      };
+    });
+    setMilestones(defaultMilestones);
+    setStep(4);
+  };
+
+  const updateMilestone = (goalId, field, value) => {
+    setMilestones({
+      ...milestones,
+      [goalId]: {
+        ...milestones[goalId],
+        [field]: value
+      }
+    });
+  };
+
+  // Step 5: Quests Creation
+  const [week1Quests, setWeek1Quests] = React.useState({});
+  const [newQuestTitle, setNewQuestTitle] = React.useState({});
+  const [newQuestDiff, setNewQuestDiff] = React.useState({});
+
+  const initQuestsStep = () => {
+    const initialQuests = {};
+    const initialTitles = {};
+    const initialDiffs = {};
+    tempGoals.forEach(g => {
+      // Seed some default week 1 tasks based on milestone choices or clean defaults
+      const weeklyAction = milestones[g.id]?.weeklyGoal || 'Research';
+      initialQuests[g.id] = [
+        { id: genId(), title: `${weeklyAction} competitors`, difficulty: 'Small' },
+        { id: genId(), title: `Define core ${weeklyAction.toLowerCase()} problem`, difficulty: 'Medium' }
+      ];
+      initialTitles[g.id] = '';
+      initialDiffs[g.id] = 'Medium';
+    });
+    setWeek1Quests(initialQuests);
+    setNewQuestTitle(initialTitles);
+    setNewQuestDiff(initialDiffs);
+    setStep(5);
+  };
+
+  const addQuest = (goalId) => {
+    const qTitle = newQuestTitle[goalId]?.trim();
+    if (!qTitle) return;
+    const diff = newQuestDiff[goalId] || 'Medium';
+    const newQ = { id: genId(), title: qTitle, difficulty: diff };
+    setWeek1Quests({
+      ...week1Quests,
+      [goalId]: [...(week1Quests[goalId] || []), newQ]
+    });
+    setNewQuestTitle({ ...newQuestTitle, [goalId]: '' });
+  };
+
+  const removeQuest = (goalId, questId) => {
+    setWeek1Quests({
+      ...week1Quests,
+      [goalId]: week1Quests[goalId].filter(q => q.id !== questId)
+    });
+  };
+
+  // Step 6: Reward Personalization presets
+  const rewardPresets = [
+    { id: 'rp1', name: 'Watch KDrama episode', category: 'Entertainment', type: 'Daily', duration: '30 min', xpCost: 50 },
+    { id: 'rp2', name: 'Gaming session', category: 'Entertainment', type: 'Daily', duration: '1 hour', xpCost: 50 },
+    { id: 'rp3', name: 'Movies session', category: 'Entertainment', type: 'Weekly', duration: '2 hours', xpCost: 150 },
+    { id: 'rp4', name: 'Snack under ₹20', category: 'Food', type: 'Daily', duration: '15 min', xpCost: 50 },
+    { id: 'rp5', name: 'Meal under ₹80', category: 'Food', type: 'Weekly', duration: '1 hour', xpCost: 150 },
+    { id: 'rp6', name: 'Weekend outing', category: 'Experiences', type: 'Monthly', duration: 'Half day', xpCost: 500 },
+    { id: 'rp7', name: 'Tarot reading card pull', category: 'Creative', type: 'Daily', duration: '15 min', xpCost: 50 },
+    { id: 'rp8', name: 'Listening to music session', category: 'Creative', type: 'Daily', duration: '30 min', xpCost: 50 },
+    { id: 'rp9', name: 'Spend on custom shopping gadgets', category: 'Shopping', type: 'Monthly', duration: 'Half day', xpCost: 500 }
+  ];
+
+  const [selectedRewardIds, setSelectedRewardIds] = React.useState(['rp1', 'rp4', 'rp8']);
+  const [customRewards, setCustomRewards] = React.useState([]);
+
+  // Custom reward creator form state
+  const [crName, setCrName] = React.useState('');
+  const [crCat, setCrCat] = React.useState('Entertainment');
+  const [crType, setCrType] = React.useState('Daily');
+  const [crDur, setCrDur] = React.useState('30 min');
+
+  const addCustomReward = (e) => {
+    e.preventDefault();
+    if (!crName.trim()) return;
+    const calcCost = crType === 'Daily' ? 50 : crType === 'Weekly' ? 150 : 500;
+    const newCr = {
+      id: genId(),
+      name: crName.trim(),
+      category: crCat,
+      type: crType,
+      duration: crDur,
+      xpCost: calcCost,
+      isClaimed: false,
+      claimedAt: null
+    };
+    setCustomRewards([...customRewards, newCr]);
+    setCrName('');
+  };
+
+  const togglePresetReward = (id) => {
+    if (selectedRewardIds.includes(id)) {
+      setSelectedRewardIds(selectedRewardIds.filter(x => x !== id));
+    } else {
+      setSelectedRewardIds([...selectedRewardIds, id]);
+    }
+  };
+
+  // Compile final state to enter dashboard
+  const finalizeOdyssey = () => {
+    // 1. Profile
+    const profileData = {
+      name: name.trim() || 'Alex',
+      avatar: avatarEmoji,
+      avatarType,
+      currentIdentity: curId.trim() || 'Student',
+      futureIdentity: futId.trim() || 'Product Designer',
+      totalXp: 0,
+      spentXp: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    // 2. Goals
+    const goalsData = tempGoals.map(tg => {
+      const ms = milestones[tg.id] || {};
+      return {
+        id: tg.id,
+        name: tg.name || 'My Campaign Journey',
+        duration: tg.duration === 'Custom' ? (tg.customDuration || 'Custom') : tg.duration,
+        finalTarget: ms.monthlyTarget || 'Build Milestone App', // Seed final target
+        monthlyTarget: ms.monthlyTarget || 'First checkpoint',
+        weeklyActions: ms.weeklyGoal || 'Research & Design',
+        hoursPerWeek: parseInt(ms.weeklyCommitment) || 5,
+        category: 'Career',
+        createdAt: new Date().toISOString()
+      };
+    });
+
+    // 3. Tasks / Quests
+    const tasksData = [];
+    tempGoals.forEach(tg => {
+      const qList = week1Quests[tg.id] || [];
+      qList.forEach(q => {
+        tasksData.push({
+          id: q.id,
+          goalId: tg.id,
+          title: q.title,
+          difficulty: q.difficulty,
+          xpValue: XP_MAP[q.difficulty] || 30,
+          taskType: 'daily',
+          isCompleted: false,
+          completedAt: null,
+          createdAt: new Date().toISOString()
+        });
+      });
+    });
+
+    // 4. Rewards
+    const selectedPresetsData = rewardPresets
+      .filter(rp => selectedRewardIds.includes(rp.id))
+      .map(rp => ({
+        id: rp.id,
+        name: rp.name,
+        category: rp.category,
+        xpCost: rp.xpCost,
+        expiryDate: rp.type,
+        isClaimed: false,
+        claimedAt: null
+      }));
+
+    const allRewards = [...selectedPresetsData, ...customRewards];
+
+    // Save to LocalStorage
+    LS.set('irisquest_profile', profileData);
+    LS.set('irisquest_goals', goalsData);
+    LS.set('irisquest_tasks', tasksData);
+    LS.set('irisquest_rewards', allRewards);
+    LS.set('irisquest_reviews', []);
+
+    onComplete(profileData);
+  };
 
   return (
-    <div className="app-container" style={{ display: 'flex', alignItems: 'center', minHeight: '90vh' }}>
-      <div className="premium-card" style={{ width: '100%', padding: '32px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: 8 }}>🧭</div>
-          <h1 className="large-title" style={{ marginBottom: 4 }}>ODYSSEY</h1>
-          <p className="caption">Personal Life Journey System</p>
-        </div>
-        
-        <form onSubmit={submit}>
-          <div className="form-group">
-            <label className="form-label">Select Identity Base Style</label>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', margin: '10px 0' }}>
-              {[
-                { emoji: '👨‍💻', label: 'Developer' },
-                { emoji: '👩‍🎨', label: 'Designer' },
-                { emoji: '✍️', label: 'Writer' },
-                { emoji: '📊', label: 'Strategist' },
-                { emoji: '🏋️', label: 'Athlete' },
-                { emoji: '🧘', label: 'Sage' }
-              ].map(item => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => setAvatar(item.emoji)}
-                  style={{
-                    fontSize: '1.8rem',
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    border: avatar === item.emoji ? '2.5px solid var(--accent-indigo)' : '1px solid var(--border-system)',
-                    background: avatar === item.emoji ? 'rgba(88, 86, 214, 0.08)' : '#FFFFFF',
-                    cursor: 'pointer',
-                    transition: 'var(--transition-ios)'
-                  }}
-                  title={item.label}
-                >
-                  {item.emoji}
-                </button>
-              ))}
-            </div>
+    <div className="app-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
+      
+      {/* STEP 1: IDENTITY LAUNCHPAD */}
+      {step === 1 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: 6 }}>🧭</div>
+            <h1 className="large-title" style={{ fontSize: '28px', marginBottom: 4 }}>Begin Your Journey</h1>
+            <p className="caption">Transform your goals into a path towards your future self</p>
           </div>
 
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
             <div className="form-group">
-              <label className="form-label">Hair Style</label>
-              <select className="form-select" value={hair} onChange={e=>setHair(e.target.value)}>
-                <option>Cropped</option><option>Swept</option><option>Waves</option><option>Topknot</option>
-              </select>
+              <label className="form-label">Avatar Identity Type</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, margin: '10px 0' }}>
+                {avatarOptions.map(opt => (
+                  <button
+                    key={opt.type}
+                    type="button"
+                    onClick={() => { setAvatarType(opt.type); setAvatarEmoji(opt.emoji); }}
+                    style={{
+                      padding: '12px 6px',
+                      borderRadius: '12px',
+                      border: avatarType === opt.type ? '2px solid var(--accent-indigo)' : '1px solid var(--border-system)',
+                      background: avatarType === opt.type ? 'rgba(88,86,214,0.06)' : '#FFFFFF',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      transition: 'var(--transition-ios)'
+                    }}
+                  >
+                    <div style={{ fontSize: '1.6rem', marginBottom: 2 }}>{opt.emoji}</div>
+                    <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-primary)' }}>{opt.type}</div>
+                  </button>
+                ))}
+              </div>
             </div>
+
             <div className="form-group">
-              <label className="form-label">Accessories</label>
-              <select className="form-select" value={accessory} onChange={e=>setAccessory(e.target.value)}>
-                <option>Clean</option><option>Frames</option><option>Wire-rim</option><option>Headband</option>
-              </select>
+              <label className="form-label">Hero Name</label>
+              <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Alex" required />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label className="form-label">Hero Name</label>
-            <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Alex Vance" required />
-          </div>
-
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group">
               <label className="form-label">Current Identity</label>
-              <input className="form-input" value={cur} onChange={e=>setCur(e.target.value)} placeholder="Student" required />
+              <input className="form-input" value={curId} onChange={e=>setCurId(e.target.value)} placeholder="e.g. Student" required />
             </div>
+
             <div className="form-group">
-              <label className="form-label">Future Identity</label>
-              <input className="form-input" value={fut} onChange={e=>setFut(e.target.value)} placeholder="Creator" required />
+              <label className="form-label">Future Identity Destination</label>
+              <input className="form-input" value={futId} onChange={e=>setFutId(e.target.value)} placeholder="e.g. Product Designer" required />
+              
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                {suggestedChips.map(chip => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setFutId(chip)}
+                    className="ios-badge ios-badge-purple"
+                    style={{ border: 'none', cursor: 'pointer' }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button className="btn-primary" type="submit" style={{ marginTop: 10 }}>Continue</button>
+          </form>
+        </div>
+      )}
+
+      {/* STEP 2: ODYSSEY BLUEPRINT SCREEN */}
+      {step === 2 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <h2 className="title">How ODYSSEY Works</h2>
+            <p className="caption">A path mapped through daily actions</p>
+          </div>
+
+          <div className="infographic-container" style={{ margin: '20px 0' }}>
+            {[
+              { icon: '👁️', title: 'VISION', desc: 'Where you want to go' },
+              { icon: '🎯', title: 'GOALS', desc: 'What you want to achieve' },
+              { icon: '⚔️', title: 'QUESTS', desc: 'Small actions that move you forward' },
+              { icon: '⚡', title: 'XP', desc: 'Progress you earn' },
+              { icon: '🎁', title: 'REWARDS', desc: 'Experiences you unlock' },
+              { icon: '🛡️', title: 'FUTURE SELF', desc: 'The person you become' }
+            ].map((node, idx) => (
+              <div key={node.title} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                <div style={{ fontSize: '1.8rem', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.02)', borderRadius: '12px', border: '1px solid var(--border-system)' }}>
+                  {node.icon}
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{node.title}</h4>
+                  <p className="caption" style={{ fontSize: '12px' }}>{node.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button className="btn-primary" onClick={() => setStep(3)}>Create My Odyssey</button>
+        </div>
+      )}
+
+      {/* STEP 3: GOAL CREATION SCREEN */}
+      {step === 3 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
+          <div style={{ marginBottom: 16 }}>
+            <h2 className="title" style={{ fontSize: '22px' }}>What journeys are you building?</h2>
+            <p className="caption">Map up to 3 main life campaigns</p>
+          </div>
+
+          {tempGoals.map((g, idx) => (
+            <div key={g.id} className="premium-card" style={{ padding: 14, border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(0,0,0,0.01)', position: 'relative' }}>
+              {tempGoals.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => removeGoalRow(idx)} 
+                  style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', color: 'var(--accent-pink)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              )}
+              
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '11px' }}>Journey {idx + 1} Name</label>
+                <input 
+                  className="form-input" 
+                  value={g.name} 
+                  onChange={e => updateGoalField(idx, 'name', e.target.value)} 
+                  placeholder="e.g. Portfolio Development" 
+                  required 
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '11px' }}>Duration</label>
+                <select 
+                  className="form-select" 
+                  value={g.duration} 
+                  onChange={e => updateGoalField(idx, 'duration', e.target.value)}
+                >
+                  <option>3 months</option>
+                  <option>6 months</option>
+                  <option>1 year</option>
+                  <option>Custom</option>
+                </select>
+                {g.duration === 'Custom' && (
+                  <input 
+                    className="form-input" 
+                    style={{ marginTop: 8 }} 
+                    value={g.customDuration} 
+                    onChange={e => updateGoalField(idx, 'customDuration', e.target.value)} 
+                    placeholder="e.g. 45 Days" 
+                    required 
+                  />
+                )}
+              </div>
+            </div>
+          ))}
+
+          {tempGoals.length < 3 && (
+            <button 
+              className="btn-secondary" 
+              type="button" 
+              onClick={addGoalRow} 
+              style={{ height: '44px', marginBottom: 16, fontSize: '14px' }}
+            >
+              ➕ Add another journey
+            </button>
+          )}
+
+          <button 
+            className="btn-primary" 
+            onClick={initMilestones}
+            disabled={tempGoals.some(g => !g.name.trim())}
+          >
+            Set Milestones
+          </button>
+        </div>
+      )}
+
+      {/* STEP 4: GOAL MILESTONE SETUP */}
+      {step === 4 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
+          <div style={{ marginBottom: 16 }}>
+            <h2 className="title" style={{ fontSize: '22px' }}>Goal Milestone Setup</h2>
+            <p className="caption">Define target focus for each journey</p>
+          </div>
+
+          {tempGoals.map(g => (
+            <div key={g.id} className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)' }}>
+              <h4 className="section-header" style={{ marginBottom: 10, color: 'var(--accent-indigo)' }}>
+                {g.name || 'Journey Campaign'}
+              </h4>
+
+              <div className="form-group">
+                <label className="form-label">Monthly Target Milestone</label>
+                <input 
+                  className="form-input" 
+                  value={milestones[g.id]?.monthlyTarget} 
+                  onChange={e => updateMilestone(g.id, 'monthlyTarget', e.target.value)} 
+                  placeholder="e.g. Complete 1 project" 
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Weekly Hour Commitment</label>
+                <select 
+                  className="form-select" 
+                  value={milestones[g.id]?.weeklyCommitment} 
+                  onChange={e => updateMilestone(g.id, 'weeklyCommitment', e.target.value)}
+                >
+                  <option>2 hours/week</option>
+                  <option>5 hours/week</option>
+                  <option>10 hours/week</option>
+                  <option>20 hours/week</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Weekly Objective / Action Type</label>
+                <input 
+                  className="form-input" 
+                  value={milestones[g.id]?.weeklyGoal} 
+                  onChange={e => updateMilestone(g.id, 'weeklyGoal', e.target.value)} 
+                  placeholder="e.g. Design" 
+                  required 
+                />
+                
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  {milestoneChips.map(chip => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => updateMilestone(g.id, 'weeklyGoal', chip)}
+                      className="ios-badge ios-badge-blue"
+                      style={{ border: 'none', cursor: 'pointer' }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <button className="btn-primary" onClick={initQuestsStep}>Create Weekly Quests</button>
+        </div>
+      )}
+
+      {/* STEP 5: WEEK 1 QUEST CREATION */}
+      {step === 5 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px' }}>
+          <div style={{ marginBottom: 16 }}>
+            <h2 className="title" style={{ fontSize: '20px' }}>What actions will you complete this week?</h2>
+            <p className="caption">Define Week 1 quests for each journey</p>
+          </div>
+
+          {tempGoals.map(g => (
+            <div key={g.id} className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)' }}>
+              <h4 className="section-header" style={{ marginBottom: 8, color: 'var(--accent-indigo)' }}>
+                {g.name}
+              </h4>
+
+              {/* Tasks List */}
+              <div style={{ margin: '8px 0' }}>
+                {(week1Quests[g.id] || []).map(q => (
+                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 6 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500 }}>{q.title} <span className="caption">({q.difficulty})</span></div>
+                    <button type="button" onClick={() => removeQuest(g.id, q.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', fontSize: '13px', cursor: 'pointer' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Inline task creator */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                <input 
+                  className="form-input" 
+                  style={{ flexGrow: 1, height: '40px' }} 
+                  value={newQuestTitle[g.id]} 
+                  onChange={e => setNewQuestTitle({ ...newQuestTitle, [g.id]: e.target.value })} 
+                  placeholder="Add task item..." 
+                />
+                <select 
+                  className="form-select" 
+                  style={{ width: '90px', height: '40px', padding: '0 8px' }} 
+                  value={newQuestDiff[g.id]} 
+                  onChange={e => setNewQuestDiff({ ...newQuestDiff, [g.id]: e.target.value })}
+                >
+                  <option>Small</option>
+                  <option>Medium</option>
+                  <option>Large</option>
+                </select>
+                <button 
+                  type="button" 
+                  className="btn-primary" 
+                  style={{ width: '40px', height: '40px', padding: 0 }} 
+                  onClick={() => addQuest(g.id)}
+                >
+                  ＋
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <button className="btn-primary" onClick={() => setStep(6)}>Select Rewards</button>
+        </div>
+      )}
+
+      {/* STEP 6: REWARD PERSONALIZATION */}
+      {step === 6 && (
+        <div className="premium-card" style={{ width: '100%', padding: '28px 20px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ marginBottom: 16 }}>
+            <h2 className="title" style={{ fontSize: '22px' }}>What motivates your journey?</h2>
+            <p className="caption">Complete quests. Earn XP. Unlock experiences.</p>
+          </div>
+
+          {/* Presets Library */}
+          <div style={{ marginBottom: 20 }}>
+            <h4 className="section-header" style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Library Presets</h4>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              {rewardPresets.map(preset => {
+                const isSelected = selectedRewardIds.includes(preset.id);
+                return (
+                  <div 
+                    key={preset.id} 
+                    onClick={() => togglePresetReward(preset.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      border: isSelected ? '2px solid var(--accent-orange)' : '1px solid var(--border-system)',
+                      background: isSelected ? 'rgba(255, 149, 0, 0.05)' : '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'var(--transition-ios)'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 600 }}>{preset.name}</div>
+                      <div className="caption" style={{ fontSize: '11px' }}>{preset.category} · {preset.type} ({preset.duration})</div>
+                    </div>
+                    <div style={{ fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {preset.xpCost} XP</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <button className="btn-primary" type="submit" style={{ marginTop: 12 }}>⚡ Map Your Journey</button>
-        </form>
-      </div>
+          {/* Add custom reward form */}
+          <div className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)', marginBottom: 20 }}>
+            <h4 className="section-header" style={{ fontSize: '13px' }}>➕ Create Custom Reward</h4>
+            <form onSubmit={addCustomReward}>
+              <div className="form-group">
+                <input 
+                  className="form-input" 
+                  value={crName} 
+                  onChange={e=>setCrName(e.target.value)} 
+                  placeholder="Reward Name (e.g. Unwind day off)" 
+                />
+              </div>
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '10px' }}>Category</label>
+                  <select className="form-select" style={{ height: '38px', fontSize: '13px' }} value={crCat} onChange={e=>setCrCat(e.target.value)}>
+                    <option>Entertainment</option><option>Food</option><option>Experiences</option><option>Creative</option><option>Shopping</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '10px' }}>Type</label>
+                  <select className="form-select" style={{ height: '38px', fontSize: '13px' }} value={crType} onChange={e=>setCrType(e.target.value)}>
+                    <option>Daily</option><option>Weekly</option><option>Monthly</option>
+                  </select>
+                </div>
+              </div>
+              <button className="btn-secondary" style={{ height: '38px', fontSize: '13px' }} type="submit">Add Custom Reward</button>
+            </form>
+
+            {/* Custom rewards created listing */}
+            {customRewards.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                {customRewards.map(cr => (
+                  <div key={cr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 4, fontSize: '12px' }}>
+                    <span>{cr.name} (⚡ {cr.xpCost} XP)</span>
+                    <button type="button" onClick={() => setCustomRewards(customRewards.filter(x => x.id !== cr.id))} style={{ border: 'none', background: 'transparent', color: 'var(--accent-pink)', cursor: 'pointer' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button className="btn-primary" onClick={finalizeOdyssey}>Enter Dashboard</button>
+        </div>
+      )}
+
     </div>
   );
 }
 
-/* ===== HOME PAGE ===== */
+/* ===== HOME PAGE (DASHBOARD) ===== */
 function HomePage({ profile, tasks, goals, setPage }) {
   const lv = calcLevel(profile.totalXp);
   const avail = profile.totalXp - profile.spentXp;
@@ -226,11 +675,9 @@ function HomePage({ profile, tasks, goals, setPage }) {
   const totalTodayCount = todayTasks.length + completedTodayCount;
   const progressPct = totalTodayCount > 0 ? Math.round((completedTodayCount / totalTodayCount) * 100) : 100;
 
-  // Next Quest details
   const nextQuest = todayTasks[0];
   const goalName = (gid) => { const g = goals.find(g => g.id === gid); return g ? g.name : ''; };
 
-  // Calculate overall goal journey progress metrics
   const getGoalProgress = (gid) => {
     const linked = tasks.filter(t => t.goalId === gid);
     if (linked.length === 0) return 0;
@@ -240,11 +687,11 @@ function HomePage({ profile, tasks, goals, setPage }) {
 
   return (
     <div>
-      {/* Top Profile Header */}
+      {/* Top Header Card */}
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <h1 className="large-title" style={{ margin: 0, fontSize: '28px' }}>Odyssey</h1>
-          <p className="caption">Welcome back, {profile.name}</p>
+          <h1 className="large-title" style={{ margin: 0, fontSize: '28px' }}>ODYSSEY</h1>
+          <p className="caption">Welcome, {profile.name}</p>
         </div>
         <div className="avatar-wrapper">
           <div className={`avatar-ring ${lv.rankClass}`}>
@@ -253,20 +700,18 @@ function HomePage({ profile, tasks, goals, setPage }) {
         </div>
       </div>
 
-      {/* Identity Summary Card */}
+      {/* Profile/Identity Details Card */}
       <div className="premium-card">
         <span className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', color: 'var(--accent-indigo)' }}>Identity Transformation</span>
         <h2 style={{ fontSize: '18px', marginTop: 4 }}>{profile.currentIdentity}</h2>
-        <p className="caption" style={{ margin: '2px 0 12px' }}>Destination Target: <b>{profile.futureIdentity}</b></p>
-        
-        <div style={{ display: 'flex', gap: 8, fontSize: '12px', flexWrap: 'wrap' }}>
+        <p className="caption" style={{ margin: '2px 0 12px' }}>Destination Blueprint: <b style={{ color: 'var(--accent-indigo)' }}>{profile.futureIdentity}</b></p>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <span className="ios-badge ios-badge-purple">Lvl {lv.level} · {lv.title}</span>
-          <span className="ios-badge ios-badge-orange">{profile.hair} Style</span>
-          <span className="ios-badge ios-badge-blue">{profile.accessory} Accessory</span>
+          <span className="ios-badge ios-badge-blue">{profile.avatarType}</span>
         </div>
       </div>
 
-      {/* Today's Quest Highlights (Apple Fitness Rings style) */}
+      {/* Today's Quests Card with Progress Ring */}
       <div className="premium-card" style={{ cursor: 'pointer' }} onClick={() => setPage('quests')}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h3 className="section-header" style={{ margin: 0 }}>Today's Quests</h3>
@@ -301,15 +746,15 @@ function HomePage({ profile, tasks, goals, setPage }) {
               </>
             ) : (
               <>
-                <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-emerald)' }}>All Daily Quests Completed!</h4>
-                <p className="caption" style={{ marginTop: 2 }}>Your calendar is fully cleared.</p>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-emerald)' }}>All Daily Quests Cleared!</h4>
+                <p className="caption" style={{ marginTop: 2 }}>Outstanding work.</p>
               </>
             )}
           </div>
         </div>
       </div>
 
-      {/* Large XP Progression Card */}
+      {/* XP Card */}
       <div className="premium-card" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF9FF 100%)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
           <div>
@@ -330,10 +775,10 @@ function HomePage({ profile, tasks, goals, setPage }) {
         </div>
       </div>
 
-      {/* Goal Journey Progress previews */}
+      {/* Goal Journey Progress Maps */}
       {goals.length > 0 && (
         <div style={{ marginTop: 24 }}>
-          <h3 className="section-header" style={{ marginBottom: 12 }}>Active Campaigns Map</h3>
+          <h3 className="section-header" style={{ marginBottom: 12 }}>Journey Maps Progress</h3>
           {goals.map(g => {
             const prog = getGoalProgress(g.id);
             return (
@@ -361,8 +806,8 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   const [tab, setTab] = React.useState('list');
   const [name, setName] = React.useState('');
   const [cat, setCat] = React.useState('Career');
-  const [dur, setDur] = React.useState('90 Days');
-  const [hrs, setHrs] = React.useState(15);
+  const [dur, setDur] = React.useState('6 months');
+  const [hrs, setHrs] = React.useState(10);
   const [ft, setFt] = React.useState('');
   const [mt, setMt] = React.useState('');
   const [wa, setWa] = React.useState('');
@@ -381,7 +826,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
       category: cat, 
       createdAt: new Date().toISOString() 
     };
-    const newGoals = [g, ...goals];
+    const newGoals = [...goals, g];
     LS.set('irisquest_goals', newGoals);
     setGoals(newGoals);
 
@@ -402,7 +847,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
       setTasks(allTasks);
     }
     setName(''); setFt(''); setMt(''); setWa('');
-    toast('Odyssey campaign launched!');
+    toast('Campaign journey map initialized!');
     setTab('list');
   };
 
@@ -411,10 +856,9 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
     LS.set('irisquest_goals', ng); setGoals(ng);
     const nt = tasks.filter(t=>t.goalId!==id);
     LS.set('irisquest_tasks', nt); setTasks(nt);
-    toast('Goal and linked journeys deleted.');
+    toast('Campaign journey deleted.');
   };
 
-  // Helper: calculate progress percentage for a specific goal based on linked tasks
   const getGoalProgress = (gid) => {
     const linked = tasks.filter(t => t.goalId === gid);
     if (linked.length === 0) return 0;
@@ -422,7 +866,6 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
     return Math.round((completed / linked.length) * 100);
   };
 
-  // Helper: get first active task description
   const getNextAction = (gid) => {
     const nextTask = tasks.find(t => t.goalId === gid && !t.isCompleted);
     return nextTask ? nextTask.title : 'All tasks completed';
@@ -450,16 +893,15 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                                g.category === 'Finance' ? 'ios-badge-orange' :
                                g.category === 'Creative' ? 'ios-badge-purple' : 'ios-badge-pink';
             
-            // Journey stages automatically generated based on goal details and duration
             const milestones = [
               { label: 'Start Campaign', done: true },
-              { label: g.monthlyTarget || 'Midpoint Target', done: prog >= 33 },
-              { label: 'Scaling Stage', done: prog >= 66 },
-              { label: g.finalTarget || 'Destination Reach', done: prog >= 100 }
+              { label: g.monthlyTarget || 'Checkpoint 1', done: prog >= 33 },
+              { label: 'Checkpoint 2', done: prog >= 66 },
+              { label: g.finalTarget || 'Destination', done: prog >= 100 }
             ];
 
             return (
-              <div className="premium-card" key={g.id} style={{ position: 'relative' }}>
+              <div className="premium-card" key={g.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className={`ios-badge ${badgeClass}`}>{g.category}</span>
                   <span className="caption" style={{ fontWeight: 600 }}>{g.hoursPerWeek} hrs / week</span>
@@ -471,13 +913,8 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                 {/* SVG Visual Journey Map Path - calm adventure aesthetic */}
                 <div style={{ margin: '20px 0', padding: '10px 0', position: 'relative' }}>
                   <svg width="100%" height="80" style={{ overflow: 'visible' }}>
-                    {/* Background Connection Path Line */}
                     <line x1="10%" y1="40" x2="90%" y2="40" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
-                    
-                    {/* Active Completed Progress Line */}
                     <line x1="10%" y1="40" x2={`${10 + (prog * 0.8)}%`} y2="40" stroke="var(--accent-indigo)" strokeWidth="4" />
-                    
-                    {/* Milestones Nodes */}
                     {milestones.map((milestone, idx) => {
                       const cx = 10 + (idx * 26.66);
                       const isCompleted = milestone.done;
@@ -491,9 +928,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                             stroke={isCompleted ? 'var(--accent-indigo)' : 'var(--border-system)'} 
                             strokeWidth="2" 
                           />
-                          {isCompleted && (
-                            <circle cx={`${cx}%`} cy="40" r="5" fill="#FFFFFF" />
-                          )}
+                          {isCompleted && <circle cx={`${cx}%`} cy="40" r="5" fill="#FFFFFF" />}
                           <text 
                             x={`${cx}%`} 
                             y="70" 
@@ -501,7 +936,6 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                             fontSize="9" 
                             fontWeight="700" 
                             fill={isCompleted ? 'var(--text-primary)' : 'var(--text-secondary)'}
-                            style={{ maxWidth: '60px' }}
                           >
                             {idx === 0 ? 'Start' : idx === 3 ? 'Dest' : `M${idx}`}
                           </text>
@@ -530,11 +964,11 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
         )
       ) : (
         <div className="premium-card">
-          <h3 className="section-header" style={{ marginBottom: 16 }}>Create Transformation Campaign</h3>
+          <h3 className="section-header" style={{ marginBottom: 16 }}>Create Campaign Journey</h3>
           <form onSubmit={addGoal}>
             <div className="form-group">
               <label className="form-label">Goal Name</label>
-              <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Master Design System Architecture" required />
+              <input className="form-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Master Design System" required />
             </div>
             <div className="form-group">
               <label className="form-label">Category</label>
@@ -545,7 +979,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
             <div className="form-group">
               <label className="form-label">Duration Horizon</label>
               <select className="form-select" value={dur} onChange={e=>setDur(e.target.value)}>
-                <option>30 Days</option><option>60 Days</option><option>90 Days</option><option>180 Days</option><option>1 Year</option>
+                <option>3 months</option><option>6 months</option><option>1 year</option>
               </select>
             </div>
             <div className="form-group">
@@ -554,14 +988,14 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
             </div>
             <div className="form-group">
               <label className="form-label">Final Target Milestone</label>
-              <input className="form-input" value={ft} onChange={e=>setFt(e.target.value)} placeholder="e.g. Live portfolio link with 3 case studies" required />
+              <input className="form-input" value={ft} onChange={e=>setFt(e.target.value)} placeholder="e.g. Live portfolio link" required />
             </div>
             <div className="form-group">
               <label className="form-label">Monthly Target Milestone</label>
-              <input className="form-input" value={mt} onChange={e=>setMt(e.target.value)} placeholder="e.g. Design assets complete" />
+              <input className="form-input" value={mt} onChange={e=>setMt(e.target.value)} placeholder="e.g. Wireframes complete" />
             </div>
             <div className="form-group">
-              <label className="form-label">Weekly Actions (1 per line to seed quests)</label>
+              <label className="form-label">Weekly Actions (1 per line)</label>
               <textarea className="form-textarea" value={wa} onChange={e=>setWa(e.target.value)} placeholder="e.g. Complete 2 layouts&#10;Write 1 case study writeup" />
             </div>
             <button className="btn-primary" type="submit">🎯 Initialize Journey Map</button>
@@ -762,7 +1196,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
           <span className="ios-badge ios-badge-orange">Perk Vault</span>
           <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Claim Perks</h2>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlignment: 'right' }}>
           <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {avail} XP</div>
           <p className="caption">Available Balance</p>
         </div>
@@ -861,9 +1295,6 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
 function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
-  
-  const [hair, setHair] = React.useState(profile.hair || 'Cropped');
-  const [accessory, setAccessory] = React.useState(profile.accessory || 'Clean');
 
   const [showReview, setShowReview] = React.useState(false);
 
@@ -880,7 +1311,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
   const updateIdentity = (e) => {
     e.preventDefault();
-    const np = { ...profile, currentIdentity: ci, futureIdentity: fi, hair, accessory };
+    const np = { ...profile, currentIdentity: ci, futureIdentity: fi };
     LS.set('irisquest_profile', np); setProfile(np);
     toast('Profile and Identity customization updated.');
   };
@@ -978,7 +1409,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
       {!showReview ? (
         <>
-          {/* Identity Customization Profile Display */}
+          {/* Identity customization display */}
           <div className="premium-card" style={{ textAlign: 'center' }}>
             <div className="avatar-wrapper" style={{ margin: '0 auto 16px' }}>
               <div className={`avatar-ring ${lv.rankClass}`}>
@@ -988,36 +1419,21 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             <h2 className="title" style={{ fontSize: '22px' }}>{profile.name}</h2>
             <p className="caption" style={{ marginTop: 4 }}>{profile.currentIdentity} ➔ <span style={{ color: 'var(--accent-indigo)', fontWeight: 600 }}>{profile.futureIdentity}</span></p>
             <div style={{ marginTop: 12 }}>
-              <span className="ios-badge ios-badge-purple" style={{ fontSize: '13px' }}>Lvl {lv.level} · {lv.title}</span>
+              <span className="ios-badge ios-badge-purple" style={{ fontSize: '13px' }}>Total XP Earned: {profile.totalXp}</span>
             </div>
           </div>
 
-          {/* Weekly Review Prompts */}
+          {/* Weekly reflection campaign prompt */}
           <div className="premium-card" style={{ background: 'rgba(88,86,214,0.04)', borderColor: 'rgba(88,86,214,0.15)' }}>
             <h3 className="section-header" style={{ marginBottom: 6 }}>Weekly Reflection Log</h3>
             <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review milestones, assess obstacles and plan next week's campaign. Grants +50 XP.</p>
             <button className="btn-primary" style={{ marginTop: 16, height: '46px' }} onClick={()=>setShowReview(true)}>Write Weekly Review</button>
           </div>
 
-          {/* Edit Customization options */}
+          {/* Edit Identity mapping form */}
           <div className="premium-card">
-            <h3 className="section-header" style={{ marginBottom: 16 }}>Customize Avatar & Identity</h3>
+            <h3 className="section-header" style={{ marginBottom: 16 }}>Edit Identity Mapping</h3>
             <form onSubmit={updateIdentity}>
-              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <div className="form-group">
-                  <label className="form-label">Hair Style</label>
-                  <select className="form-select" value={hair} onChange={e=>setHair(e.target.value)}>
-                    <option>Cropped</option><option>Swept</option><option>Waves</option><option>Topknot</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Accessories</label>
-                  <select className="form-select" value={accessory} onChange={e=>setAccessory(e.target.value)}>
-                    <option>Clean</option><option>Frames</option><option>Wire-rim</option><option>Headband</option>
-                  </select>
-                </div>
-              </div>
-
               <div className="form-group">
                 <label className="form-label">Current Identity</label>
                 <input className="form-input" value={ci} onChange={e=>setCi(e.target.value)} required />
@@ -1026,7 +1442,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                 <label className="form-label">Future Identity Target</label>
                 <input className="form-input" value={fi} onChange={e=>setFi(e.target.value)} required />
               </div>
-              <button className="btn-secondary" type="submit">Update Character Profile</button>
+              <button className="btn-secondary" type="submit">Update Identity Mapping</button>
             </form>
           </div>
 
@@ -1056,7 +1472,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             )}
           </div>
 
-          {/* Past reviews */}
+          {/* Reflection Review log list */}
           {reviews.length > 0 && (
             <div style={{ marginTop: 24 }}>
               <h3 className="section-header" style={{ marginBottom: 12 }}>Reflection Logs</h3>
@@ -1079,7 +1495,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             </div>
           )}
 
-          {/* Reset controls */}
+          {/* Reset System Options */}
           <div className="premium-card" style={{ marginTop: 24, border: '1.5px solid rgba(255, 45, 85, 0.15)' }}>
             <h3 className="section-header" style={{ color: 'var(--accent-pink)', marginBottom: 16 }}>⚠️ System Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1155,7 +1571,7 @@ function App() {
             <path d="M16.2 7.8l-2 2M7.8 16.2l2-2" />
             <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
           </svg>
-          <span className="nav-tab-label">Journeys</span>
+          <span className="nav-tab-label">Goals</span>
         </button>
         <button className={'nav-tab-btn'+(page==='quests'?' active':'')} onClick={()=>setPage('quests')}>
           <svg className="nav-tab-icon" viewBox="0 0 24 24">
@@ -1171,14 +1587,14 @@ function App() {
             <path d="M12 8H7.5a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8z" />
             <path d="M12 8h4.5a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8z" />
           </svg>
-          <span className="nav-tab-label">Perks</span>
+          <span className="nav-tab-label">Rewards</span>
         </button>
         <button className={'nav-tab-btn'+(page==='profile'?' active':'')} onClick={()=>setPage('profile')}>
           <svg className="nav-tab-icon" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-          <span className="nav-tab-label">Settings</span>
+          <span className="nav-tab-label">Profile</span>
         </button>
       </nav>
     </div>
