@@ -57,7 +57,7 @@ function Onboarding({ onComplete }) {
     const currentGoalName = tempGoals[goalIndex].name.trim();
     if (!currentGoalName) return;
 
-    if (addAnother && tempGoals.length < 3) {
+    if (addAnother) {
       const newId = 'g' + (tempGoals.length + 1);
       const newGoals = [...tempGoals];
       newGoals.push({ id: newId, name: '', duration: '6 months', customDuration: '' });
@@ -427,16 +427,14 @@ function Onboarding({ onComplete }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {tempGoals.length < 3 && (
-              <button 
-                className="btn-secondary" 
-                type="button" 
-                onClick={() => handleGoalNext(true)}
-                disabled={!tempGoals[goalIndex].name.trim()}
-              >
-                ➕ Add another journey
-              </button>
-            )}
+            <button 
+              className="btn-secondary" 
+              type="button" 
+              onClick={() => handleGoalNext(true)}
+              disabled={!tempGoals[goalIndex].name.trim()}
+            >
+              ➕ Add another journey
+            </button>
             
             <button 
               className="btn-primary" 
