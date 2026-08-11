@@ -27,11 +27,11 @@ function Onboarding({ onComplete }) {
   const [step, setStep] = React.useState(1);
   
   // Step 1: Identity Launchpad
-  const [name, setName] = React.useState('');
+  const [name, setName] = React.useState('Alex');
   const [avatarType, setAvatarType] = React.useState('Minimal Human');
   const [avatarEmoji, setAvatarEmoji] = React.useState('👤');
-  const [curId, setCurId] = React.useState('');
-  const [futId, setFutId] = React.useState('');
+  const [curId, setCurId] = React.useState('Student');
+  const [futId, setFutId] = React.useState('Product Designer');
 
   const avatarOptions = [
     { type: 'Minimal Human', emoji: '👤' },
@@ -49,7 +49,7 @@ function Onboarding({ onComplete }) {
 
   // Step 3: Goals Setup (Screen by Screen)
   const [tempGoals, setTempGoals] = React.useState([
-    { id: 'g1', name: '', duration: '6 months', customDuration: '' }
+    { id: 'g1', name: 'Portfolio Design', duration: '6 months', customDuration: '' }
   ]);
   const [goalIndex, setGoalIndex] = React.useState(0);
 
@@ -221,6 +221,9 @@ function Onboarding({ onComplete }) {
 
     const goalsData = tempGoals.map(tg => {
       const ms = milestones[tg.id] || {};
+      const finalHrs = ms.weeklyCommitment === 'Custom'
+        ? (parseInt(ms.customCommitment) || 10)
+        : (parseInt(ms.weeklyCommitment) || 5);
       return {
         id: tg.id,
         name: tg.name || 'My Campaign Journey',
@@ -228,7 +231,7 @@ function Onboarding({ onComplete }) {
         finalTarget: ms.monthlyTarget || 'Build Milestone App',
         monthlyTarget: ms.monthlyTarget || 'First checkpoint',
         weeklyActions: ms.weeklyGoal || 'Research & Design',
-        hoursPerWeek: parseInt(ms.weeklyCommitment) || 5,
+        hoursPerWeek: finalHrs,
         category: 'Career',
         createdAt: new Date().toISOString()
       };
@@ -483,7 +486,19 @@ function Onboarding({ onComplete }) {
                 <option>5 hours/week</option>
                 <option>10 hours/week</option>
                 <option>20 hours/week</option>
+                <option>Custom</option>
               </select>
+              {milestones[tempGoals[milestoneIndex].id]?.weeklyCommitment === 'Custom' && (
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  style={{ marginTop: 8 }} 
+                  value={milestones[tempGoals[milestoneIndex].id]?.customCommitment || ''} 
+                  onChange={e => updateMilestone(tempGoals[milestoneIndex].id, 'customCommitment', e.target.value)} 
+                  placeholder="Enter custom weekly hours (e.g. 15)" 
+                  required 
+                />
+              )}
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
