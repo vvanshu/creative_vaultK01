@@ -1323,7 +1323,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
 }
 
 /* ===== PROFILE & TIMELINE PAGE ===== */
-function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast }) {
+function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
 
@@ -1454,6 +1454,34 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             </div>
           </div>
 
+          {/* PWA Install Prompt Card */}
+          {!isStandalone && deferredPrompt && (
+            <div className="premium-card" style={{ background: 'rgba(88,86,214,0.04)', borderColor: 'rgba(88,86,214,0.15)' }}>
+              <h3 className="section-header" style={{ marginBottom: 6 }}>📲 Odyssey Home Screen App</h3>
+              <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Install ODYSSEY natively for offline access, full-screen view, and local notifications.</p>
+              <button 
+                className="btn-primary" 
+                style={{ marginTop: 16, height: '46px' }} 
+                onClick={async () => {
+                  if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User choice outcome: ${outcome}`);
+                    setDeferredPrompt(null);
+                  }
+                }}
+              >
+                Add to Home Screen
+              </button>
+            </div>
+          )}
+          {isStandalone && (
+            <div className="premium-card" style={{ background: 'rgba(52, 199, 89, 0.04)', borderColor: 'rgba(52, 199, 89, 0.15)', textAlign: 'center' }}>
+              <span className="ios-badge ios-badge-green">✓ PWA Standalone Active</span>
+              <p className="caption" style={{ marginTop: 6 }}>Launched natively from your device home screen.</p>
+            </div>
+          )}
+
           {/* Weekly reflection campaign prompt */}
           <div className="premium-card" style={{ background: 'rgba(88,86,214,0.04)', borderColor: 'rgba(88,86,214,0.15)' }}>
             <h3 className="section-header" style={{ marginBottom: 6 }}>Weekly Reflection Log</h3>
@@ -1579,6 +1607,21 @@ function App() {
   const [page, setPage] = React.useState('home');
   const [toastMsg, setToastMsg] = React.useState(null);
 
+  const [deferredPrompt, setDeferredPrompt] = React.useState(null);
+  const [isStandalone, setIsStandalone] = React.useState(false);
+
+  React.useEffect(() => {
+    const standaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    setIsStandalone(!!standaloneMode);
+
+    const handleInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+  }, []);
+
   const showToast = (msg) => { setToastMsg(msg); };
 
   if (!profile) return <Onboarding onComplete={(p) => { setProfile(p); setPage('home'); }} />;
@@ -1592,7 +1635,22 @@ function App() {
       {page === 'goals' && <GoalsPage goals={goals} setGoals={setGoals} tasks={tasks} setTasks={setTasks} toast={showToast} />}
       {page === 'quests' && <QuestsPage profile={profile} tasks={tasks} goals={goals} setTasks={setTasks} setProfile={setProfile} toast={showToast} />}
       {page === 'rewards' && <RewardsPage profile={profile} setProfile={setProfile} rewards={rewards} setRewards={setRewards} toast={showToast} />}
-      {page === 'profile' && <ProfilePage profile={profile} setProfile={setProfile} tasks={tasks} setTasks={setTasks} rewards={rewards} setRewards={setRewards} reviews={reviews} setReviews={setReviews} toast={showToast} />}
+      {page === 'profile' && (
+        <ProfilePage 
+          profile={profile} 
+          setProfile={setProfile} 
+          tasks={tasks} 
+          setTasks={setTasks} 
+          rewards={rewards} 
+          setRewards={setRewards} 
+          reviews={reviews} 
+          setReviews={setReviews} 
+          toast={showToast} 
+          deferredPrompt={deferredPrompt}
+          setDeferredPrompt={setDeferredPrompt}
+          isStandalone={isStandalone}
+        />
+      )}
 
       {/* Floating Bottom Nav */}
       <nav className="bottom-nav">
