@@ -366,6 +366,45 @@ function Onboarding({ onComplete }) {
             <p className="caption">Transform your goals into a path towards your future self</p>
           </div>
 
+          {/* Google Sign In Option */}
+          <button 
+            type="button" 
+            className="btn-secondary" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 10, 
+              height: '46px', 
+              minHeight: '46px', 
+              width: '100%', 
+              marginBottom: 20, 
+              border: '1px solid var(--border-system)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
+              fontWeight: 600
+            }}
+            onClick={() => {
+              const mockGoogleName = prompt("Simulated Google Auth: Enter your Google Account Display Name:", "Vanshu Dev");
+              if (mockGoogleName) {
+                setName(mockGoogleName);
+                setAvatarType('Explorer');
+                setAvatarEmoji('🧭');
+                setCurId('Developer');
+                setFutId('Independent Founder');
+                alert(`Successfully signed in as ${mockGoogleName}! Profile details pre-populated.`);
+              }
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" style={{ display: 'block' }}>
+              <path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z" fill="#4285F4" />
+              <path d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26A5.58 5.58 0 0 1 9 14.54c-2.34 0-4.33-1.57-5.04-3.71H.92v2.33A9 9 0 0 0 9 18z" fill="#34A853" />
+              <path d="M3.96 10.83a5.39 5.39 0 0 1 0-3.66V4.84H.92a9 9 0 0 0 0 8.32l3.04-2.33z" fill="#FBBC05" />
+              <path d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4A9 9 0 0 0 .92 4.84l3.04 2.33C4.67 5.15 6.66 3.58 9 3.58z" fill="#EA4335" />
+            </svg>
+            Sign in with Google
+          </button>
+
           <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
             <div className="form-group">
               <label className="form-label">Avatar Identity Type</label>
@@ -1963,6 +2002,19 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
           <div className="premium-card" style={{ marginTop: 24, border: '1.5px solid rgba(255, 45, 85, 0.15)' }}>
             <h3 className="section-header" style={{ color: 'var(--accent-pink)', marginBottom: 16 }}>⚠️ System Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button 
+                type="button"
+                className="btn-secondary" 
+                style={{ color: 'var(--text-primary)', fontWeight: 600 }} 
+                onClick={() => {
+                  if (confirm('Are you sure you want to sign out? Your profile settings will be cleared so you can log back in.')) {
+                    localStorage.removeItem('irisquest_profile');
+                    window.location.reload();
+                  }
+                }}
+              >
+                🚪 Sign Out / Log Out Profile
+              </button>
               <button className="btn-secondary" style={{ color: 'var(--text-primary)' }} onClick={softReset}>🔄 Soft Reset (XP & quests)</button>
               <button className="btn-primary" style={{ background: 'var(--accent-pink)', boxShadow: 'none' }} onClick={fullReset}>🚨 Full System Format</button>
             </div>
