@@ -418,7 +418,7 @@ function Onboarding({ onComplete }) {
                       padding: '12px 6px',
                       borderRadius: '12px',
                       border: avatarType === opt.type ? '2px solid var(--accent-indigo)' : '1px solid var(--border-system)',
-                      background: avatarType === opt.type ? 'rgba(88,86,214,0.06)' : '#FFFFFF',
+                      background: avatarType === opt.type ? 'rgba(247, 208, 96, 0.12)' : 'var(--bg-card)',
                       cursor: 'pointer',
                       textAlign: 'center',
                       transition: 'var(--transition-ios)'
@@ -734,7 +734,7 @@ function Onboarding({ onComplete }) {
                       padding: '10px 14px',
                       borderRadius: '12px',
                       border: isSelected ? '2px solid var(--accent-orange)' : '1px solid var(--border-system)',
-                      background: isSelected ? 'rgba(255, 149, 0, 0.05)' : '#FFFFFF',
+                      background: isSelected ? 'rgba(255, 149, 0, 0.05)' : 'var(--bg-card)',
                       cursor: 'pointer',
                       transition: 'var(--transition-ios)'
                     }}
@@ -994,7 +994,7 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
                 {/* Visual horizontal pipeline for dashboard */}
                 <div style={{ position: 'relative', margin: '14px 0 10px' }}>
                   <svg width="100%" height="32" style={{ overflow: 'visible' }}>
-                    <line x1="5%" y1="16" x2="95%" y2="16" stroke="rgba(0,0,0,0.06)" strokeWidth="3" />
+                    <line x1="5%" y1="16" x2="95%" y2="16" stroke="var(--border-system)" strokeWidth="3" />
                     <line x1="5%" y1="16" x2={`${5 + (prog * 0.9)}%`} y2="16" stroke="var(--accent-indigo)" strokeWidth="3" />
                     {milestones.map((ms, idx) => {
                       const cx = 5 + (idx * 30);
@@ -1004,7 +1004,7 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
                           cx={`${cx}%`} 
                           cy="16" 
                           r={ms.done ? '6' : '5'} 
-                          fill={ms.done ? 'var(--accent-indigo)' : '#FFFFFF'} 
+                          fill={ms.done ? 'var(--accent-indigo)' : 'var(--bg-card)'} 
                           stroke={ms.done ? 'var(--accent-indigo)' : 'var(--border-system)'} 
                           strokeWidth="2" 
                         />
