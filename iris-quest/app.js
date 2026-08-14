@@ -1080,6 +1080,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   };
 
   const [expandedWeek, setExpandedWeek] = React.useState({});
+  const [expandedGoalIds, setExpandedGoalIds] = React.useState({});
   const [inlineTitle, setInlineTitle] = React.useState({});
 
   const getGoalProgress = (gId) => {
