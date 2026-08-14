@@ -376,7 +376,7 @@ body {
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--accent-indigo);
-  background-color: #FFFFFF;
+  background-color: var(--bg-card);
   box-shadow: 0 0 0 4px rgba(88, 86, 214, 0.1);
 }
 
@@ -385,7 +385,7 @@ body {
   display: flex;
   align-items: center;
   padding: 16px;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: 16px;
   border: 1px solid var(--border-system);
   margin-bottom: 10px;
@@ -544,7 +544,7 @@ body {
   height: 10px;
   border-radius: 50%;
   background: var(--accent-indigo);
-  border: 2px solid #FFFFFF;
+  border: 2px solid var(--bg-card);
 }
 
 /* Segmented Tabs (Segmented Control) */
@@ -791,7 +791,7 @@ html, body {
   font-weight: 700;
   border-radius: 10px;
   padding: 2px 5px;
-  border: 1.5px solid #FFFFFF;
+  border: 1.5px solid var(--bg-card);
   line-height: 1;
 }
 
@@ -801,7 +801,7 @@ html, body {
   right: 16px;
   width: calc(100% - 32px);
   max-width: 320px;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: 18px;
   border: 1px solid var(--border-system);
   box-shadow: 0 10px 40px rgba(0,0,0,0.12);
