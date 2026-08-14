@@ -1127,7 +1127,6 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
               toast('Quest deleted.');
             };
 
-            return (
             const isGoalOpen = !!expandedGoalIds[g.id];
             const toggleGoal = () => {
               setExpandedGoalIds(prev => ({
