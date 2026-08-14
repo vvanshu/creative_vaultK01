@@ -1128,19 +1128,30 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
             };
 
             return (
-              <div className="premium-card" key={g.id}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            const isGoalOpen = !!expandedGoalIds[g.id];
+            const toggleGoal = () => {
+              setExpandedGoalIds(prev => ({
+                ...prev,
+                [g.id]: !prev[g.id]
+              }));
+            };
+
+            return (
+              <div className="premium-card" key={g.id} style={{ padding: '16px 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, cursor: 'pointer' }} onClick={toggleGoal}>
                   <span className={`ios-badge ${badgeClass}`}>{g.category}</span>
                   <span className="caption" style={{ fontWeight: 600 }}>{g.hoursPerWeek} hrs / week</span>
                 </div>
                 
-                <h3 className="title" style={{ fontSize: '20px', marginBottom: 4, letterSpacing: '-0.4px' }}>{g.name.toUpperCase()}</h3>
+                <h3 className="title" style={{ fontSize: '20px', marginBottom: 4, letterSpacing: '-0.4px', cursor: 'pointer' }} onClick={toggleGoal}>
+                  {g.name.toUpperCase()} {isGoalOpen ? '▼' : '▲'}
+                </h3>
                 <p className="caption" style={{ marginBottom: 16 }}>Timeline Horizon: <b>{g.duration}</b> ({totalWeeks} Weeks)</p>
                 
                 {/* Journey Duration-based Progress Bar */}
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ marginBottom: 18, cursor: 'pointer' }} onClick={toggleGoal}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                    <span>Journey Complete</span>
+                    <span>Overall Journey Progress</span>
                     <span>{prog}%</span>
                   </div>
                   <div className="ios-progress-track" style={{ height: '6px' }}>
@@ -1148,109 +1159,125 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                   </div>
                 </div>
 
-                {/* Collapsible Weeks Accordion */}
-                <div style={{ marginBottom: 20 }}>
-                  <h4 className="section-header" style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase' }}>Weekly Action Roadmap</h4>
-                  {weeksArray.map(wk => {
-                    const isOpen = expandedWeek[g.id] === wk;
-                    const weekTasks = tasks.filter(t => t.goalId === g.id && t.weekNumber === wk);
-                    const completedWeekCount = weekTasks.filter(t => t.isCompleted).length;
-                    const totalWeekCount = weekTasks.length;
-                    const isWeekDone = totalWeekCount > 0 && completedWeekCount === totalWeekCount;
+                {!isGoalOpen && (
+                  <button className="btn-secondary" style={{ height: '40px', minHeight: '40px', fontSize: '13px', marginTop: 4 }} onClick={toggleGoal}>
+                    🧭 View Journey Roadmap & Milestones
+                  </button>
+                )}
 
-                    return (
-                      <div className="collapsible-week" key={wk}>
-                        <button className="collapsible-trigger" type="button" onClick={() => toggleWeek(g.id, wk)}>
-                          <span style={{ fontSize: '14px', fontWeight: 700, color: isWeekDone ? 'var(--accent-emerald)' : 'var(--text-primary)' }}>
-                            {isWeekDone ? '✓ ' : ''}Week {wk} Focus
-                          </span>
-                          <span className="caption" style={{ fontWeight: 600 }}>
-                            {totalWeekCount > 0 ? `${completedWeekCount}/${totalWeekCount} Cleared` : 'No quests'} {isOpen ? '▼' : '▶'}
-                          </span>
-                        </button>
-                        
-                        {isOpen && (
-                          <div className="collapsible-pane">
-                            <div style={{ margin: '8px 0 12px' }}>
-                              {weekTasks.length === 0 ? (
-                                <p className="caption" style={{ fontStyle: 'italic', padding: '4px 0' }}>No quests defined for this week node.</p>
-                              ) : (
-                                weekTasks.map(t => (
-                                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid var(--border-system)', marginBottom: 6 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1 }}>
-                                      <input 
-                                        type="checkbox" 
-                                        checked={t.isCompleted} 
-                                        onChange={() => toggleInlineTask(t.id)} 
-                                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                      />
-                                      <span style={{ fontSize: '13px', textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
-                                        {t.title}
-                                      </span>
-                                    </div>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => deleteInlineTask(t.id)} 
-                                      style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', cursor: 'pointer', fontSize: '12px' }}
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                ))
-                              )}
-                            </div>
+                {/* Collapsible content (Accordion roadmap & checkpoints) */}
+                {isGoalOpen && (
+                  <div style={{ marginTop: 20 }}>
+                    {/* Collapsible Weeks Accordion */}
+                    <div style={{ marginBottom: 20 }}>
+                      <h4 className="section-header" style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase' }}>Weekly Action Roadmap</h4>
+                      {weeksArray.map(wk => {
+                        const isOpen = expandedWeek[g.id] === wk;
+                        const weekTasks = tasks.filter(t => t.goalId === g.id && t.weekNumber === wk);
+                        const completedWeekCount = weekTasks.filter(t => t.isCompleted).length;
+                        const totalWeekCount = weekTasks.length;
+                        const isWeekDone = totalWeekCount > 0 && completedWeekCount === totalWeekCount;
 
-                            {/* Inline task creator */}
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <input 
-                                className="form-input" 
-                                style={{ flexGrow: 1, height: '36px', minHeight: '36px', fontSize: '13px', padding: '0 10px' }} 
-                                value={inlineTitle[`${g.id}-${wk}`] || ''} 
-                                onChange={e => setInlineTitle({ ...inlineTitle, [`${g.id}-${wk}`]: e.target.value })} 
-                                placeholder="Add weekly quest action..." 
-                              />
-                              <button 
-                                type="button" 
-                                className="btn-primary" 
-                                style={{ width: '36px', height: '36px', minHeight: '36px', padding: 0 }} 
-                                onClick={() => addInlineQuest(g.id, wk)}
-                              >
-                                ＋
-                              </button>
-                            </div>
+                        return (
+                          <div className="collapsible-week" key={wk}>
+                            <button className="collapsible-trigger" type="button" onClick={() => toggleWeek(g.id, wk)}>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: isWeekDone ? 'var(--accent-emerald)' : 'var(--text-primary)' }}>
+                                {isWeekDone ? '✓ ' : ''}Week {wk} Focus
+                              </span>
+                              <span className="caption" style={{ fontWeight: 600 }}>
+                                {totalWeekCount > 0 ? `${completedWeekCount}/${totalWeekCount} Cleared` : 'No quests'} {isOpen ? '▼' : '▶'}
+                              </span>
+                            </button>
+                            
+                            {isOpen && (
+                              <div className="collapsible-pane">
+                                <div style={{ margin: '8px 0 12px' }}>
+                                  {weekTasks.length === 0 ? (
+                                    <p className="caption" style={{ fontStyle: 'italic', padding: '4px 0' }}>No quests defined for this week node.</p>
+                                  ) : (
+                                    weekTasks.map(t => (
+                                      <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid var(--border-system)', marginBottom: 6 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1 }}>
+                                          <input 
+                                            type="checkbox" 
+                                            checked={t.isCompleted} 
+                                            onChange={() => toggleInlineTask(t.id)} 
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                          />
+                                          <span style={{ fontSize: '13px', textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
+                                            {t.title}
+                                          </span>
+                                        </div>
+                                        <button 
+                                          type="button" 
+                                          onClick={() => deleteInlineTask(t.id)} 
+                                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', cursor: 'pointer', fontSize: '12px' }}
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+
+                                {/* Inline task creator */}
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <input 
+                                    className="form-input" 
+                                    style={{ flexGrow: 1, height: '36px', minHeight: '36px', fontSize: '13px', padding: '0 10px' }} 
+                                    value={inlineTitle[`${g.id}-${wk}`] || ''} 
+                                    onChange={e => setInlineTitle({ ...inlineTitle, [`${g.id}-${wk}`]: e.target.value })} 
+                                    placeholder="Add weekly quest action..." 
+                                  />
+                                  <button 
+                                    type="button" 
+                                    className="btn-primary" 
+                                    style={{ width: '36px', height: '36px', minHeight: '36px', padding: 0 }} 
+                                    onClick={() => addInlineQuest(g.id, wk)}
+                                  >
+                                    ＋
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
 
-                {/* Monthly Checkpoints */}
-                <div style={{ background: 'rgba(0,0,0,0.01)', borderRadius: '12px', padding: '14px 16px', border: '1px solid var(--border-system)', marginBottom: 16 }}>
-                  <h4 className="section-header" style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 10 }}>Monthly Milestones</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Month 1 Checkpoint: <span className="caption">{g.monthlyTarget || 'Checkpoint 1'}</span></span>
-                      <span className={'ios-badge ' + (prog >= 33 ? 'ios-badge-green' : 'ios-badge-orange')}>
-                        {prog >= 33 ? '✓ Cleared' : '⌛ In Progress'}
-                      </span>
+                    {/* Monthly Checkpoints */}
+                    <div style={{ background: 'rgba(0,0,0,0.01)', borderRadius: '12px', padding: '14px 16px', border: '1px solid var(--border-system)', marginBottom: 16 }}>
+                      <h4 className="section-header" style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 10 }}>Monthly Milestones</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600 }}>Month 1 Checkpoint: <span className="caption">{g.monthlyTarget || 'Checkpoint 1'}</span></span>
+                          <span className={'ios-badge ' + (prog >= 33 ? 'ios-badge-green' : 'ios-badge-orange')}>
+                            {prog >= 33 ? '✓ Cleared' : '⌛ In Progress'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600 }}>Month 2 Checkpoint: <span className="caption">Focus Optimization</span></span>
+                          <span className={'ios-badge ' + (prog >= 66 ? 'ios-badge-green' : 'ios-badge-orange')}>
+                            {prog >= 66 ? '✓ Cleared' : '⌛ Pending'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600 }}>Destination: <span className="caption">{g.finalTarget || 'Destination Launch'}</span></span>
+                          <span className={'ios-badge ' + (prog >= 100 ? 'ios-badge-green' : 'ios-badge-orange')}>
+                            {prog >= 100 ? '✓ Cleared' : '⌛ Pending'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Month 2 Checkpoint: <span className="caption">Focus Optimization</span></span>
-                      <span className={'ios-badge ' + (prog >= 66 ? 'ios-badge-green' : 'ios-badge-orange')}>
-                        {prog >= 66 ? '✓ Cleared' : '⌛ Pending'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Destination: <span className="caption">{g.finalTarget || 'Destination Launch'}</span></span>
-                      <span className={'ios-badge ' + (prog >= 100 ? 'ios-badge-green' : 'ios-badge-orange')}>
-                        {prog >= 100 ? '✓ Cleared' : '⌛ Pending'}
-                      </span>
+
+                    <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                      <button className="btn-secondary" style={{ height: '40px', minHeight: '40px', fontSize: '13px' }} onClick={toggleGoal}>
+                        ▲ Close Journey Map
+                      </button>
+                      <button className="btn-danger-text" style={{ padding: '0 8px' }} onClick={()=>deleteGoal(g.id)}>🗑️ Delete Campaign</button>
                     </div>
                   </div>
-                </div>
-
-                <button className="btn-danger-text" onClick={()=>deleteGoal(g.id)}>🗑️ Delete Campaign</button>
+                )}
               </div>
             );
           })
