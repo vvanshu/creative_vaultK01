@@ -1,3 +1,4 @@
+/* ===== COLOR SCHEME ARCHITECTURE (LIGHT / DARK / SYSTEM DEFAULT) ===== */
 :root {
   /* ODYSSEY Premium iOS Light System */
   --bg-system: #F2F2F7;
@@ -23,6 +24,62 @@
   --radius-button: 14px;
   --font-apple: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --transition-ios: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* System-based Auto Dark Scheme default variables */
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) {
+    --bg-system: #0A0A0C;
+    --bg-card: rgba(28, 28, 30, 0.95);
+    --border-system: rgba(255, 255, 255, 0.08);
+    --text-primary: #FFFFFF;
+    --text-secondary: #AEAEB2;
+    --text-muted: #48484A;
+    --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+  :root:not(.theme-light) .segmented-control {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  :root:not(.theme-light) .segmented-btn.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+  }
+}
+
+/* Forced Dark Theme Overrides */
+.theme-dark {
+  --bg-system: #0A0A0C !important;
+  --bg-card: rgba(28, 28, 30, 0.95) !important;
+  --border-system: rgba(255, 255, 255, 0.08) !important;
+  --text-primary: #FFFFFF !important;
+  --text-secondary: #AEAEB2 !important;
+  --text-muted: #48484A !important;
+  --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+}
+.theme-dark .segmented-control {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.theme-dark .segmented-btn.active {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+/* Forced Light Theme Overrides */
+.theme-light {
+  --bg-system: #F2F2F7 !important;
+  --bg-card: rgba(255, 255, 255, 0.95) !important;
+  --border-system: rgba(0, 0, 0, 0.05) !important;
+  --text-primary: #1C1C1E !important;
+  --text-secondary: #8E8E93 !important;
+  --text-muted: #C7C7CC !important;
+  --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.03), 0 1px 4px rgba(0, 0, 0, 0.02) !important;
+}
+.theme-light .segmented-control {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+.theme-light .segmented-btn.active {
+  background: #FFFFFF !important;
+  color: #1C1C1E !important;
 }
 
 /* Base resets & styles */

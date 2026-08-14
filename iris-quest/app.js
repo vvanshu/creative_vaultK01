@@ -626,7 +626,7 @@ function Onboarding({ onComplete }) {
             {/* Tasks List */}
             <div style={{ margin: '8px 0' }}>
               {(week1Quests[tempGoals[questIndex].id] || []).map(q => (
-                <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 6 }}>
+                <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: 'var(--bg-card)', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 6 }}>
                   <div style={{ fontSize: '14px', fontWeight: 500 }}>{q.title} <span className="caption">({q.difficulty})</span></div>
                   <button type="button" onClick={() => removeQuest(tempGoals[questIndex].id, q.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', fontSize: '13px', cursor: 'pointer' }}>✕</button>
                 </div>
@@ -744,7 +744,7 @@ function Onboarding({ onComplete }) {
             {customRewards.length > 0 && (
               <div style={{ marginTop: 12 }}>
                 {customRewards.map(cr => (
-                  <div key={cr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 4, fontSize: '12px' }}>
+                  <div key={cr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: 'var(--bg-card)', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 4, fontSize: '12px' }}>
                     <span>{cr.name} (⚡ {cr.xpCost} XP)</span>
                     <button type="button" onClick={() => setCustomRewards(customRewards.filter(x => x.id !== cr.id))} style={{ border: 'none', background: 'transparent', color: 'var(--accent-pink)', cursor: 'pointer' }}>✕</button>
                   </div>
@@ -913,7 +913,7 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
       </div>
 
       {/* XP Card */}
-      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF9FF 100%)' }}>
+      <div className="premium-card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-system) 100%)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
           <div>
             <div style={{ fontSize: '36px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{profile.totalXp} XP</div>
@@ -1196,7 +1196,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                                     <p className="caption" style={{ fontStyle: 'italic', padding: '4px 0' }}>No quests defined for this week node.</p>
                                   ) : (
                                     weekTasks.map(t => (
-                                      <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid var(--border-system)', marginBottom: 6 }}>
+                                      <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-system)', marginBottom: 6 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1 }}>
                                           <input 
                                             type="checkbox" 
@@ -1568,7 +1568,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
         <h1 className="large-title" style={{ margin: 0 }}>Perks</h1>
       </div>
 
-      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #FFFFFF, #FAF9FF)', borderColor: 'rgba(88, 86, 214, 0.15)', marginBottom: 16 }}>
+      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, var(--bg-card), var(--bg-system))', borderColor: 'rgba(88, 86, 214, 0.15)', marginBottom: 16 }}>
         <div>
           <span className="ios-badge ios-badge-orange">Perk Vault</span>
           <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Claim Perks</h2>
@@ -1700,7 +1700,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
 }
 
 /* ===== PROFILE & TIMELINE PAGE ===== */
-function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone }) {
+function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
 
@@ -1865,6 +1865,35 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review milestones, assess obstacles and plan next week's campaign. Grants +50 XP.</p>
             <button className="btn-primary" style={{ marginTop: 16, height: '46px' }} onClick={()=>setShowReview(true)}>Write Weekly Review</button>
           </div>
+          
+          {/* Theme Settings Card */}
+          <div className="premium-card">
+            <h3 className="section-header" style={{ marginBottom: 12 }}>🎨 UI Appearance Mode</h3>
+            <p className="caption" style={{ marginBottom: 14 }}>Customize the color palette appearance of ODYSSEY OS.</p>
+            <div className="segmented-control" style={{ marginBottom: 0 }}>
+              <button 
+                type="button"
+                className={'segmented-btn' + (theme === 'light' ? ' active' : '')} 
+                onClick={() => { setTheme('light'); toast('Light Mode active'); }}
+              >
+                ☀️ Light
+              </button>
+              <button 
+                type="button"
+                className={'segmented-btn' + (theme === 'dark' ? ' active' : '')} 
+                onClick={() => { setTheme('dark'); toast('Dark Mode active'); }}
+              >
+                🌙 Dark
+              </button>
+              <button 
+                type="button"
+                className={'segmented-btn' + (theme === 'system' ? ' active' : '')} 
+                onClick={() => { setTheme('system'); toast('System Preference mode active'); }}
+              >
+                ⚙️ System
+              </button>
+            </div>
+          </div>
 
           {/* Edit Identity mapping form */}
           <div className="premium-card">
@@ -1991,8 +2020,23 @@ function App() {
   const [page, setPage] = React.useState('home');
   const [toastMsg, setToastMsg] = React.useState(null);
 
+  const [theme, setTheme] = React.useState(() => {
+    return LS.get('irisquest_theme') || 'system';
+  });
+
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [isStandalone, setIsStandalone] = React.useState(false);
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('theme-light', 'theme-dark');
+    if (theme === 'light') {
+      root.classList.add('theme-light');
+    } else if (theme === 'dark') {
+      root.classList.add('theme-dark');
+    }
+    LS.set('irisquest_theme', theme);
+  }, [theme]);
 
   React.useEffect(() => {
     const standaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -2033,6 +2077,8 @@ function App() {
           deferredPrompt={deferredPrompt}
           setDeferredPrompt={setDeferredPrompt}
           isStandalone={isStandalone}
+          theme={theme}
+          setTheme={setTheme}
         />
       )}
 
