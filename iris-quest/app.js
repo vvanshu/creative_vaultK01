@@ -800,39 +800,185 @@ function Onboarding({ onComplete }) {
   );
 }
 
-/* ===== HOME PAGE (DASHBOARD) ===== */
-function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
+function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPage, toast }) {
   const lv = calcLevel(profile.totalXp);
   const avail = profile.totalXp - profile.spentXp;
   const xpNeeded = lv.nextXp - lv.currentXp;
 
-  const todayTasks = tasks.filter(t => t.taskType === 'daily' && !t.isCompleted);
-  const completedTodayCount = tasks.filter(t => t.taskType === 'daily' && t.isCompleted).length;
-  const totalTodayCount = todayTasks.length + completedTodayCount;
-  const progressPct = totalTodayCount > 0 ? Math.round((completedTodayCount / totalTodayCount) * 100) : 100;
+  const [selectedDate, setSelectedDate] = React.useState(() => new Date());
+  const [currentMonth, setCurrentMonth] = React.useState(() => new Date());
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [showNotif, setShowNotif] = React.useState(false);
 
-  const nextQuest = todayTasks[0];
+  // New task builder state
+  const [newTitle, setNewTitle] = React.useState('');
+  const [newGoalId, setNewGoalId] = React.useState('');
+  const [newDiff, setNewDiff] = React.useState('Medium');
+
+  const selectedDateStr = selectedDate.toDateString();
+  const selectedDateYMD = selectedDate.toISOString().split('T')[0];
+
+  // Selected date tasks filtering
+  const dayTasks = tasks.filter(t => {
+    if (t.taskType === 'daily') return true;
+    if (t.targetDate === selectedDateYMD) return true;
+    if (!t.targetDate && new Date(t.createdAt).toDateString() === selectedDateStr) return true;
+    return false;
+  });
+
+  const completedCount = dayTasks.filter(t => t.isCompleted).length;
+  const totalCount = dayTasks.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
   const goalName = (gid) => { const g = goals.find(g => g.id === gid); return g ? g.name : ''; };
 
-  const [showNotif, setShowNotif] = React.useState(false);
+  // Task list notifications bell status helper
   const activeUnusedTickets = rewards.filter(r => r.isClaimed && !r.isUsed).length;
-  
+  const remainingTodayDailies = tasks.filter(t => t.taskType === 'daily' && !t.isCompleted).length;
   const notificationsList = [];
-  if (todayTasks.length > 0) {
-    notificationsList.push(`⚡ You have ${todayTasks.length} daily quests remaining on your board!`);
+  if (remainingTodayDailies > 0) {
+    notificationsList.push(`⚡ You have ${remainingTodayDailies} daily quests remaining on your board!`);
   } else {
     notificationsList.push(`✅ All daily quests cleared for today. Excellent work!`);
   }
   if (activeUnusedTickets > 0) {
     notificationsList.push(`🎁 You have ${activeUnusedTickets} active coupon tickets waiting to be redeemed!`);
   }
-  
-  const activeNotifsCount = (todayTasks.length > 0 ? 1 : 0) + (activeUnusedTickets > 0 ? 1 : 0);
+  const activeNotifsCount = (remainingTodayDailies > 0 ? 1 : 0) + (activeUnusedTickets > 0 ? 1 : 0);
+
+  // Helpers to generate days of week (Mon to Sun) containing refDate
+  const getDaysInWeek = (refDate) => {
+    const days = [];
+    const temp = new Date(refDate);
+    const day = temp.getDay();
+    const diff = temp.getDate() - day + (day === 0 ? -6 : 1);
+    temp.setDate(diff);
+    for (let i = 0; i < 7; i++) {
+      days.push(new Date(temp));
+      temp.setDate(temp.getDate() + 1);
+    }
+    return days;
+  };
+
+  // Helpers to generate days of month (including padding)
+  const getDaysInMonth = (refDate) => {
+    const year = refDate.getFullYear();
+    const month = refDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const days = [];
+
+    let startPadding = firstDay.getDay();
+    if (startPadding === 0) startPadding = 7;
+    const prevMonthPaddingCount = startPadding - 1;
+
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = prevMonthPaddingCount - 1; i >= 0; i--) {
+      days.push({
+        date: new Date(year, month - 1, prevMonthLastDay - i),
+        isCurrentMonth: false
+      });
+    }
+
+    const totalDaysInMonth = lastDay.getDate();
+    for (let i = 1; i <= totalDaysInMonth; i++) {
+      days.push({
+        date: new Date(year, month, i),
+        isCurrentMonth: true
+      });
+    }
+
+    const remaining = 7 - (days.length % 7);
+    if (remaining < 7) {
+      for (let i = 1; i <= remaining; i++) {
+        days.push({
+          date: new Date(year, month + 1, i),
+          isCurrentMonth: false
+        });
+      }
+    }
+    return days;
+  };
+
+  const changeMonth = (offset) => {
+    const m = new Date(currentMonth);
+    m.setMonth(m.getMonth() + offset);
+    setCurrentMonth(m);
+  };
+
+  const changeWeek = (offset) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + (offset * 7));
+    setSelectedDate(d);
+    setCurrentMonth(d);
+  };
+
+  const toggleTask = (id) => {
+    let wasChecked = false;
+    const updated = tasks.map(t => {
+      if (t.id !== id) return t;
+      wasChecked = !t.isCompleted;
+      const wasCompleted = t.isCompleted;
+      const newP = { ...profile };
+      if (wasCompleted) {
+        newP.totalXp = Math.max(0, newP.totalXp - t.xpValue);
+      } else {
+        newP.totalXp += t.xpValue;
+      }
+      LS.set('irisquest_profile', newP);
+      setProfile(newP);
+
+      return { 
+        ...t, 
+        isCompleted: !wasCompleted, 
+        completedAt: wasCompleted ? null : new Date().toISOString() 
+      };
+    });
+    LS.set('irisquest_tasks', updated);
+    setTasks(updated);
+    toast(wasChecked ? 'Quest cleared! 🎉' : 'Quest status reverted.');
+  };
+
+  const deleteTask = (id) => {
+    const updated = tasks.filter(t => t.id !== id);
+    LS.set('irisquest_tasks', updated);
+    setTasks(updated);
+    toast('Quest deleted.');
+  };
+
+  const addQuest = (e) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    const newTask = {
+      id: genId(),
+      title: newTitle.trim(),
+      isCompleted: false,
+      xpValue: XP_MAP[newDiff] || 30,
+      difficulty: newDiff,
+      taskType: 'single',
+      targetDate: selectedDateYMD,
+      goalId: newGoalId || null,
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [...tasks, newTask];
+    LS.set('irisquest_tasks', updated);
+    setTasks(updated);
+    setNewTitle('');
+    toast('Quest added to planner.');
+  };
+
+  const weekDays = getDaysInWeek(selectedDate);
+  const monthDays = getDaysInMonth(currentMonth);
+  const weekdayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   const getGoalProgress = (gid) => {
     const g = goals.find(x => x.id === gid);
     return g ? getDurationGoalProgress(g, tasks) : 0;
   };
+
+  const nextQuest = dayTasks.find(t => !t.isCompleted);
 
   return (
     <div>
@@ -897,6 +1043,192 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
         </div>
       )}
 
+      {/* BUILT-IN COLLAPSIBLE CALENDAR PLANNER */}
+      <div className="calendar-container">
+        <div className="calendar-header">
+          <span className="calendar-title">
+            {isExpanded 
+              ? currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+              : selectedDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+            }
+          </span>
+          <div className="calendar-controls">
+            <button 
+              type="button" 
+              className="calendar-arrow-btn" 
+              onClick={() => isExpanded ? changeMonth(-1) : changeWeek(-1)}
+            >
+              ◀
+            </button>
+            <button 
+              type="button" 
+              className="calendar-expand-btn" 
+              onClick={() => {
+                setIsExpanded(!isExpanded);
+                setCurrentMonth(selectedDate);
+              }}
+            >
+              {isExpanded ? 'Collapse ↑' : 'Month View ↓'}
+            </button>
+            <button 
+              type="button" 
+              className="calendar-arrow-btn" 
+              onClick={() => isExpanded ? changeMonth(1) : changeWeek(1)}
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+
+        {/* 7-Day Collapsed Week Row View */}
+        {!isExpanded && (
+          <div className="calendar-week-row">
+            {weekDays.map((d, i) => {
+              const isActive = d.toDateString() === selectedDateStr;
+              const isToday = d.toDateString() === new Date().toDateString();
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`calendar-day-chip ${isActive ? 'active' : ''}`}
+                  style={{ borderColor: isToday && !isActive ? 'var(--accent-pink)' : 'var(--border-system)' }}
+                  onClick={() => {
+                    setSelectedDate(d);
+                    setCurrentMonth(d);
+                  }}
+                >
+                  <span className="calendar-day-number">{d.getDate()}</span>
+                  <span className="calendar-day-name">
+                    {d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Month Grid View */}
+        {isExpanded && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+              {weekdayNames.map(name => (
+                <div key={name} className="calendar-weekday-header">{name}</div>
+              ))}
+            </div>
+            <div className="calendar-month-grid">
+              {monthDays.map((cell, idx) => {
+                const cellDateStr = cell.date.toDateString();
+                const isSelected = cellDateStr === selectedDateStr;
+                const isToday = cellDateStr === new Date().toDateString();
+                const cellClasses = `calendar-grid-cell ${isSelected ? 'selected' : ''} ${!cell.isCurrentMonth ? 'inactive' : ''} ${isToday ? 'today' : ''}`;
+
+                return (
+                  <div
+                    key={idx}
+                    className={cellClasses}
+                    onClick={() => {
+                      setSelectedDate(cell.date);
+                      setCurrentMonth(cell.date);
+                    }}
+                  >
+                    {cell.date.getDate()}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* PLANNER TASKS CHECKLIST (Styled like Saturday Activity box in Ref 1) */}
+      <div className="premium-card" style={{ borderLeft: '4px solid var(--accent-indigo)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <h3 className="section-header" style={{ margin: 0, textTransform: 'uppercase', fontSize: '14px', letterSpacing: '0.5px' }}>
+              {selectedDate.toLocaleDateString(undefined, { weekday: 'long' })} Quests
+            </h3>
+            <p className="caption" style={{ fontSize: '11px', marginTop: 2 }}>Daily planning nodes</p>
+          </div>
+          <span className="ios-badge ios-badge-purple">{progressPct}% Done</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '12px 0 20px' }}>
+          {dayTasks.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '24px', marginBottom: 6 }}>🛡️</div>
+              <p className="caption">No active quests mapped for this day node.</p>
+            </div>
+          ) : (
+            dayTasks.map(t => (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(0,0,0,0.02)', borderRadius: 12, border: '1px solid var(--border-system)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexGrow: 1 }}>
+                  <div className={'quest-checkbox'+(t.isCompleted?' checked':'')} onClick={()=>toggleTask(t.id)}>
+                    {t.isCompleted && (
+                      <svg className="quest-checkbox-icon" viewBox="0 0 12 12">
+                        <path d="M2.5 6L5 8.5L9.5 3.5" />
+                      </svg>
+                    )}
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '14px', fontWeight: 600, textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
+                      {t.title}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                      <span className={'ios-badge ' + (t.difficulty==='Small'?'ios-badge-blue':t.difficulty==='Medium'?'ios-badge-orange':'ios-badge-purple')} style={{ fontSize: '9px', padding: '2px 6px' }}>
+                        {t.difficulty}
+                      </span>
+                      {goalName(t.goalId) && (
+                        <span className="caption" style={{ fontSize: '10px', fontWeight: 600 }}>
+                          🎯 {goalName(t.goalId)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span className="quest-xp-badge" style={{ fontSize: '13px' }}>+{t.xpValue} XP</span>
+                  <button className="btn-icon" style={{ width: 26, height: 26, borderRadius: '50%' }} onClick={()=>deleteTask(t.id)}>✕</button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Quick Add Quest form for selected day */}
+        <form onSubmit={addQuest} style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--border-system)', paddingTop: 16 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              className="form-input"
+              style={{ flexGrow: 1, height: '40px', minHeight: '40px', fontSize: '13px' }}
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              placeholder="Add quest details..."
+              required
+            />
+            <button type="submit" className="btn-primary" style={{ width: '40px', height: '40px', minHeight: '40px', padding: 0 }}>
+              ＋
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label className="form-label" style={{ fontSize: '10px', marginBottom: 4 }}>Difficulty</label>
+              <select className="form-select" style={{ height: '36px', minHeight: '36px', fontSize: '12px' }} value={newDiff} onChange={e=>setNewDiff(e.target.value)}>
+                <option>Small</option><option>Medium</option><option>Large</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label" style={{ fontSize: '10px', marginBottom: 4 }}>Linked Journey</label>
+              <select className="form-select" style={{ height: '36px', minHeight: '36px', fontSize: '12px' }} value={newGoalId} onChange={e=>setNewGoalId(e.target.value)}>
+                <option value="">General</option>
+                {goals.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+
       {/* Profile/Identity Details Card */}
       <div className="premium-card">
         <span className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', color: 'var(--accent-indigo)' }}>Identity Transformation</span>
@@ -911,8 +1243,8 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
       {/* Today's Quests Card with Progress Ring */}
       <div className="premium-card" style={{ cursor: 'pointer' }} onClick={() => setPage('quests')}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <h3 className="section-header" style={{ margin: 0 }}>Today's Quests</h3>
-          <span className="caption" style={{ fontWeight: 600 }}>{completedTodayCount}/{totalTodayCount} Cleared</span>
+          <h3 className="section-header" style={{ margin: 0 }}>Quest Board Summary</h3>
+          <span className="caption" style={{ fontWeight: 600 }}>Active Overview</span>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <div className="progress-ring-container" style={{ width: 80, height: 80 }}>
@@ -943,7 +1275,7 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
               </>
             ) : (
               <>
-                <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-emerald)' }}>All Daily Quests Cleared!</h4>
+                <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-emerald)' }}>All Scheduled Quests Cleared!</h4>
                 <p className="caption" style={{ marginTop: 2 }}>Outstanding work.</p>
               </>
             )}
@@ -974,8 +1306,8 @@ function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
 
       {/* Goal Journey Progress Maps (Horizontal visual pathways) */}
       {goals.length > 0 && (
-        <div style={{ marginTop: 24, marginBottom: 20 }}>
-          <h3 className="section-header" style={{ marginBottom: 12 }}>Active Campaigns Map</h3>
+        <div style={{ marginTop: 24 }}>
+          <h3 className="section-header" style={{ marginBottom: 12 }}>Active Campaign Maps</h3>
           {goals.map(g => {
             const prog = getGoalProgress(g.id);
             const milestones = [
@@ -2117,7 +2449,7 @@ function App() {
       {toastMsg && <Toast message={toastMsg} onClose={()=>setToastMsg(null)} />}
 
       {/* Dynamic Subpages */}
-      {page === 'home' && <HomePage profile={profile} tasks={tasks} goals={goals} rewards={rewards} setPage={setPage} toast={showToast} />}
+      {page === 'home' && <HomePage profile={profile} setProfile={setProfile} tasks={tasks} setTasks={setTasks} goals={goals} rewards={rewards} setPage={setPage} toast={showToast} />}
       {page === 'goals' && <GoalsPage goals={goals} setGoals={setGoals} tasks={tasks} setTasks={setTasks} toast={showToast} />}
       {page === 'quests' && <QuestsPage profile={profile} tasks={tasks} goals={goals} setTasks={setTasks} setProfile={setProfile} toast={showToast} />}
       {page === 'rewards' && <RewardsPage profile={profile} setProfile={setProfile} rewards={rewards} setRewards={setRewards} toast={showToast} />}
