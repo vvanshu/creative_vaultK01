@@ -2021,7 +2021,11 @@ function App() {
   const [toastMsg, setToastMsg] = React.useState(null);
 
   const [theme, setTheme] = React.useState(() => {
-    return LS.get('irisquest_theme') || 'system';
+    try {
+      return localStorage.getItem('irisquest_theme') || 'system';
+    } catch (e) {
+      return 'system';
+    }
   });
 
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
@@ -2035,7 +2039,9 @@ function App() {
     } else if (theme === 'dark') {
       root.classList.add('theme-dark');
     }
-    LS.set('irisquest_theme', theme);
+    try {
+      localStorage.setItem('irisquest_theme', theme);
+    } catch (e) {}
   }, [theme]);
 
   React.useEffect(() => {
