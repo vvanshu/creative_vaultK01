@@ -6,13 +6,18 @@
   --border-system: rgba(0, 0, 0, 0.05);
   --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.03), 0 1px 4px rgba(0, 0, 0, 0.02);
   
-  /* Calm iOS Accent Colors */
-  --accent-indigo: #5856D6;
+  /* Taskbar Theme Variables */
+  --bg-nav: rgba(255, 255, 255, 0.85);
+  --border-nav: rgba(0, 0, 0, 0.06);
+
+  /* Butter Yellow & Gold Brand Palette (Light Mode defaults to Gold/Amber for readability) */
+  --accent-indigo: #B8860B; 
   --accent-emerald: #34C759;
   --accent-orange: #FF9500;
   --accent-blue: #007AFF;
   --accent-pink: #FF2D55;
   --accent-grey: #8E8E93;
+  --accent-butter: #F7D060;
   
   /* Text Hierarchy */
   --text-primary: #1C1C1E;
@@ -36,6 +41,13 @@
     --text-secondary: #AEAEB2;
     --text-muted: #48484A;
     --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2);
+    
+    /* Dark Theme Taskbar variables */
+    --bg-nav: rgba(28, 28, 30, 0.88);
+    --border-nav: rgba(255, 255, 255, 0.1);
+    
+    /* Dark Theme Accent (Glow Butter Yellow!) */
+    --accent-indigo: #F7D060;
   }
   :root:not(.theme-light) .segmented-control {
     background-color: rgba(255, 255, 255, 0.08);
@@ -44,6 +56,12 @@
     background: rgba(255, 255, 255, 0.15);
     color: #FFFFFF;
   }
+  /* System Dark badges overrides */
+  :root:not(.theme-light) .ios-badge-purple { background-color: rgba(247, 208, 96, 0.12); }
+  :root:not(.theme-light) .ios-badge-green { background-color: rgba(48, 209, 88, 0.12); color: #30D158; }
+  :root:not(.theme-light) .ios-badge-orange { background-color: rgba(255, 159, 10, 0.12); color: #FF9F0A; }
+  :root:not(.theme-light) .ios-badge-blue { background-color: rgba(10, 132, 255, 0.12); color: #0A84FF; }
+  :root:not(.theme-light) .ios-badge-pink { background-color: rgba(255, 55, 95, 0.12); color: #FF375F; }
 }
 
 /* Forced Dark Theme Overrides */
@@ -55,6 +73,13 @@
   --text-secondary: #AEAEB2 !important;
   --text-muted: #48484A !important;
   --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+  
+  /* Dark Taskbar config */
+  --bg-nav: rgba(28, 28, 30, 0.88) !important;
+  --border-nav: rgba(255, 255, 255, 0.1) !important;
+  
+  /* Dark Accent (Butter Yellow) */
+  --accent-indigo: #F7D060 !important;
 }
 .theme-dark .segmented-control {
   background-color: rgba(255, 255, 255, 0.08) !important;
@@ -63,6 +88,12 @@
   background: rgba(255, 255, 255, 0.15) !important;
   color: #FFFFFF !important;
 }
+/* Forced Dark badges overrides */
+.theme-dark .ios-badge-purple { background-color: rgba(247, 208, 96, 0.12) !important; }
+.theme-dark .ios-badge-green { background-color: rgba(48, 209, 88, 0.12) !important; color: #30D158 !important; }
+.theme-dark .ios-badge-orange { background-color: rgba(255, 159, 10, 0.12) !important; color: #FF9F0A !important; }
+.theme-dark .ios-badge-blue { background-color: rgba(10, 132, 255, 0.12) !important; color: #0A84FF !important; }
+.theme-dark .ios-badge-pink { background-color: rgba(255, 55, 95, 0.12) !important; color: #FF375F !important; }
 
 /* Forced Light Theme Overrides */
 .theme-light {
@@ -73,6 +104,13 @@
   --text-secondary: #8E8E93 !important;
   --text-muted: #C7C7CC !important;
   --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.03), 0 1px 4px rgba(0, 0, 0, 0.02) !important;
+  
+  /* Light Taskbar config */
+  --bg-nav: rgba(255, 255, 255, 0.85) !important;
+  --border-nav: rgba(0, 0, 0, 0.06) !important;
+  
+  /* Light Accent (Gold / Dark Amber brand) */
+  --accent-indigo: #B8860B !important;
 }
 .theme-light .segmented-control {
   background-color: rgba(0, 0, 0, 0.04) !important;
@@ -81,6 +119,12 @@
   background: #FFFFFF !important;
   color: #1C1C1E !important;
 }
+/* Forced Light badges overrides */
+.theme-light .ios-badge-purple { background-color: rgba(184, 134, 11, 0.08) !important; color: var(--accent-indigo) !important; }
+.theme-light .ios-badge-green { background-color: rgba(52, 199, 89, 0.08) !important; color: var(--accent-emerald) !important; }
+.theme-light .ios-badge-orange { background-color: rgba(255, 149, 0, 0.08) !important; color: var(--accent-orange) !important; }
+.theme-light .ios-badge-blue { background-color: rgba(0, 122, 255, 0.08) !important; color: var(--accent-blue) !important; }
+.theme-light .ios-badge-pink { background-color: rgba(255, 45, 85, 0.08) !important; color: var(--accent-pink) !important; }
 
 /* Base resets & styles */
 * {
@@ -170,10 +214,10 @@ body {
   width: calc(100% - 32px);
   max-width: 480px;
   height: 66px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--bg-nav);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border-nav);
   border-radius: 33px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -540,7 +584,7 @@ body {
   font-weight: 600;
 }
 
-.ios-badge-purple { background-color: rgba(88, 86, 214, 0.08); color: var(--accent-indigo); }
+.ios-badge-purple { background-color: rgba(184, 134, 11, 0.08); color: var(--accent-indigo); }
 .ios-badge-green { background-color: rgba(52, 199, 89, 0.08); color: var(--accent-emerald); }
 .ios-badge-orange { background-color: rgba(255, 149, 0, 0.08); color: var(--accent-orange); }
 .ios-badge-blue { background-color: rgba(0, 122, 255, 0.08); color: var(--accent-blue); }
