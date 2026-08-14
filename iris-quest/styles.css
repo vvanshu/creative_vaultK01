@@ -104,22 +104,26 @@ body {
   transform: scale(0.995);
 }
 
-/* Bottom Dock Tab Navigation */
+/* Bottom Dock Tab Navigation - Floating iOS Style */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-top: 1px solid var(--border-system);
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  height: 66px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 33px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  height: 80px;
-  padding-bottom: 12px;
   z-index: 1000;
+  padding: 0 10px;
 }
 
 .nav-tab-btn {
@@ -134,6 +138,7 @@ body {
   cursor: pointer;
   color: var(--text-secondary);
   transition: var(--transition-ios);
+  border-radius: 20px;
 }
 
 .nav-tab-btn.active {
@@ -141,9 +146,9 @@ body {
 }
 
 .nav-tab-icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 4px;
+  width: 22px;
+  height: 22px;
+  margin-bottom: 2px;
   stroke: currentColor;
   stroke-width: 2;
   fill: none;
@@ -158,8 +163,8 @@ body {
 }
 
 .nav-tab-label {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 /* iOS Primary & Secondary Buttons */
@@ -602,4 +607,129 @@ html, body {
   overflow-x: hidden;
   position: relative;
 }
+
+/* Collapsible Journey Weeks Styling */
+.collapsible-week {
+  background: var(--bg-card);
+  border: 1px solid var(--border-system);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+  transition: var(--transition-ios);
+}
+
+.collapsible-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-apple);
+  cursor: pointer;
+  min-height: 48px;
+}
+
+.collapsible-pane {
+  padding: 0 18px 16px;
+  border-top: 1px dashed rgba(0,0,0,0.05);
+  background: rgba(0,0,0,0.005);
+}
+
+/* Coupon Tickets - Perks Wallet */
+.coupon-card {
+  position: relative;
+  background: radial-gradient(circle at left, transparent 8px, #ffffff 8px) left,
+              radial-gradient(circle at right, transparent 8px, #ffffff 8px) right;
+  background-size: 51% 100%;
+  background-repeat: no-repeat;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.03));
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.coupon-dashed-border {
+  border-left: 2px dashed rgba(0, 0, 0, 0.08);
+  height: 100%;
+  position: absolute;
+  left: 72%;
+  top: 0;
+}
+
+/* In-App Notifications Panel */
+.notif-bell-btn {
+  position: relative;
+  background: rgba(0,0,0,0.03);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-ios);
+}
+
+.notif-bell-btn:active {
+  transform: scale(0.95);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: var(--accent-pink);
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 2px 5px;
+  border: 1.5px solid #FFFFFF;
+  line-height: 1;
+}
+
+.notif-panel {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  width: calc(100% - 32px);
+  max-width: 320px;
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid var(--border-system);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+  z-index: 2000;
+  padding: 16px;
+  animation: notifIn 0.2s cubic-bezier(0.1, 0.8, 0.25, 1);
+}
+
+@keyframes notifIn {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.notif-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-system);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.notif-item {
+  padding: 10px 12px;
+  background: rgba(88, 86, 214, 0.03);
+  border-left: 3px solid var(--accent-indigo);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
 

@@ -16,6 +16,82 @@ const calcLevel = (xp) => {
   return { level, currentXp, nextXp, progress, title, rankClass };
 };
 
+// PWA Recurring Tasks Reset Manager
+const checkRecurringTasks = (tasksList) => {
+  let updated = false;
+  const now = new Date();
+  const todayStr = now.toDateString();
+
+  const newTasks = tasksList.map(t => {
+    if (t.isCompleted && t.completedAt && t.repeatType && t.repeatType !== 'None') {
+      const compDate = new Date(t.completedAt);
+      const compDateStr = compDate.toDateString();
+      let shouldReset = false;
+
+      if (t.repeatType === 'Daily' && todayStr !== compDateStr) {
+        if (!t.repeatEnd || new Date(t.repeatEnd) >= now) {
+          shouldReset = true;
+        }
+      } else if (t.repeatType === 'Weekly') {
+        const oneWeekMs = 7 * 24 * 3600 * 1000;
+        if (now.getTime() - compDate.getTime() >= oneWeekMs) {
+          if (!t.repeatEnd || new Date(t.repeatEnd) >= now) {
+            shouldReset = true;
+          }
+        }
+      }
+
+      if (shouldReset) {
+        updated = true;
+        // Reset completed state for new occurrences
+        return { ...t, isCompleted: false, completedAt: null };
+      }
+    }
+    return t;
+  });
+
+  return { newTasks, updated };
+};
+
+// Campaign duration converter
+const getDurationWeeks = (durationStr) => {
+  if (!durationStr) return 12;
+  const ds = durationStr.toLowerCase();
+  if (ds.includes('3 month')) return 12;
+  if (ds.includes('6 month')) return 26;
+  if (ds.includes('1 year') || ds.includes('12 month')) return 52;
+  const matches = ds.match(/\d+/);
+  if (matches) {
+    const val = parseInt(matches[0]);
+    if (ds.includes('week')) return val;
+    if (ds.includes('day')) return Math.max(1, Math.ceil(val / 7));
+    if (ds.includes('month')) return Math.ceil(val * 4.33);
+    return Math.max(1, Math.ceil(val / 7));
+  }
+  return 12;
+};
+
+// Estimate duration-based quest progress (prevents 100% completion in week 1)
+const getDurationGoalProgress = (g, tasksList) => {
+  const totalWeeks = getDurationWeeks(g.duration);
+  const linked = tasksList.filter(t => t.goalId === g.id);
+  const completedCount = linked.filter(t => t.isCompleted).length;
+  
+  // Assume average 3 quests per week across duration
+  const estTotalQuests = totalWeeks * 3;
+  let prog = Math.round((completedCount / estTotalQuests) * 100);
+  if (completedCount > 0 && prog === 0) prog = 1; // minimum 1% if any is done
+  
+  // If they completed all actual linked tasks and duration has elapsed, show 100%
+  if (linked.length > 0 && linked.every(t => t.isCompleted)) {
+    const start = new Date(g.createdAt || new Date());
+    const elapsedWeeks = Math.floor((new Date() - start) / (7 * 24 * 3600 * 1000));
+    if (elapsedWeeks >= totalWeeks) return 100;
+    return Math.min(95, prog || 10);
+  }
+  return Math.min(100, prog);
+};
+
 /* ===== TOAST ===== */
 function Toast({ message, onClose }) {
   React.useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [message]);
@@ -686,7 +762,7 @@ function Onboarding({ onComplete }) {
 }
 
 /* ===== HOME PAGE (DASHBOARD) ===== */
-function HomePage({ profile, tasks, goals, setPage }) {
+function HomePage({ profile, tasks, goals, rewards, setPage, toast }) {
   const lv = calcLevel(profile.totalXp);
   const avail = profile.totalXp - profile.spentXp;
   const xpNeeded = lv.nextXp - lv.currentXp;
@@ -699,27 +775,88 @@ function HomePage({ profile, tasks, goals, setPage }) {
   const nextQuest = todayTasks[0];
   const goalName = (gid) => { const g = goals.find(g => g.id === gid); return g ? g.name : ''; };
 
+  const [showNotif, setShowNotif] = React.useState(false);
+  const activeUnusedTickets = rewards.filter(r => r.isClaimed && !r.isUsed).length;
+  
+  const notificationsList = [];
+  if (todayTasks.length > 0) {
+    notificationsList.push(`⚡ You have ${todayTasks.length} daily quests remaining on your board!`);
+  } else {
+    notificationsList.push(`✅ All daily quests cleared for today. Excellent work!`);
+  }
+  if (activeUnusedTickets > 0) {
+    notificationsList.push(`🎁 You have ${activeUnusedTickets} active coupon tickets waiting to be redeemed!`);
+  }
+  
+  const activeNotifsCount = (todayTasks.length > 0 ? 1 : 0) + (activeUnusedTickets > 0 ? 1 : 0);
+
   const getGoalProgress = (gid) => {
-    const linked = tasks.filter(t => t.goalId === gid);
-    if (linked.length === 0) return 0;
-    const completed = linked.filter(t => t.isCompleted).length;
-    return Math.round((completed / linked.length) * 100);
+    const g = goals.find(x => x.id === gid);
+    return g ? getDurationGoalProgress(g, tasks) : 0;
   };
 
   return (
     <div>
-      {/* Top Header Card */}
+      {/* Top Header Card with PWA Alerts Bell */}
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <h1 className="large-title" style={{ margin: 0, fontSize: '28px' }}>ODYSSEY</h1>
           <p className="caption">Welcome, {profile.name}</p>
         </div>
-        <div className="avatar-wrapper">
-          <div className={`avatar-ring ${lv.rankClass}`}>
-            <div className="avatar-main">{profile.avatar}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Notification Bell trigger */}
+          <button className="notif-bell-btn" type="button" onClick={() => setShowNotif(!showNotif)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            {activeNotifsCount > 0 && <span className="notif-badge">{activeNotifsCount}</span>}
+          </button>
+
+          <div className="avatar-wrapper">
+            <div className={`avatar-ring ${lv.rankClass}`}>
+              <div className="avatar-main">{profile.avatar}</div>
+            </div>
           </div>
         </div>
       </div>
+
+      {showNotif && (
+        <div className="notif-panel">
+          <div className="notif-panel-header">
+            <span style={{ fontWeight: 700, fontSize: '14px' }}>🔔 System Alerts</span>
+            <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }} onClick={() => setShowNotif(false)}>Close</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {notificationsList.map((notif, idx) => (
+              <div className="notif-item" key={idx}>
+                {notif}
+              </div>
+            ))}
+            
+            <button 
+              className="btn-secondary" 
+              style={{ height: '36px', minHeight: '36px', fontSize: '12px', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} 
+              onClick={() => {
+                if ('Notification' in window) {
+                  Notification.requestPermission().then(perm => {
+                    if (perm === 'granted') {
+                      new Notification("ODYSSEY OS", { body: "Browser alerts successfully linked!", icon: "icon.png" });
+                      toast("Browser notifications enabled!");
+                    } else {
+                      toast("Alert permissions denied.");
+                    }
+                  });
+                } else {
+                  toast("Browser notifications not supported.");
+                }
+              }}
+            >
+              🔔 Request Browser Alerts
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Profile/Identity Details Card */}
       <div className="premium-card">
@@ -903,11 +1040,12 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
     toast('Campaign journey deleted.');
   };
 
-  const getGoalProgress = (gid) => {
-    const linked = tasks.filter(t => t.goalId === gid);
-    if (linked.length === 0) return 0;
-    const completed = linked.filter(t => t.isCompleted).length;
-    return Math.round((completed / linked.length) * 100);
+  const [expandedWeek, setExpandedWeek] = React.useState({});
+  const [inlineTitle, setInlineTitle] = React.useState({});
+
+  const getGoalProgress = (gId) => {
+    const g = goals.find(x => x.id === gId);
+    return g ? getDurationGoalProgress(g, tasks) : 0;
   };
 
   const getNextAction = (gid) => {
@@ -937,12 +1075,57 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                                g.category === 'Finance' ? 'ios-badge-orange' :
                                g.category === 'Creative' ? 'ios-badge-purple' : 'ios-badge-pink';
             
-            const milestones = [
-              { label: 'Start Campaign', done: true },
-              { label: g.monthlyTarget || 'Checkpoint 1', done: prog >= 33 },
-              { label: 'Checkpoint 2', done: prog >= 66 },
-              { label: g.finalTarget || 'Destination', done: prog >= 100 }
-            ];
+            const totalWeeks = getDurationWeeks(g.duration);
+            const weeksArray = Array.from({ length: totalWeeks }, (_, i) => i + 1);
+
+            const toggleWeek = (goalId, wk) => {
+              const key = `${goalId}-${wk}`;
+              setExpandedWeek(prev => ({
+                ...prev,
+                [goalId]: prev[goalId] === wk ? null : wk
+              }));
+            };
+
+            const addInlineQuest = (goalId, wk) => {
+              const titleKey = `${goalId}-${wk}`;
+              const title = inlineTitle[titleKey]?.trim();
+              if (!title) return;
+              const t = {
+                id: genId(),
+                goalId: goalId,
+                title: title,
+                difficulty: 'Medium',
+                xpValue: 30,
+                taskType: 'weekly',
+                weekNumber: wk,
+                isCompleted: false,
+                completedAt: null,
+                createdAt: new Date().toISOString()
+              };
+              const updated = [t, ...tasks];
+              LS.set('irisquest_tasks', updated);
+              setTasks(updated);
+              setInlineTitle(prev => ({ ...prev, [titleKey]: '' }));
+              toast(`Quest initialized for Week ${wk}!`);
+            };
+
+            const toggleInlineTask = (id) => {
+              const updated = tasks.map(t => {
+                if (t.id !== id) return t;
+                const wasCompleted = t.isCompleted;
+                return { ...t, isCompleted: !wasCompleted, completedAt: wasCompleted ? null : new Date().toISOString() };
+              });
+              LS.set('irisquest_tasks', updated);
+              setTasks(updated);
+              toast('Quest status toggled.');
+            };
+
+            const deleteInlineTask = (id) => {
+              const updated = tasks.filter(t => t.id !== id);
+              LS.set('irisquest_tasks', updated);
+              setTasks(updated);
+              toast('Quest deleted.');
+            };
 
             return (
               <div className="premium-card" key={g.id}>
@@ -952,53 +1135,119 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                 </div>
                 
                 <h3 className="title" style={{ fontSize: '20px', marginBottom: 4, letterSpacing: '-0.4px' }}>{g.name.toUpperCase()}</h3>
-                <p className="caption" style={{ marginBottom: 16 }}>Timeline Horizon: <b>{g.duration}</b></p>
+                <p className="caption" style={{ marginBottom: 16 }}>Timeline Horizon: <b>{g.duration}</b> ({totalWeeks} Weeks)</p>
                 
-                {/* SVG Visual Journey Map Path - calm adventure aesthetic */}
-                <div style={{ margin: '20px 0', padding: '10px 0', position: 'relative' }}>
-                  <svg width="100%" height="80" style={{ overflow: 'visible' }}>
-                    <line x1="10%" y1="40" x2="90%" y2="40" stroke="rgba(0,0,0,0.06)" strokeWidth="4" />
-                    <line x1="10%" y1="40" x2={`${10 + (prog * 0.8)}%`} y2="40" stroke="var(--accent-indigo)" strokeWidth="4" />
-                    {milestones.map((milestone, idx) => {
-                      const cx = 10 + (idx * 26.66);
-                      const isCompleted = milestone.done;
-                      return (
-                        <g key={idx}>
-                          <circle 
-                            cx={`${cx}%`} 
-                            cy="40" 
-                            r={isCompleted ? '10' : '8'} 
-                            fill={isCompleted ? 'var(--accent-indigo)' : '#FFFFFF'} 
-                            stroke={isCompleted ? 'var(--accent-indigo)' : 'var(--border-system)'} 
-                            strokeWidth="2" 
-                          />
-                          {isCompleted && <circle cx={`${cx}%`} cy="40" r="5" fill="#FFFFFF" />}
-                          <text 
-                            x={`${cx}%`} 
-                            y="70" 
-                            textAnchor="middle" 
-                            fontSize="9" 
-                            fontWeight="700" 
-                            fill={isCompleted ? 'var(--text-primary)' : 'var(--text-secondary)'}
-                          >
-                            {idx === 0 ? 'Start' : idx === 3 ? 'Dest' : `M${idx}`}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                </div>
-
-                <div className="goal-progress-bar-container" style={{ marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyBetween: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                {/* Journey Duration-based Progress Bar */}
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
                     <span>Journey Complete</span>
-                    <span style={{ float: 'right' }}>{prog}%</span>
+                    <span>{prog}%</span>
+                  </div>
+                  <div className="ios-progress-track" style={{ height: '6px' }}>
+                    <div className="ios-progress-fill" style={{ width: prog + '%' }} />
                   </div>
                 </div>
 
-                <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-system)', marginBottom: 16 }}>
-                  <p className="caption" style={{ fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent-indigo)' }}>Active Objective</p>
-                  <p className="body-text" style={{ fontWeight: 600, fontSize: '14px', marginTop: 2 }}>{getNextAction(g.id)}</p>
+                {/* Collapsible Weeks Accordion */}
+                <div style={{ marginBottom: 20 }}>
+                  <h4 className="section-header" style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase' }}>Weekly Action Roadmap</h4>
+                  {weeksArray.map(wk => {
+                    const isOpen = expandedWeek[g.id] === wk;
+                    const weekTasks = tasks.filter(t => t.goalId === g.id && t.weekNumber === wk);
+                    const completedWeekCount = weekTasks.filter(t => t.isCompleted).length;
+                    const totalWeekCount = weekTasks.length;
+                    const isWeekDone = totalWeekCount > 0 && completedWeekCount === totalWeekCount;
+
+                    return (
+                      <div className="collapsible-week" key={wk}>
+                        <button className="collapsible-trigger" type="button" onClick={() => toggleWeek(g.id, wk)}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: isWeekDone ? 'var(--accent-emerald)' : 'var(--text-primary)' }}>
+                            {isWeekDone ? '✓ ' : ''}Week {wk} Focus
+                          </span>
+                          <span className="caption" style={{ fontWeight: 600 }}>
+                            {totalWeekCount > 0 ? `${completedWeekCount}/${totalWeekCount} Cleared` : 'No quests'} {isOpen ? '▼' : '▶'}
+                          </span>
+                        </button>
+                        
+                        {isOpen && (
+                          <div className="collapsible-pane">
+                            <div style={{ margin: '8px 0 12px' }}>
+                              {weekTasks.length === 0 ? (
+                                <p className="caption" style={{ fontStyle: 'italic', padding: '4px 0' }}>No quests defined for this week node.</p>
+                              ) : (
+                                weekTasks.map(t => (
+                                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid var(--border-system)', marginBottom: 6 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1 }}>
+                                      <input 
+                                        type="checkbox" 
+                                        checked={t.isCompleted} 
+                                        onChange={() => toggleInlineTask(t.id)} 
+                                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                      />
+                                      <span style={{ fontSize: '13px', textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
+                                        {t.title}
+                                      </span>
+                                    </div>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => deleteInlineTask(t.id)} 
+                                      style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', cursor: 'pointer', fontSize: '12px' }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+
+                            {/* Inline task creator */}
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <input 
+                                className="form-input" 
+                                style={{ flexGrow: 1, height: '36px', minHeight: '36px', fontSize: '13px', padding: '0 10px' }} 
+                                value={inlineTitle[`${g.id}-${wk}`] || ''} 
+                                onChange={e => setInlineTitle({ ...inlineTitle, [`${g.id}-${wk}`]: e.target.value })} 
+                                placeholder="Add weekly quest action..." 
+                              />
+                              <button 
+                                type="button" 
+                                className="btn-primary" 
+                                style={{ width: '36px', height: '36px', minHeight: '36px', padding: 0 }} 
+                                onClick={() => addInlineQuest(g.id, wk)}
+                              >
+                                ＋
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Monthly Checkpoints */}
+                <div style={{ background: 'rgba(0,0,0,0.01)', borderRadius: '12px', padding: '14px 16px', border: '1px solid var(--border-system)', marginBottom: 16 }}>
+                  <h4 className="section-header" style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 10 }}>Monthly Milestones</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Month 1 Checkpoint: <span className="caption">{g.monthlyTarget || 'Checkpoint 1'}</span></span>
+                      <span className={'ios-badge ' + (prog >= 33 ? 'ios-badge-green' : 'ios-badge-orange')}>
+                        {prog >= 33 ? '✓ Cleared' : '⌛ In Progress'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Month 2 Checkpoint: <span className="caption">Focus Optimization</span></span>
+                      <span className={'ios-badge ' + (prog >= 66 ? 'ios-badge-green' : 'ios-badge-orange')}>
+                        {prog >= 66 ? '✓ Cleared' : '⌛ Pending'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600 }}>Destination: <span className="caption">{g.finalTarget || 'Destination Launch'}</span></span>
+                      <span className={'ios-badge ' + (prog >= 100 ? 'ios-badge-green' : 'ios-badge-orange')}>
+                        {prog >= 100 ? '✓ Cleared' : '⌛ Pending'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <button className="btn-danger-text" onClick={()=>deleteGoal(g.id)}>🗑️ Delete Campaign</button>
@@ -1057,6 +1306,8 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
   const [diff, setDiff] = React.useState('Medium');
   const [ttype, setTtype] = React.useState('daily');
   const [goalId, setGoalId] = React.useState('');
+  const [repeatType, setRepeatType] = React.useState('None');
+  const [repeatEnd, setRepeatEnd] = React.useState('');
 
   const toggleTask = (id) => {
     const updated = tasks.map(t => {
@@ -1096,14 +1347,19 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
       difficulty: diff, 
       xpValue: XP_MAP[diff], 
       taskType: ttype, 
+      weekNumber: 1, // Default to Week 1 if linked to campaign
       isCompleted: false, 
       completedAt: null, 
-      createdAt: new Date().toISOString() 
+      createdAt: new Date().toISOString(),
+      repeatType: repeatType,
+      repeatEnd: repeatEnd || null
     };
     const updated = [t, ...tasks];
     LS.set('irisquest_tasks', updated);
     setTasks(updated);
     setTitle('');
+    setRepeatType('None');
+    setRepeatEnd('');
     toast('New quest initialized!');
   };
 
@@ -1142,6 +1398,9 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
               <div className="quest-meta">
                 {goalName(t.goalId) && <span>{goalName(t.goalId)} · </span>}
                 <span className={'ios-badge ' + (t.difficulty==='Small'?'ios-badge-blue':t.difficulty==='Medium'?'ios-badge-orange':'ios-badge-purple')}>{t.difficulty}</span>
+                {t.repeatType && t.repeatType !== 'None' && (
+                  <span className="ios-badge ios-badge-pink" style={{ marginLeft: 6 }}>🔁 {t.repeatType}</span>
+                )}
               </div>
             </div>
             <span className="quest-xp-badge">+{t.xpValue} XP</span>
@@ -1179,6 +1438,23 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
               </select>
             </div>
           )}
+          
+          {/* Recurrence Settings */}
+          <div className="form-group">
+            <label className="form-label">🔁 Recurrence / Repeat</label>
+            <select className="form-select" value={repeatType} onChange={e=>setRepeatType(e.target.value)}>
+              <option value="None">None</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+            </select>
+          </div>
+          {repeatType !== 'None' && (
+            <div className="form-group">
+              <label className="form-label">Recurrence End Date (Optional)</label>
+              <input type="date" className="form-input" value={repeatEnd} onChange={e=>setRepeatEnd(e.target.value)} />
+            </div>
+          )}
+
           <button className="btn-primary" type="submit">⚡ Add Quest to Board</button>
         </form>
       </div>
@@ -1202,15 +1478,28 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
     if (!r || r.isClaimed || avail < r.xpCost) return;
     const np = { ...profile, spentXp: profile.spentXp + r.xpCost };
     LS.set('irisquest_profile', np); setProfile(np);
-    const nr = rewards.map(rw => rw.id===id ? { ...rw, isClaimed: true, claimedAt: new Date().toISOString() } : rw);
+    const nr = rewards.map(rw => rw.id===id ? { ...rw, isClaimed: true, claimedAt: new Date().toISOString(), isUsed: false } : rw);
     LS.set('irisquest_rewards', nr); setRewards(nr);
-    toast('🎁 Perk claimed successfully!');
+    toast('🎁 Perk unlocked and added to ticket wallet!');
+  };
+
+  const redeem = (id) => {
+    const nr = rewards.map(rw => {
+      if (rw.id === id) {
+        toast(`🎫 Coupon ticket redeemed: ${rw.name}`);
+        // Log redemption event in life timeline history
+        return { ...rw, isUsed: true, redeemedAt: new Date().toISOString() };
+      }
+      return rw;
+    });
+    LS.set('irisquest_rewards', nr);
+    setRewards(nr);
   };
 
   const addReward = (e) => {
     e.preventDefault();
     if (!rn.trim()) return;
-    const r = { id: genId(), name: rn.trim(), category: rc, xpCost: rxp, expiryDate: rexp.trim(), isClaimed: false, claimedAt: null };
+    const r = { id: genId(), name: rn.trim(), category: rc, xpCost: rxp, expiryDate: rexp.trim() || 'Expires in 7 days', isClaimed: false, claimedAt: null, isUsed: false };
     const nr = [r, ...rewards];
     LS.set('irisquest_rewards', nr); setRewards(nr); setRn(''); setRexp('');
     toast('Reward cataloged.'); setTab('shop');
@@ -1229,13 +1518,30 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
     return r.xpCost >= 500;
   };
 
+  // Helper to calculate dynamic ticket expiry date from claimed time
+  const getTicketExpiryStr = (r) => {
+    if (!r.claimedAt) return r.expiryDate || 'Expires in 7 days';
+    const claimDate = new Date(r.claimedAt);
+    
+    // Determine expiration duration: Daily = 1 day, Weekly = 7 days, Monthly = 30 days
+    let daysToAdd = 7;
+    const desc = (r.expiryDate || '').toLowerCase();
+    if (desc.includes('daily') || desc.includes('day')) daysToAdd = 1;
+    else if (desc.includes('monthly') || desc.includes('month')) daysToAdd = 30;
+
+    const expiryDate = new Date(claimDate.getTime() + (daysToAdd * 24 * 3600 * 1000));
+    return expiryDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const unlockedTickets = rewards.filter(r => r.isClaimed && !r.isUsed);
+
   return (
     <div>
       <div className="section-header">
         <h1 className="large-title" style={{ margin: 0 }}>Perks</h1>
       </div>
 
-      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #FFFFFF, #FAF9FF)', borderColor: 'rgba(88, 86, 214, 0.15)' }}>
+      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #FFFFFF, #FAF9FF)', borderColor: 'rgba(88, 86, 214, 0.15)', marginBottom: 16 }}>
         <div>
           <span className="ios-badge ios-badge-orange">Perk Vault</span>
           <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Claim Perks</h2>
@@ -1246,12 +1552,15 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
         </div>
       </div>
 
-      <div className="segmented-control">
+      <div className="segmented-control" style={{ marginBottom: 16 }}>
         <button className={'segmented-btn'+(tab==='shop'?' active':'')} onClick={()=>setTab('shop')}>Perk Catalog</button>
-        <button className={'segmented-btn'+(tab==='add'?' active':'')} onClick={()=>setTab('add')}>Catalog Custom Perk</button>
+        <button className={'segmented-btn'+(tab==='wallet'?' active':'')} onClick={()=>setTab('wallet')}>
+          My Wallet ({unlockedTickets.length})
+        </button>
+        <button className={'segmented-btn'+(tab==='add'?' active':'')} onClick={()=>setTab('add')}>Catalog Custom</button>
       </div>
 
-      {tab === 'shop' ? (
+      {tab === 'shop' && (
         <>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
             {['All','Small','Medium','Big'].map(f=>(
@@ -1275,11 +1584,11 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
             ))}
           </div>
 
-          {rewards.filter(tierFilter).length === 0 ? (
+          {rewards.filter(r => !r.isClaimed).filter(tierFilter).length === 0 ? (
             <div className="empty-state"><div className="empty-state-icon">🎁</div><p>No perks in this catalog tier.</p></div>
           ) : (
-            rewards.filter(tierFilter).map(r => (
-              <div className="premium-card" key={r.id} style={{ opacity: r.isClaimed ? 0.6 : 1 }}>
+            rewards.filter(r => !r.isClaimed).filter(tierFilter).map(r => (
+              <div className="premium-card" key={r.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className="ios-badge ios-badge-pink">{r.category}</span>
                   <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {r.xpCost} XP</span>
@@ -1287,25 +1596,53 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
                 <h3 className="title" style={{ fontSize: '18px', marginBottom: 4 }}>{r.name}</h3>
                 <p className="caption" style={{ marginBottom: 16 }}>⌛ {r.expiryDate || 'Permanent'}</p>
                 <div style={{ display: 'flex', gap: 12 }}>
-                  {r.isClaimed ? (
-                    <span className="ios-badge ios-badge-green" style={{ display: 'inline-flex', padding: '10px 16px', fontWeight: 700 }}>✓ Claimed</span>
-                  ) : (
-                    <button 
-                      className="btn-primary" 
-                      style={{ height: '40px', background: 'var(--accent-orange)', boxShadow: 'none' }}
-                      disabled={avail < r.xpCost} 
-                      onClick={()=>claim(r.id)}
-                    >
-                      Unlock perk
-                    </button>
-                  )}
+                  <button 
+                    className="btn-primary" 
+                    style={{ height: '40px', background: 'var(--accent-orange)', boxShadow: 'none' }}
+                    disabled={avail < r.xpCost} 
+                    onClick={()=>claim(r.id)}
+                  >
+                    Unlock perk
+                  </button>
                   <button className="btn-secondary" style={{ width: '40px', height: '40px', borderRadius: '10px' }} onClick={()=>deleteReward(r.id)}>✕</button>
                 </div>
               </div>
             ))
           )}
         </>
-      ) : (
+      )}
+
+      {tab === 'wallet' && (
+        <>
+          {unlockedTickets.length === 0 ? (
+            <div className="empty-state"><div className="empty-state-icon">🎫</div><p>No active claim tickets. Unlock perks from catalog.</p></div>
+          ) : (
+            unlockedTickets.map(r => (
+              <div className="coupon-card" key={r.id}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '68%' }}>
+                  <span className="ios-badge ios-badge-purple" style={{ width: 'fit-content', padding: '2px 8px', fontSize: '10px' }}>{r.category.toUpperCase()} TICKET</span>
+                  <h3 className="title" style={{ fontSize: '16px', marginTop: 4, letterSpacing: '-0.3px' }}>{r.name}</h3>
+                  <span className="caption" style={{ fontSize: '11px', color: 'var(--accent-pink)', fontWeight: 600 }}>⌛ Expiry: {getTicketExpiryStr(r)}</span>
+                </div>
+                
+                <div className="coupon-dashed-border" />
+                
+                <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', width: '22%', textAlign: 'center' }}>
+                  <button 
+                    className="btn-primary" 
+                    style={{ height: '36px', minHeight: '36px', fontSize: '12px', padding: '0 8px', background: 'var(--accent-indigo)', borderRadius: '10px', boxShadow: 'none' }}
+                    onClick={()=>redeem(r.id)}
+                  >
+                    Use Claim
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </>
+      )}
+
+      {tab === 'add' && (
         <div className="premium-card">
           <h3 className="section-header" style={{ marginBottom: 16 }}>Catalog Custom Perk</h3>
           <form onSubmit={addReward}>
@@ -1614,7 +1951,14 @@ function App() {
     return p;
   });
   const [goals, setGoals] = React.useState(LS.get('irisquest_goals') || []);
-  const [tasks, setTasks] = React.useState(LS.get('irisquest_tasks') || []);
+  const [tasks, setTasks] = React.useState(() => {
+    const cached = LS.get('irisquest_tasks') || [];
+    const { newTasks, updated } = checkRecurringTasks(cached);
+    if (updated) {
+      LS.set('irisquest_tasks', newTasks);
+    }
+    return newTasks;
+  });
   const [rewards, setRewards] = React.useState(LS.get('irisquest_rewards') || []);
   const [reviews, setReviews] = React.useState(LS.get('irisquest_reviews') || []);
   const [page, setPage] = React.useState('home');
@@ -1644,7 +1988,7 @@ function App() {
       {toastMsg && <Toast message={toastMsg} onClose={()=>setToastMsg(null)} />}
 
       {/* Dynamic Subpages */}
-      {page === 'home' && <HomePage profile={profile} tasks={tasks} goals={goals} setPage={setPage} />}
+      {page === 'home' && <HomePage profile={profile} tasks={tasks} goals={goals} rewards={rewards} setPage={setPage} toast={showToast} />}
       {page === 'goals' && <GoalsPage goals={goals} setGoals={setGoals} tasks={tasks} setTasks={setTasks} toast={showToast} />}
       {page === 'quests' && <QuestsPage profile={profile} tasks={tasks} goals={goals} setTasks={setTasks} setProfile={setProfile} toast={showToast} />}
       {page === 'rewards' && <RewardsPage profile={profile} setProfile={setProfile} rewards={rewards} setRewards={setRewards} toast={showToast} />}
