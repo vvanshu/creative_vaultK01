@@ -6,42 +6,20 @@ const supabaseClient = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
   : null;
 
-// Google Sign-In Handler
-async function handleGoogleLogin(e) {
-  if (e && e.preventDefault) e.preventDefault();
-
-  if (!supabaseClient) {
-    alert('Supabase client failed to load.');
-    return;
+// Check and sync user state in database
+const syncUserProfile = async (user) => {
+  if (!supabaseClient || !user) return;
+  try {
+    await supabaseClient.from('profiles').upsert({
+      id: user.id,
+      email: user.email,
+      full_name: user.user_metadata.full_name || user.user_metadata.name || 'Explorer',
+      avatar_url: user.user_metadata.avatar_url || ''
+    });
+  } catch (e) {
+    console.error('Failed to sync profile to database:', e);
   }
-
-  const { error } = await supabaseClient.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin
-    }
-  });
-
-  if (error) {
-    console.error('Google Sign-in Error:', error.message);
-    alert('Sign-in Error: ' + error.message);
-  }
-}
-
-// Check and sync user state
-if (supabaseClient) {
-  supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (session?.user) {
-      console.log('Authenticated User:', session.user);
-      await supabaseClient.from('profiles').upsert({
-        id: session.user.id,
-        email: session.user.email,
-        full_name: session.user.user_metadata.full_name || session.user.user_metadata.name || 'Explorer',
-        avatar_url: session.user.user_metadata.avatar_url || ''
-      });
-    }
-  });
-}
+};
 /* ===== DATA PERSISTENCE HELPERS ===== */
 const LS = {
   get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
@@ -143,11 +121,17 @@ function Toast({ message, onClose }) {
 }
 
 /* ===== ONBOARDING (STEPS 1 - 6 SCREEN BY SCREEN) ===== */
-function Onboarding({ onComplete }) {
+function Onboarding({ onComplete, session }) {
   const [step, setStep] = React.useState(1);
   
   // Step 1: Identity Launchpad
-  const [name, setName] = React.useState('Alex');
+  const [name, setName] = React.useState(() => {
+    if (session && session.user) {
+      const meta = session.user.user_metadata;
+      return meta?.full_name || meta?.name || 'Alex';
+    }
+    return 'Alex';
+  });
   const [avatarType, setAvatarType] = React.useState('Minimal Human');
   const [avatarEmoji, setAvatarEmoji] = React.useState('👤');
   const [curId, setCurId] = React.useState('Student');
@@ -410,35 +394,25 @@ function Onboarding({ onComplete }) {
             <p className="caption">Transform your goals into a path towards your future self</p>
           </div>
 
-        
-{/* Google Sign In Option */}
-          <button 
-            type="button" 
-            className="btn-secondary" 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: 10, 
-              height: '46px', 
-              minHeight: '46px', 
-              width: '100%', 
-              marginBottom: 20, 
-              border: '1px solid var(--border-system)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              fontWeight: 600
-            }}
-            onClick={handleGoogleLogin}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            Sign in with Google
-          </button>
+          {/* Authenticated User Status */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 12, 
+            padding: '12px 14px', 
+            borderRadius: '12px', 
+            border: '1.5px dashed var(--accent-indigo)', 
+            background: 'rgba(247, 208, 96, 0.05)', 
+            marginBottom: 20 
+          }}>
+            <div style={{ fontSize: '1.5rem' }}>🔐</div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-indigo)', textTransform: 'uppercase' }}>Google Authenticated</div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                {session?.user?.email || "No email available"}
+              </div>
+            </div>
+          </div>
 
           <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
             <div className="form-group">
@@ -2427,7 +2401,10 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
 /* ===== MAIN APP NAVIGATION ===== */
 function App() {
-  const [profile, setProfile] = React.useState(() => {
+  const [session, setSession] = React.useState(null);
+  const [authLoading, setAuthLoading] = React.useState(true);
+  const [showContinueCard, setShowContinueCard] = React.useState(false);
+  const [cachedProfile, setCachedProfile] = React.useState(() => {
     const p = LS.get('irisquest_profile');
     if (p && !p.avatarType) {
       localStorage.removeItem('irisquest_profile');
@@ -2435,6 +2412,8 @@ function App() {
     }
     return p;
   });
+
+  const [profile, setProfile] = React.useState(null);
   const [goals, setGoals] = React.useState(LS.get('irisquest_goals') || []);
   const [tasks, setTasks] = React.useState(() => {
     const cached = LS.get('irisquest_tasks') || [];
@@ -2459,6 +2438,67 @@ function App() {
 
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [isStandalone, setIsStandalone] = React.useState(false);
+
+  // Supabase Auth Mount Check and Listener
+  React.useEffect(() => {
+    if (supabaseClient) {
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        if (session) {
+          syncUserProfile(session.user);
+          const cached = LS.get('irisquest_profile');
+          if (cached) {
+            setCachedProfile(cached);
+            setShowContinueCard(true);
+          }
+        }
+        setAuthLoading(false);
+      });
+
+      const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        if (session) {
+          syncUserProfile(session.user);
+          const cached = LS.get('irisquest_profile');
+          if (cached) {
+            setCachedProfile(cached);
+          }
+        } else {
+          setProfile(null);
+          setCachedProfile(null);
+          setShowContinueCard(false);
+        }
+        setAuthLoading(false);
+      });
+
+      return () => subscription.unsubscribe();
+    } else {
+      setAuthLoading(false);
+    }
+  }, []);
+
+  // Google OAuth Sign In & Account Switcher
+  const handleGoogleSignIn = async (promptSelect = false) => {
+    if (!supabaseClient) {
+      alert("Supabase client is not initialized. Verify connection configuration.");
+      return;
+    }
+    const options = {
+      redirectTo: window.location.origin + window.location.pathname
+    };
+    if (promptSelect) {
+      options.queryParams = { prompt: 'select_account' };
+    }
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options
+      });
+      if (error) throw error;
+    } catch (err) {
+      alert(`Google Authentication Error: ${err.message}`);
+    }
+  };
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -2487,7 +2527,130 @@ function App() {
 
   const showToast = (msg) => { setToastMsg(msg); };
 
-  if (!profile) return <Onboarding onComplete={(p) => { setProfile(p); setPage('home'); }} />;
+  // Spinner loader block while session is fetching
+  if (authLoading) {
+    return (
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: 12, animation: 'spin 2s linear infinite' }}>🧭</div>
+          <p className="caption">Syncing Odyssey OS...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth Gate 1: No Sign-in = No Entry
+  if (!session) {
+    return (
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div className="premium-card" style={{ width: '100%', maxWidth: '400px', padding: '36px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 16 }}>🧭</div>
+          <h1 className="large-title" style={{ fontSize: '28px', marginBottom: 8, letterSpacing: '-0.8px' }}>ODYSSEY RPG</h1>
+          <p className="caption" style={{ marginBottom: 28, fontSize: '13px', lineHeight: '1.6' }}>
+            Transform your goals into quests, actions into progress, and progress into identity. Join the productivity adventure.
+          </p>
+          
+          <button 
+            type="button" 
+            className="btn-primary" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 12, 
+              height: '46px', 
+              minHeight: '46px', 
+              width: '100%',
+              background: 'var(--text-primary)',
+              color: 'var(--bg-system)',
+              fontWeight: 700,
+              border: 'none',
+              borderRadius: '23px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}
+            onClick={() => handleGoogleSignIn(false)}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" style={{ display: 'block' }}>
+              <path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z" fill="#4285F4" />
+              <path d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26A5.58 5.58 0 0 1 9 14.54c-2.34 0-4.33-1.57-5.04-3.71H.92v2.33A9 9 0 0 0 9 18z" fill="#34A853" />
+              <path d="M3.96 10.83a5.39 5.39 0 0 1 0-3.66V4.84H.92a9 9 0 0 0 0 8.32l3.04-2.33z" fill="#FBBC05" />
+              <path d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4A9 9 0 0 0 .92 4.84l3.04 2.33C4.67 5.15 6.66 3.58 9 3.58z" fill="#EA4335" />
+            </svg>
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth Gate 2: Instagram-Style "Continue as [Account]" Welcome Card
+  if (showContinueCard && cachedProfile) {
+    const meta = session.user?.user_metadata;
+    const gName = meta?.full_name || meta?.name || cachedProfile.name;
+    const gEmail = session.user?.email || "";
+    const gAvatar = meta?.avatar_url || "";
+
+    return (
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div className="premium-card" style={{ width: '100%', maxWidth: '400px', padding: '36px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: 16 }}>🧭</div>
+          <h2 className="title" style={{ fontSize: '22px', marginBottom: 24, letterSpacing: '-0.5px' }}>Welcome back to Odyssey</h2>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+            <div className="avatar-wrapper" style={{ width: 80, height: 80, margin: '0 auto' }}>
+              <div className="avatar-ring lvl-creator" style={{ width: 80, height: 80, borderRadius: '50%' }}>
+                {gAvatar ? (
+                  <img src={gAvatar} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', display: 'block' }} alt="Avatar" />
+                ) : (
+                  <div className="avatar-main" style={{ fontSize: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{cachedProfile.avatar || "👤"}</div>
+                )}
+              </div>
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{gName}</div>
+              <div className="caption" style={{ fontSize: '12px', marginTop: 2 }}>{gEmail}</div>
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            className="btn-primary" 
+            style={{ width: '100%', height: '46px', minHeight: '46px', fontWeight: 700, borderRadius: '23px', marginBottom: 14 }}
+            onClick={() => {
+              setProfile(cachedProfile);
+              setPage('home');
+              setShowContinueCard(false);
+            }}
+          >
+            Continue as {gName.split(' ')[0]}
+          </button>
+          
+          <button 
+            type="button" 
+            className="btn-secondary" 
+            style={{ width: '100%', height: '44px', minHeight: '44px', fontWeight: 600, borderRadius: '22px', color: 'var(--text-secondary)' }}
+            onClick={() => handleGoogleSignIn(true)}
+          >
+            Switch Account
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth Gate 3: Complete Onboarding (If authenticated but no cached profile exists)
+  if (!profile) {
+    return (
+      <Onboarding 
+        session={session}
+        onComplete={(p) => { 
+          setProfile(p); 
+          setPage('home'); 
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="app-container">
