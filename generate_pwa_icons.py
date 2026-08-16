@@ -66,4 +66,5 @@ if __name__ == "__main__":
     os.makedirs(target_dir, exist_ok=True)
     
     create_icon(192, os.path.join(target_dir, "icon.png"))
+    create_icon(192, os.path.join(target_dir, "icon-192.png"))
     create_icon(512, os.path.join(target_dir, "icon-512.png"))
