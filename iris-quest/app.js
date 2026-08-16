@@ -1043,8 +1043,10 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
         </div>
       )}
 
-      {/* BUILT-IN COLLAPSIBLE CALENDAR PLANNER */}
-      <div className="calendar-container">
+      <div className="dashboard-grid-layout">
+        <div className="dashboard-primary-col">
+          {/* BUILT-IN COLLAPSIBLE CALENDAR PLANNER */}
+          <div className="calendar-container">
         <div className="calendar-header">
           <span className="calendar-title">
             {isExpanded 
@@ -1228,7 +1230,9 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
           </div>
         </form>
       </div>
+    </div>
 
+    <div className="dashboard-secondary-col">
       {/* Profile/Identity Details Card */}
       <div className="premium-card">
         <span className="caption" style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', color: 'var(--accent-indigo)' }}>Identity Transformation</span>
@@ -1349,6 +1353,8 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
           })}
         </div>
       )}
+      </div>
+      </div>
     </div>
   );
 }
@@ -1985,27 +1991,29 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
           {rewards.filter(r => !r.isClaimed).filter(tierFilter).length === 0 ? (
             <div className="empty-state"><div className="empty-state-icon">🎁</div><p>No perks in this catalog tier.</p></div>
           ) : (
-            rewards.filter(r => !r.isClaimed).filter(tierFilter).map(r => (
-              <div className="premium-card" key={r.id}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span className="ios-badge ios-badge-pink">{r.category}</span>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {r.xpCost} XP</span>
+            <div className="responsive-card-grid">
+              {rewards.filter(r => !r.isClaimed).filter(tierFilter).map(r => (
+                <div className="premium-card" key={r.id} style={{ margin: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <span className="ios-badge ios-badge-pink">{r.category}</span>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {r.xpCost} XP</span>
+                  </div>
+                  <h3 className="title" style={{ fontSize: '18px', marginBottom: 4 }}>{r.name}</h3>
+                  <p className="caption" style={{ marginBottom: 16 }}>⌛ {r.expiryDate || 'Permanent'}</p>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button 
+                      className="btn-primary" 
+                      style={{ height: '40px', background: 'var(--accent-orange)', boxShadow: 'none' }}
+                      disabled={avail < r.xpCost} 
+                      onClick={()=>claim(r.id)}
+                    >
+                      Unlock perk
+                    </button>
+                    <button className="btn-secondary" style={{ width: '40px', height: '40px', borderRadius: '10px' }} onClick={()=>deleteReward(r.id)}>✕</button>
+                  </div>
                 </div>
-                <h3 className="title" style={{ fontSize: '18px', marginBottom: 4 }}>{r.name}</h3>
-                <p className="caption" style={{ marginBottom: 16 }}>⌛ {r.expiryDate || 'Permanent'}</p>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button 
-                    className="btn-primary" 
-                    style={{ height: '40px', background: 'var(--accent-orange)', boxShadow: 'none' }}
-                    disabled={avail < r.xpCost} 
-                    onClick={()=>claim(r.id)}
-                  >
-                    Unlock perk
-                  </button>
-                  <button className="btn-secondary" style={{ width: '40px', height: '40px', borderRadius: '10px' }} onClick={()=>deleteReward(r.id)}>✕</button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </>
       )}
@@ -2015,27 +2023,29 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
           {unlockedTickets.length === 0 ? (
             <div className="empty-state"><div className="empty-state-icon">🎫</div><p>No active claim tickets. Unlock perks from catalog.</p></div>
           ) : (
-            unlockedTickets.map(r => (
-              <div className="coupon-card" key={r.id}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '68%' }}>
-                  <span className="ios-badge ios-badge-purple" style={{ width: 'fit-content', padding: '2px 8px', fontSize: '10px' }}>{r.category.toUpperCase()} TICKET</span>
-                  <h3 className="title" style={{ fontSize: '16px', marginTop: 4, letterSpacing: '-0.3px' }}>{r.name}</h3>
-                  <span className="caption" style={{ fontSize: '11px', color: 'var(--accent-pink)', fontWeight: 600 }}>⌛ Expiry: {getTicketExpiryStr(r)}</span>
+            <div className="responsive-card-grid">
+              {unlockedTickets.map(r => (
+                <div className="coupon-card" key={r.id} style={{ margin: 0, position: 'relative' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '68%' }}>
+                    <span className="ios-badge ios-badge-purple" style={{ width: 'fit-content', padding: '2px 8px', fontSize: '10px' }}>{r.category.toUpperCase()} TICKET</span>
+                    <h3 className="title" style={{ fontSize: '16px', marginTop: 4, letterSpacing: '-0.3px' }}>{r.name}</h3>
+                    <span className="caption" style={{ fontSize: '11px', color: 'var(--accent-pink)', fontWeight: 600 }}>⌛ Expiry: {getTicketExpiryStr(r)}</span>
+                  </div>
+                  
+                  <div className="coupon-dashed-border" />
+                  
+                  <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', width: '22%', textAlign: 'center' }}>
+                    <button 
+                      className="btn-primary" 
+                      style={{ height: '36px', minHeight: '36px', fontSize: '12px', padding: '0 8px', background: 'var(--accent-indigo)', borderRadius: '10px', boxShadow: 'none' }}
+                      onClick={()=>redeem(r.id)}
+                    >
+                      Use Claim
+                    </button>
+                  </div>
                 </div>
-                
-                <div className="coupon-dashed-border" />
-                
-                <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', width: '22%', textAlign: 'center' }}>
-                  <button 
-                    className="btn-primary" 
-                    style={{ height: '36px', minHeight: '36px', fontSize: '12px', padding: '0 8px', background: 'var(--accent-indigo)', borderRadius: '10px', boxShadow: 'none' }}
-                    onClick={()=>redeem(r.id)}
-                  >
-                    Use Claim
-                  </button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </>
       )}
