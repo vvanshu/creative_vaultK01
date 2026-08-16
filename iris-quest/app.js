@@ -1,5 +1,5 @@
 // --- Supabase Setup ---
-const SUPABASE_URL = 'https://bnshcwswmzwhmncxhtcn.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://bnshcwswmzwhmncxhtcn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuc2hjd3N3bXp3aG1uY3hodGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzE4NjMsImV4cCI6MjEwMjQ0Nzg2M30.ZiRiaXbSvS5ct-dQQIPSW99taMEOJ_QXLN24FlIvbNs';
 
 const supabaseClient = window.supabase 
