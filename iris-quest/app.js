@@ -1,31 +1,30 @@
 // --- Supabase Setup ---
 const SUPABASE_URL = 'https://bnshcwswmzwbmncxhtcn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_4j2c2IczsVmmP3B7-nUSrw_Wn6xeC6F';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuc2hjd3N3bXp3aG1uY3hodGNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzE4NjMsImV4cCI6MjEwMjQ0Nzg2M30.ZiRiaXbSvS5ct-dQQIPSW99taMEOJ_QXLN24FlIvbNs';
 
-// Initialize Supabase Client
 const supabaseClient = window.supabase 
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
   : null;
 
 // Google Sign-In Handler
 async function handleGoogleLogin(e) {
-  if (e) e.preventDefault(); // Prevents default form/link navigation
-  
+  if (e && e.preventDefault) e.preventDefault();
+
   if (!supabaseClient) {
-    alert('Supabase SDK failed to load. Check index.html script tag.');
+    alert('Supabase client failed to load.');
     return;
   }
-  
-  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'https://creative-vault-k01.vercel.app'
+      redirectTo: window.location.origin
     }
   });
 
   if (error) {
     console.error('Google Sign-in Error:', error.message);
-    alert('Sign-in error: ' + error.message);
+    alert('Sign-in Error: ' + error.message);
   }
 }
 
