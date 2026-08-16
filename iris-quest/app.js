@@ -1,21 +1,32 @@
 // --- Supabase Setup ---
 const SUPABASE_URL = 'https://bnshcwswmzwbmncxhtcn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_4j2c2IczsVmmP3B7-nUSrw_Wn6xeC6F';
-const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+// Initialize Supabase Client
+const supabaseClient = window.supabase 
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
+  : null;
 
 // Google Sign-In Handler
-async function handleGoogleLogin() {
+async function handleGoogleLogin(e) {
+  if (e) e.preventDefault(); // Prevents default form/link navigation
+  
   if (!supabaseClient) {
-    console.error('Supabase is not loaded.');
+    alert('Supabase SDK failed to load. Check index.html script tag.');
     return;
   }
-  const { error } = await supabaseClient.auth.signInWithOAuth({
+  
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin
+      redirectTo: 'https://creative-vault-k01.vercel.app'
     }
   });
-  if (error) console.error('Sign-in error:', error.message);
+
+  if (error) {
+    console.error('Google Sign-in Error:', error.message);
+    alert('Sign-in error: ' + error.message);
+  }
 }
 
 // Check and sync user state
