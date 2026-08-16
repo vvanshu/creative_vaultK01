@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 
-# Set page config for wide, clean, full-screen viewport (v1.1.4)
+# Set page config for wide, clean, full-screen viewport (v1.1.5)
 st.set_page_config(
     page_title="IRIS QUEST — RPG Productivity",
     page_icon="🛡️",
@@ -65,10 +65,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def load_bundled_html():
+    import base64
     base_dir = os.path.dirname(os.path.abspath(__file__))
     html_path = os.path.join(base_dir, "iris-quest", "index.html")
     css_path = os.path.join(base_dir, "iris-quest", "styles.css")
     js_path = os.path.join(base_dir, "iris-quest", "app.js")
+    manifest_path = os.path.join(base_dir, "iris-quest", "manifest.json")
     
     # Read core files
     with open(html_path, "r", encoding="utf-8") as f:
@@ -77,6 +79,8 @@ def load_bundled_html():
         css = f.read()
     with open(js_path, "r", encoding="utf-8") as f:
         js = f.read()
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = f.read()
         
     # Replace relative links with embedded content
     # Remove stylesheet link tag and inject inline style tag
@@ -88,6 +92,18 @@ def load_bundled_html():
     js_tag = '<script type="text/babel">\n' + js + '\n</script>'
     html = html.replace('<script type="text/babel" src="app.js"></script>', js_tag)
     html = html.replace('<script type="text/babel" src="app.js"></script>', js_tag)
+    
+    # Embed manifest.json as base64 data URI to support PWA standalone mode inside Streamlit iframes
+    manifest_base64 = base64.b64encode(manifest.encode("utf-8")).decode("utf-8")
+    manifest_tag = f'<link rel="manifest" href="data:application/json;base64,{manifest_base64}" />'
+    html = html.replace('<link rel="manifest" href="manifest.json" />', manifest_tag)
+    html = html.replace('<link rel="manifest" href="manifest.json">', manifest_tag)
+    
+    # Update PWA theme metadata & title to match Odyssey RPG specifications
+    html = html.replace('<meta name="theme-color" content="#5856D6" />', '<meta name="theme-color" content="#18181b" />')
+    html = html.replace('<meta name="theme-color" content="#5856D6">', '<meta name="theme-color" content="#18181b" />')
+    html = html.replace('<meta name="apple-mobile-web-app-title" content="ODYSSEY" />', '<meta name="apple-mobile-web-app-title" content="Odyssey RPG" />')
+    html = html.replace('<title>ODYSSEY — Personal Journey System</title>', '<title>Odyssey RPG</title>')
     
     return html
 
