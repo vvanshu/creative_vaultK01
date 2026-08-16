@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 
-# Set page config for wide, clean, full-screen viewport (v1.1.3)
+# Set page config for wide, clean, full-screen viewport (v1.1.4)
 st.set_page_config(
     page_title="IRIS QUEST — RPG Productivity",
     page_icon="🛡️",
@@ -18,6 +18,24 @@ st.markdown("""
         visibility: hidden !important;
     }
     
+    /* Lock the main Streamlit container to 100vh and hide its overflow */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+        overflow: hidden !important;
+        height: 100vh !important;
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Remove padding and margin from the Streamlit vertical block and elements */
+    [data-testid="stVerticalBlock"], [data-testid="stVerticalBlock"] > div {
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 0 !important;
+        height: 100vh !important;
+        width: 100% !important;
+    }
+    
     /* Remove padding around the main block container */
     .block-container {
         padding: 0 !important;
@@ -25,18 +43,23 @@ st.markdown("""
         max-width: 100% !important;
         width: 100% !important;
         height: 100vh !important;
+        overflow: hidden !important;
     }
     
     /* Make the iframe container take up full view height */
-    div[data-testid="stHtml"] {
+    div[data-testid="stHtml"], div.element-container {
         width: 100% !important;
         height: 100vh !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
     }
     
     iframe {
         width: 100% !important;
         height: 100vh !important;
         border: none !important;
+        display: block !important;
     }
 </style>
 """, unsafe_allow_html=True)
