@@ -156,6 +156,73 @@ function Toast({ message, onClose }) {
   );
 }
 
+/* ===== IN-APP CONFIRMATION MODAL ===== */
+function ConfirmDialog({ isOpen, title, message, confirmText = "Delete", cancelText = "Cancel", isDestructive = true, icon = "🗑️", onConfirm, onCancel }) {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="modal-backdrop-custom"
+      onClick={onCancel}
+    >
+      <div 
+        className="premium-card modal-content-custom" 
+        style={{
+          width: '100%',
+          maxWidth: '380px',
+          padding: '26px 20px',
+          background: 'var(--bg-card)',
+          borderRadius: '20px',
+          border: '1px solid var(--border-system)',
+          boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
+          textAlign: 'center',
+          position: 'relative'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ fontSize: '2.5rem', marginBottom: 12, lineHeight: 1 }}>
+          {icon || (isDestructive ? '🗑️' : '⚠️')}
+        </div>
+        <h3 className="title" style={{ fontSize: '19px', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+          {title || "Delete Confirmation"}
+        </h3>
+        <p className="body-text" style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: 24 }}>
+          {message || "Are you sure you want to proceed? This action cannot be undone."}
+        </p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button 
+            type="button" 
+            className="btn-secondary" 
+            style={{ flex: 1, height: '42px', minHeight: '42px', fontWeight: 600, borderRadius: '12px', fontSize: '13px' }}
+            onClick={onCancel}
+          >
+            {cancelText}
+          </button>
+          <button 
+            type="button" 
+            className="btn-primary" 
+            style={{ 
+              flex: 1, 
+              height: '42px', 
+              minHeight: '42px', 
+              fontWeight: 700, 
+              borderRadius: '12px',
+              fontSize: '13px',
+              background: isDestructive ? 'var(--accent-pink)' : 'var(--accent-indigo)',
+              boxShadow: isDestructive ? '0 4px 14px rgba(255, 45, 85, 0.3)' : 'none',
+              border: 'none',
+              color: 'var(--text-active-accent)'
+            }}
+            onClick={onConfirm}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ===== ONBOARDING (STEPS 1 - 6 SCREEN BY SCREEN) ===== */
 function Onboarding({ onComplete, session }) {
   const [step, setStep] = React.useState(1);
@@ -884,7 +951,7 @@ function Onboarding({ onComplete, session }) {
   );
 }
 
-function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPage, toast }) {
+function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPage, toast, requestConfirm }) {
   const lv = calcLevel(profile.totalXp);
   const avail = profile.totalXp - profile.spentXp;
   const xpNeeded = lv.nextXp - lv.currentXp;
@@ -1026,7 +1093,7 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
   const deleteTask = (id) => {
     const taskToDelete = tasks.find(t => t.id === id);
     if (!taskToDelete) return;
-    if (confirm('Are you sure you want to delete this quest? This cannot be undone.')) {
+    const executeDelete = () => {
       const updated = tasks.filter(t => t.id !== id);
       LS.set('irisquest_tasks', updated);
       setTasks(updated);
@@ -1040,6 +1107,20 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
           toast('Quest restored! ↩️');
         }
       });
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "Delete Quest?",
+        message: `Are you sure you want to delete "${taskToDelete.title}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        isDestructive: true,
+        icon: "🗑️",
+        onConfirm: executeDelete
+      });
+    } else {
+      executeDelete();
     }
   };
 
@@ -1460,7 +1541,7 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
 }
 
 /* ===== GOALS & JOURNEY MAP PAGE ===== */
-function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
+function GoalsPage({ goals, setGoals, tasks, setTasks, toast, requestConfirm }) {
   const [tab, setTab] = React.useState('list');
   const [name, setName] = React.useState('');
   const [cat, setCat] = React.useState('Career');
@@ -1538,11 +1619,28 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   };
 
   const deleteGoal = (id) => {
-    const ng = goals.filter(g=>g.id!==id);
-    LS.set('irisquest_goals', ng); setGoals(ng);
-    const nt = tasks.filter(t=>t.goalId!==id);
-    LS.set('irisquest_tasks', nt); setTasks(nt);
-    toast('Campaign journey deleted.');
+    const goalToDelete = goals.find(g => g.id === id);
+    const executeDelete = () => {
+      const ng = goals.filter(g => g.id !== id);
+      LS.set('irisquest_goals', ng); setGoals(ng);
+      const nt = tasks.filter(t => t.goalId !== id);
+      LS.set('irisquest_tasks', nt); setTasks(nt);
+      toast('Campaign journey deleted.');
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "Delete Campaign?",
+        message: `Are you sure you want to delete campaign "${goalToDelete ? goalToDelete.name : ''}" and its associated quests? This action cannot be undone.`,
+        confirmText: "Delete Campaign",
+        cancelText: "Cancel",
+        isDestructive: true,
+        icon: "🧭",
+        onConfirm: executeDelete
+      });
+    } else {
+      executeDelete();
+    }
   };
 
   const [expandedWeek, setExpandedWeek] = React.useState({});
@@ -1629,7 +1727,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
             const deleteInlineTask = (id) => {
               const taskToDelete = tasks.find(t => t.id === id);
               if (!taskToDelete) return;
-              if (confirm('Are you sure you want to delete this quest? This cannot be undone.')) {
+              const executeDelete = () => {
                 const updated = tasks.filter(t => t.id !== id);
                 LS.set('irisquest_tasks', updated);
                 setTasks(updated);
@@ -1643,6 +1741,20 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                     toast('Quest restored! ↩️');
                   }
                 });
+              };
+
+              if (requestConfirm) {
+                requestConfirm({
+                  title: "Delete Quest?",
+                  message: `Are you sure you want to delete "${taskToDelete.title}"? This action cannot be undone.`,
+                  confirmText: "Delete",
+                  cancelText: "Cancel",
+                  isDestructive: true,
+                  icon: "🗑️",
+                  onConfirm: executeDelete
+                });
+              } else {
+                executeDelete();
               }
             };
 
@@ -1974,7 +2086,7 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
 }
 
 /* ===== QUESTS BOARD PAGE ===== */
-function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
+function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast, requestConfirm }) {
   const [tab, setTab] = React.useState('active');
   const [title, setTitle] = React.useState('');
   const [diff, setDiff] = React.useState('Medium');
@@ -2007,7 +2119,7 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
   const deleteTask = (id) => {
     const taskToDelete = tasks.find(t => t.id === id);
     if (!taskToDelete) return;
-    if (confirm('Are you sure you want to delete this quest? This cannot be undone.')) {
+    const executeDelete = () => {
       const updated = tasks.filter(t => t.id !== id);
       LS.set('irisquest_tasks', updated);
       setTasks(updated);
@@ -2021,6 +2133,20 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
           toast('Quest restored! ↩️');
         }
       });
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "Delete Quest?",
+        message: `Are you sure you want to delete "${taskToDelete.title}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        isDestructive: true,
+        icon: "🗑️",
+        onConfirm: executeDelete
+      });
+    } else {
+      executeDelete();
     }
   };
 
@@ -2153,7 +2279,7 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
 }
 
 /* ===== REWARDS STORE PAGE ===== */
-function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
+function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestConfirm }) {
   const [tab, setTab] = React.useState('shop');
   const [filter, setFilter] = React.useState('All');
   const [rn, setRn] = React.useState('');
@@ -2196,9 +2322,26 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
   };
 
   const deleteReward = (id) => {
-    const nr = rewards.filter(r=>r.id!==id);
-    LS.set('irisquest_rewards', nr); setRewards(nr);
-    toast('Reward deleted.');
+    const rewardToDelete = rewards.find(r => r.id === id);
+    const executeDelete = () => {
+      const nr = rewards.filter(r => r.id !== id);
+      LS.set('irisquest_rewards', nr); setRewards(nr);
+      toast('Reward deleted.');
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "Delete Perk?",
+        message: `Are you sure you want to remove "${rewardToDelete ? rewardToDelete.name : 'this perk'}" from your catalog?`,
+        confirmText: "Delete Perk",
+        cancelText: "Cancel",
+        isDestructive: true,
+        icon: "🎁",
+        onConfirm: executeDelete
+      });
+    } else {
+      executeDelete();
+    }
   };
 
   const tierFilter = (r) => {
@@ -2367,7 +2510,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
 }
 
 /* ===== PROFILE & TIMELINE PAGE ===== */
-function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme, onSignOut }) {
+function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme, onSignOut, requestConfirm }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
 
@@ -2397,7 +2540,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
   };
 
   const softReset = () => {
-    if (confirm('Are you sure you want to soft reset your XP and quests?')) {
+    const executeReset = () => {
       const np = { ...profile, totalXp: 0, spentXp: 0 };
       LS.set('irisquest_profile', np); setProfile(np);
       const nt = tasks.map(t=>({...t, isCompleted: false, completedAt: null}));
@@ -2405,13 +2548,41 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
       const nr = rewards.map(r=>({...r, isClaimed: false, claimedAt: null}));
       LS.set('irisquest_rewards', nr); setRewards(nr);
       toast('Progress reset.');
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "Soft Reset Progress?",
+        message: "Are you sure you want to reset your XP and quest progress? Your identity and campaigns will remain intact.",
+        confirmText: "Reset Progress",
+        cancelText: "Cancel",
+        isDestructive: false,
+        icon: "🔄",
+        onConfirm: executeReset
+      });
+    } else {
+      executeReset();
     }
   };
 
   const fullReset = () => {
-    if (confirm('🚨 This will permanently delete all profile settings, goals, quests, and rewards. Proceed?')) {
+    const executeFormat = () => {
       ['irisquest_profile','irisquest_goals','irisquest_tasks','irisquest_rewards','irisquest_reviews'].forEach(k=>localStorage.removeItem(k));
       window.location.reload();
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "🚨 Full System Format?",
+        message: "This will permanently wipe all profile settings, campaigns, quests, and rewards. Are you sure?",
+        confirmText: "Format All Data",
+        cancelText: "Cancel",
+        isDestructive: true,
+        icon: "🚨",
+        onConfirm: executeFormat
+      });
+    } else {
+      executeFormat();
     }
   };
 
@@ -2426,11 +2597,25 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
   };
 
   const deleteReview = (id) => {
-    if (confirm('Are you sure you want to delete this weekly report log?')) {
+    const executeDelete = () => {
       const nr = reviews.filter(r => r.id !== id);
       LS.set('irisquest_reviews', nr);
       setReviews(nr);
       toast('Weekly review log removed.');
+    };
+
+    if (requestConfirm) {
+      requestConfirm({
+        title: "Delete Weekly Review?",
+        message: "Are you sure you want to delete this weekly reflection log? This action cannot be undone.",
+        confirmText: "Delete Review",
+        cancelText: "Cancel",
+        isDestructive: true,
+        icon: "📝",
+        onConfirm: executeDelete
+      });
+    } else {
+      executeDelete();
     }
   };
 
@@ -2653,11 +2838,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                             <button 
                               className="btn-danger-text" 
                               style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 0', border: 'none', background: 'none', color: 'var(--accent-pink)', cursor: 'pointer', fontSize: '12px' }}
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this weekly review log? This cannot be undone.')) {
-                                  deleteReview(r.id);
-                                }
-                              }}
+                              onClick={() => deleteReview(r.id)}
                             >
                               🗑️ Delete Review
                             </button>
@@ -2680,13 +2861,27 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                 className="btn-secondary" 
                 style={{ color: 'var(--text-primary)', fontWeight: 600 }} 
                 onClick={() => {
-                  if (confirm('Are you sure you want to sign out? Your active session will be closed.')) {
+                  const executeSignOut = () => {
                     if (onSignOut) {
                       onSignOut();
                     } else {
                       localStorage.removeItem('irisquest_profile');
                       window.location.reload();
                     }
+                  };
+
+                  if (requestConfirm) {
+                    requestConfirm({
+                      title: "Sign Out?",
+                      message: "Are you sure you want to sign out? Your active session will be closed.",
+                      confirmText: "Sign Out",
+                      cancelText: "Cancel",
+                      isDestructive: false,
+                      icon: "🚪",
+                      onConfirm: executeSignOut
+                    });
+                  } else {
+                    executeSignOut();
                   }
                 }}
               >
@@ -2752,6 +2947,22 @@ function App() {
   const [reviews, setReviews] = React.useState(LS.get('irisquest_reviews') || []);
   const [page, setPage] = React.useState('home');
   const [toastMsg, setToastMsg] = React.useState(null);
+  const [confirmState, setConfirmState] = React.useState(null);
+
+  const requestConfirm = (options) => {
+    setConfirmState({
+      ...options,
+      isOpen: true,
+      onConfirm: () => {
+        setConfirmState(null);
+        if (options.onConfirm) options.onConfirm();
+      },
+      onCancel: () => {
+        setConfirmState(null);
+        if (options.onCancel) options.onCancel();
+      }
+    });
+  };
 
   const [theme, setTheme] = React.useState(() => {
     try {
@@ -2805,7 +3016,7 @@ function App() {
   // Google OAuth Sign In & Account Switcher (Always triggers select_account prompt)
   const handleGoogleSignIn = async (promptSelect = true) => {
     if (!supabaseClient) {
-      alert("Supabase client is not initialized. Verify connection configuration.");
+      showToast("Supabase configuration is not active.");
       return;
     }
     const options = {
@@ -2819,7 +3030,7 @@ function App() {
       });
       if (error) throw error;
     } catch (err) {
-      alert(`Google Authentication Error: ${err.message}`);
+      showToast(`Google Authentication Error: ${err.message}`);
     }
   };
 
@@ -3004,12 +3215,13 @@ function App() {
   return (
     <div className="app-container">
       {toastMsg && <Toast message={toastMsg} onClose={()=>setToastMsg(null)} />}
+      {confirmState && <ConfirmDialog {...confirmState} />}
 
       {/* Dynamic Subpages */}
-      {page === 'home' && <HomePage profile={profile} setProfile={setProfile} tasks={tasks} setTasks={setTasks} goals={goals} rewards={rewards} setPage={setPage} toast={showToast} />}
-      {page === 'goals' && <GoalsPage goals={goals} setGoals={setGoals} tasks={tasks} setTasks={setTasks} toast={showToast} />}
-      {page === 'quests' && <QuestsPage profile={profile} tasks={tasks} goals={goals} setTasks={setTasks} setProfile={setProfile} toast={showToast} />}
-      {page === 'rewards' && <RewardsPage profile={profile} setProfile={setProfile} rewards={rewards} setRewards={setRewards} toast={showToast} />}
+      {page === 'home' && <HomePage profile={profile} setProfile={setProfile} tasks={tasks} setTasks={setTasks} goals={goals} rewards={rewards} setPage={setPage} toast={showToast} requestConfirm={requestConfirm} />}
+      {page === 'goals' && <GoalsPage goals={goals} setGoals={setGoals} tasks={tasks} setTasks={setTasks} toast={showToast} requestConfirm={requestConfirm} />}
+      {page === 'quests' && <QuestsPage profile={profile} tasks={tasks} goals={goals} setTasks={setTasks} setProfile={setProfile} toast={showToast} requestConfirm={requestConfirm} />}
+      {page === 'rewards' && <RewardsPage profile={profile} setProfile={setProfile} rewards={rewards} setRewards={setRewards} toast={showToast} requestConfirm={requestConfirm} />}
       {page === 'profile' && (
         <ProfilePage 
           profile={profile} 
@@ -3027,6 +3239,7 @@ function App() {
           theme={theme}
           setTheme={setTheme}
           onSignOut={handleSignOut}
+          requestConfirm={requestConfirm}
         />
       )}
 
