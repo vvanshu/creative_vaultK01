@@ -116,8 +116,44 @@ const getDurationGoalProgress = (g, tasksList) => {
 
 /* ===== TOAST ===== */
 function Toast({ message, onClose }) {
-  React.useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [message]);
-  return <div className="toast">{message}</div>;
+  const isObject = typeof message === 'object' && message !== null;
+  const timeoutMs = isObject && message.actionLabel ? 5000 : 3000;
+  
+  React.useEffect(() => { 
+    const t = setTimeout(onClose, timeoutMs); 
+    return () => clearTimeout(t); 
+  }, [message]);
+
+  const text = isObject ? message.text : message;
+  const actionLabel = isObject ? message.actionLabel : null;
+  const onAction = isObject ? message.onAction : null;
+
+  return (
+    <div className="toast" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <span>{text}</span>
+      {actionLabel && (
+        <button 
+          type="button" 
+          style={{ 
+            background: 'var(--accent-indigo)', 
+            color: 'var(--text-active-accent)', 
+            border: 'none', 
+            padding: '4px 10px', 
+            borderRadius: '6px', 
+            cursor: 'pointer', 
+            fontWeight: 700,
+            fontSize: '11px' 
+          }} 
+          onClick={() => {
+            if (onAction) onAction();
+            onClose();
+          }}
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
 }
 
 /* ===== ONBOARDING (STEPS 1 - 6 SCREEN BY SCREEN) ===== */
@@ -153,7 +189,7 @@ function Onboarding({ onComplete, session }) {
 
   // Step 3: Goals Setup (Screen by Screen)
   const [tempGoals, setTempGoals] = React.useState([
-    { id: 'g1', name: 'Portfolio Design', duration: '6 months', customDuration: '' }
+    { id: 'g1', name: 'Portfolio Design', duration: '6 months', customDurationValue: '30', customDurationUnit: 'days' }
   ]);
   const [goalIndex, setGoalIndex] = React.useState(0);
 
@@ -164,7 +200,7 @@ function Onboarding({ onComplete, session }) {
     if (addAnother) {
       const newId = 'g' + (tempGoals.length + 1);
       const newGoals = [...tempGoals];
-      newGoals.push({ id: newId, name: '', duration: '6 months', customDuration: '' });
+      newGoals.push({ id: newId, name: '', duration: '6 months', customDurationValue: '30', customDurationUnit: 'days' });
       setTempGoals(newGoals);
       setGoalIndex(goalIndex + 1);
     } else {
@@ -331,7 +367,7 @@ function Onboarding({ onComplete, session }) {
       return {
         id: tg.id,
         name: tg.name || 'My Campaign Journey',
-        duration: tg.duration === 'Custom' ? (tg.customDuration || 'Custom') : tg.duration,
+        duration: tg.duration === 'Custom' ? `${tg.customDurationValue} ${tg.customDurationUnit}` : tg.duration,
         finalTarget: ms.monthlyTarget || 'Build Milestone App',
         monthlyTarget: ms.monthlyTarget || 'First checkpoint',
         weeklyActions: ms.weeklyGoal || 'Research & Design',
@@ -541,14 +577,30 @@ function Onboarding({ onComplete, session }) {
                 <option>Custom</option>
               </select>
               {tempGoals[goalIndex].duration === 'Custom' && (
-                <input 
-                  className="form-input" 
-                  style={{ marginTop: 8 }} 
-                  value={tempGoals[goalIndex].customDuration} 
-                  onChange={e => updateGoalField(goalIndex, 'customDuration', e.target.value)} 
-                  placeholder="e.g. 45 Days" 
-                  required 
-                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input 
+                    type="number"
+                    className="form-input" 
+                    style={{ width: '60%' }}
+                    value={tempGoals[goalIndex].customDurationValue || ''} 
+                    onChange={e => updateGoalField(goalIndex, 'customDurationValue', e.target.value)} 
+                    placeholder="Value (e.g. 5)" 
+                    min="1"
+                    required 
+                  />
+                  <select
+                    className="form-select"
+                    style={{ width: '40%' }}
+                    value={tempGoals[goalIndex].customDurationUnit || 'days'} 
+                    onChange={e => updateGoalField(goalIndex, 'customDurationUnit', e.target.value)}
+                  >
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                    <option value="weeks">Weeks</option>
+                    <option value="months">Months</option>
+                    <option value="years">Years</option>
+                  </select>
+                </div>
               )}
             </div>
           </div>
@@ -571,6 +623,29 @@ function Onboarding({ onComplete, session }) {
               Set Milestones
             </button>
           </div>
+
+          {tempGoals.length > 0 && (
+            <div style={{ marginTop: 20, borderTop: '1px solid var(--border-system)', paddingTop: 16 }}>
+              <h4 className="caption" style={{ fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', fontSize: '10px' }}>Configured Campaigns</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {tempGoals.map((tg, idx) => (
+                  <div key={tg.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-system)' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{idx + 1}. {tg.name || 'Unnamed Journey'} ({tg.duration === 'Custom' ? `${tg.customDurationValue || 0} ${tg.customDurationUnit || 'days'}` : tg.duration})</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button type="button" className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px', height: 'auto', minHeight: 'auto', borderRadius: '8px' }} onClick={() => setGoalIndex(idx)}>✏️ Edit</button>
+                      {tempGoals.length > 1 && (
+                        <button type="button" className="btn-secondary" style={{ padding: '4px 8px', fontSize: '11px', height: 'auto', minHeight: 'auto', borderRadius: '8px', color: 'var(--accent-pink)' }} onClick={() => {
+                          const updated = tempGoals.filter((_, i) => i !== idx);
+                          setTempGoals(updated);
+                          setGoalIndex(updated.length - 1);
+                        }}>✕ Delete</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -949,10 +1024,23 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
   };
 
   const deleteTask = (id) => {
-    const updated = tasks.filter(t => t.id !== id);
-    LS.set('irisquest_tasks', updated);
-    setTasks(updated);
-    toast('Quest deleted.');
+    const taskToDelete = tasks.find(t => t.id === id);
+    if (!taskToDelete) return;
+    if (confirm('Are you sure you want to delete this quest? This cannot be undone.')) {
+      const updated = tasks.filter(t => t.id !== id);
+      LS.set('irisquest_tasks', updated);
+      setTasks(updated);
+      toast({
+        text: `Quest "${taskToDelete.title}" deleted.`,
+        actionLabel: 'Undo',
+        onAction: () => {
+          const restored = [...updated, taskToDelete];
+          LS.set('irisquest_tasks', restored);
+          setTasks(restored);
+          toast('Quest restored! ↩️');
+        }
+      });
+    }
   };
 
   const addQuest = (e) => {
@@ -1184,9 +1272,12 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
                     <span style={{ fontSize: '14px', fontWeight: 600, textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
                       {t.title}
                     </span>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
                       <span className={'ios-badge ' + (t.difficulty==='Small'?'ios-badge-blue':t.difficulty==='Medium'?'ios-badge-orange':'ios-badge-purple')} style={{ fontSize: '9px', padding: '2px 6px' }}>
                         {t.difficulty}
+                      </span>
+                      <span className={'ios-badge ' + (t.taskType === 'daily' ? 'ios-badge-green' : t.taskType === 'weekly' ? 'ios-badge-blue' : 'ios-badge-pink')} style={{ fontSize: '9px', padding: '2px 6px' }}>
+                        {t.taskType === 'daily' ? 'Daily Goal' : t.taskType === 'weekly' ? 'Weekly Goal' : 'Quest'}
                       </span>
                       {goalName(t.goalId) && (
                         <span className="caption" style={{ fontSize: '10px', fontWeight: 600 }}>
@@ -1198,7 +1289,7 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span className="quest-xp-badge" style={{ fontSize: '13px' }}>+{t.xpValue} XP</span>
-                  <button className="btn-icon" style={{ width: 26, height: 26, borderRadius: '50%' }} onClick={()=>deleteTask(t.id)}>✕</button>
+                  <button className="btn-icon" style={{ width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={()=>deleteTask(t.id)}>🗑️</button>
                 </div>
               </div>
             ))
@@ -1374,18 +1465,46 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
   const [name, setName] = React.useState('');
   const [cat, setCat] = React.useState('Career');
   const [dur, setDur] = React.useState('6 months');
+  const [customDurValue, setCustomDurValue] = React.useState('30');
+  const [customDurUnit, setCustomDurUnit] = React.useState('days');
   const [hrs, setHrs] = React.useState(10);
   const [ft, setFt] = React.useState('');
   const [mt, setMt] = React.useState('');
   const [wa, setWa] = React.useState('');
+  const [editingGoal, setEditingGoal] = React.useState(null);
+
+  const saveEditedGoal = (e) => {
+    e.preventDefault();
+    if (!editingGoal) return;
+    const finalDuration = editingGoal.durationMode === 'Custom'
+      ? `${editingGoal.customDurationValue} ${editingGoal.customDurationUnit}`
+      : editingGoal.durationMode;
+    const updatedGoals = goals.map(g => {
+      if (g.id !== editingGoal.id) return g;
+      return {
+        ...g,
+        name: editingGoal.name.trim(),
+        category: editingGoal.category,
+        duration: finalDuration,
+        hoursPerWeek: editingGoal.hoursPerWeek,
+        finalTarget: editingGoal.finalTarget.trim(),
+        monthlyTarget: editingGoal.monthlyTarget.trim()
+      };
+    });
+    LS.set('irisquest_goals', updatedGoals);
+    setGoals(updatedGoals);
+    setEditingGoal(null);
+    toast('Campaign journey updated!');
+  };
 
   const addGoal = (e) => {
     e.preventDefault();
     if (!name.trim() || !ft.trim()) return;
+    const finalDuration = dur === 'Custom' ? `${customDurValue} ${customDurUnit}` : dur;
     const g = { 
       id: genId(), 
       name: name.trim(), 
-      duration: dur, 
+      duration: finalDuration, 
       finalTarget: ft.trim(), 
       monthlyTarget: mt.trim(), 
       weeklyActions: wa.trim(), 
@@ -1508,10 +1627,23 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
             };
 
             const deleteInlineTask = (id) => {
-              const updated = tasks.filter(t => t.id !== id);
-              LS.set('irisquest_tasks', updated);
-              setTasks(updated);
-              toast('Quest deleted.');
+              const taskToDelete = tasks.find(t => t.id === id);
+              if (!taskToDelete) return;
+              if (confirm('Are you sure you want to delete this quest? This cannot be undone.')) {
+                const updated = tasks.filter(t => t.id !== id);
+                LS.set('irisquest_tasks', updated);
+                setTasks(updated);
+                toast({
+                  text: `Quest "${taskToDelete.title}" deleted.`,
+                  actionLabel: 'Undo',
+                  onAction: () => {
+                    const restored = [...updated, taskToDelete];
+                    LS.set('irisquest_tasks', restored);
+                    setTasks(restored);
+                    toast('Quest restored! ↩️');
+                  }
+                });
+              }
             };
 
             const isGoalOpen = !!expandedGoalIds[g.id];
@@ -1521,6 +1653,77 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                 [g.id]: !prev[g.id]
               }));
             };
+
+            if (editingGoal && editingGoal.id === g.id) {
+              return (
+                <div className="premium-card" key={g.id} style={{ padding: '16px 20px' }}>
+                  <h3 className="section-header" style={{ marginBottom: 16 }}>✏️ Edit Campaign</h3>
+                  <form onSubmit={saveEditedGoal}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px' }}>Campaign Name</label>
+                      <input className="form-input" value={editingGoal.name} onChange={e=>setEditingGoal({...editingGoal, name: e.target.value})} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px' }}>Category</label>
+                      <select className="form-select" value={editingGoal.category} onChange={e=>setEditingGoal({...editingGoal, category: e.target.value})}>
+                        <option>Career</option><option>Health</option><option>Finance</option><option>Creative</option><option>Mindset</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px' }}>Duration Horizon</label>
+                      <select className="form-select" value={editingGoal.durationMode} onChange={e=>setEditingGoal({...editingGoal, durationMode: e.target.value})}>
+                        <option value="3 months">3 months</option>
+                        <option value="6 months">6 months</option>
+                        <option value="1 year">1 year</option>
+                        <option value="Custom">Custom</option>
+                      </select>
+                      {editingGoal.durationMode === 'Custom' && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <input 
+                            type="number"
+                            className="form-input" 
+                            style={{ width: '60%' }}
+                            value={editingGoal.customDurationValue || ''} 
+                            onChange={e => setEditingGoal({...editingGoal, customDurationValue: e.target.value})} 
+                            placeholder="Value" 
+                            min="1"
+                            required 
+                          />
+                          <select
+                            className="form-select"
+                            style={{ width: '40%' }}
+                            value={editingGoal.customDurationUnit || 'days'} 
+                            onChange={e => setEditingGoal({...editingGoal, customDurationUnit: e.target.value})}
+                          >
+                            <option value="hours">Hours</option>
+                            <option value="days">Days</option>
+                            <option value="weeks">Weeks</option>
+                            <option value="months">Months</option>
+                            <option value="years">Years</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px' }}>Weekly Hour Budget</label>
+                      <input className="form-input" type="number" min={1} max={168} value={editingGoal.hoursPerWeek} onChange={e=>setEditingGoal({...editingGoal, hoursPerWeek: +e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px' }}>Final Target Milestone</label>
+                      <input className="form-input" value={editingGoal.finalTarget} onChange={e=>setEditingGoal({...editingGoal, finalTarget: e.target.value})} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '11px' }}>Monthly Target Milestone</label>
+                      <input className="form-input" value={editingGoal.monthlyTarget} onChange={e=>setEditingGoal({...editingGoal, monthlyTarget: e.target.value})} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                      <button className="btn-primary" type="submit" style={{ flexGrow: 1, height: '40px', minHeight: '40px' }}>💾 Save</button>
+                      <button className="btn-secondary" type="button" style={{ flexGrow: 1, height: '40px', minHeight: '40px' }} onClick={()=>setEditingGoal(null)}>Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              );
+            }
 
             return (
               <div className="premium-card" key={g.id} style={{ padding: '16px 20px' }}>
@@ -1590,16 +1793,21 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                                             onChange={() => toggleInlineTask(t.id)} 
                                             style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                           />
-                                          <span style={{ fontSize: '13px', textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
-                                            {t.title}
-                                          </span>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: '13px', textDecoration: t.isCompleted ? 'line-through' : 'none', color: t.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
+                                              {t.title}
+                                            </span>
+                                            <span className={'ios-badge ' + (t.taskType === 'daily' ? 'ios-badge-green' : 'ios-badge-blue')} style={{ fontSize: '9px', padding: '2px 6px' }}>
+                                              {t.taskType === 'daily' ? 'Daily Goal' : 'Weekly Goal'}
+                                            </span>
+                                          </div>
                                         </div>
                                         <button 
                                           type="button" 
                                           onClick={() => deleteInlineTask(t.id)} 
-                                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-pink)', cursor: 'pointer', fontSize: '12px' }}
+                                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         >
-                                          ✕
+                                          🗑️
                                         </button>
                                       </div>
                                     ))
@@ -1660,6 +1868,30 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
                       <button className="btn-secondary" style={{ height: '40px', minHeight: '40px', fontSize: '13px' }} onClick={toggleGoal}>
                         ▲ Close Journey Map
                       </button>
+                      <button 
+                        type="button"
+                        className="btn-secondary" 
+                        style={{ height: '40px', minHeight: '40px', fontSize: '13px' }} 
+                        onClick={() => {
+                          let mode = g.duration;
+                          let cValue = '30';
+                          let cUnit = 'days';
+                          if (!['3 months', '6 months', '1 year'].includes(g.duration)) {
+                            mode = 'Custom';
+                            const parts = g.duration.split(' ');
+                            cValue = parts[0] || '30';
+                            cUnit = parts[1] || 'days';
+                          }
+                          setEditingGoal({
+                            ...g,
+                            durationMode: mode,
+                            customDurationValue: cValue,
+                            customDurationUnit: cUnit
+                          });
+                        }}
+                      >
+                        ✏️ Edit Campaign
+                      </button>
                       <button className="btn-danger-text" style={{ padding: '0 8px' }} onClick={()=>deleteGoal(g.id)}>🗑️ Delete Campaign</button>
                     </div>
                   </div>
@@ -1685,8 +1917,37 @@ function GoalsPage({ goals, setGoals, tasks, setTasks, toast }) {
             <div className="form-group">
               <label className="form-label">Duration Horizon</label>
               <select className="form-select" value={dur} onChange={e=>setDur(e.target.value)}>
-                <option>3 months</option><option>6 months</option><option>1 year</option>
+                <option>3 months</option>
+                <option>6 months</option>
+                <option>1 year</option>
+                <option>Custom</option>
               </select>
+              {dur === 'Custom' && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <input 
+                    type="number"
+                    className="form-input" 
+                    style={{ width: '60%' }}
+                    value={customDurValue || ''} 
+                    onChange={e => setCustomDurValue(e.target.value)} 
+                    placeholder="Value (e.g. 5)" 
+                    min="1"
+                    required 
+                  />
+                  <select
+                    className="form-select"
+                    style={{ width: '40%' }}
+                    value={customDurUnit || 'days'} 
+                    onChange={e => setCustomDurUnit(e.target.value)}
+                  >
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                    <option value="weeks">Weeks</option>
+                    <option value="months">Months</option>
+                    <option value="years">Years</option>
+                  </select>
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">Weekly Hour Budget</label>
@@ -1744,10 +2005,23 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
   };
 
   const deleteTask = (id) => {
-    const updated = tasks.filter(t => t.id !== id);
-    LS.set('irisquest_tasks', updated);
-    setTasks(updated);
-    toast('Quest deleted.');
+    const taskToDelete = tasks.find(t => t.id === id);
+    if (!taskToDelete) return;
+    if (confirm('Are you sure you want to delete this quest? This cannot be undone.')) {
+      const updated = tasks.filter(t => t.id !== id);
+      LS.set('irisquest_tasks', updated);
+      setTasks(updated);
+      toast({
+        text: `Quest "${taskToDelete.title}" deleted.`,
+        actionLabel: 'Undo',
+        onAction: () => {
+          const restored = [...updated, taskToDelete];
+          LS.set('irisquest_tasks', restored);
+          setTasks(restored);
+          toast('Quest restored! ↩️');
+        }
+      });
+    }
   };
 
   const addTask = (e) => {
@@ -1808,16 +2082,19 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast }) {
             </div>
             <div className="quest-info">
               <div className="quest-title">{t.title}</div>
-              <div className="quest-meta">
+              <div className="quest-meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
                 {goalName(t.goalId) && <span>{goalName(t.goalId)} · </span>}
                 <span className={'ios-badge ' + (t.difficulty==='Small'?'ios-badge-blue':t.difficulty==='Medium'?'ios-badge-orange':'ios-badge-purple')}>{t.difficulty}</span>
+                <span className={'ios-badge ' + (t.taskType === 'daily' ? 'ios-badge-green' : t.taskType === 'weekly' ? 'ios-badge-blue' : 'ios-badge-pink')}>
+                  {t.taskType === 'daily' ? 'Daily Goal' : t.taskType === 'weekly' ? 'Weekly Goal' : 'Quest'}
+                </span>
                 {t.repeatType && t.repeatType !== 'None' && (
-                  <span className="ios-badge ios-badge-pink" style={{ marginLeft: 6 }}>🔁 {t.repeatType}</span>
+                  <span className="ios-badge ios-badge-pink">🔁 {t.repeatType}</span>
                 )}
               </div>
             </div>
             <span className="quest-xp-badge">+{t.xpValue} XP</span>
-            <button className="btn-icon" style={{ width: 28, height: 28, borderRadius: '50%', marginLeft: 10 }} onClick={()=>deleteTask(t.id)}>✕</button>
+            <button className="btn-icon" style={{ width: 28, height: 28, borderRadius: '50%', marginLeft: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={()=>deleteTask(t.id)}>🗑️</button>
           </div>
         ))
       )}
@@ -2090,11 +2367,16 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast }) {
 }
 
 /* ===== PROFILE & TIMELINE PAGE ===== */
-function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme }) {
+function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme, onSignOut }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
 
   const [showReview, setShowReview] = React.useState(false);
+  const [expandedReviewIds, setExpandedReviewIds] = React.useState({});
+
+  const toggleReviewExpand = (id) => {
+    setExpandedReviewIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Weekly review form fields
   const [comp, setComp] = React.useState('');
@@ -2138,10 +2420,8 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
     const r = { id: genId(), weekStart: weekStr, completed: comp || autoSummary, failed: fail, nextMission: next, createdAt: new Date().toISOString() };
     const nr = [r, ...reviews];
     LS.set('irisquest_reviews', nr); setReviews(nr);
-    const np = { ...profile, totalXp: profile.totalXp + 50 };
-    LS.set('irisquest_profile', np); setProfile(np);
     setComp(''); setFail(''); setNext('');
-    toast('📝 Weekly review cleared! +50 XP!');
+    toast('📝 Weekly review saved!');
     setShowReview(false);
   };
 
@@ -2252,7 +2532,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
           {/* Weekly reflection campaign prompt */}
           <div className="premium-card" style={{ background: 'rgba(88,86,214,0.04)', borderColor: 'rgba(88,86,214,0.15)' }}>
             <h3 className="section-header" style={{ marginBottom: 6 }}>Weekly Reflection Log</h3>
-            <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review milestones, assess obstacles and plan next week's campaign. Grants +50 XP.</p>
+            <p className="body-text" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review milestones, assess obstacles and plan next week's campaign.</p>
             <button className="btn-primary" style={{ marginTop: 16, height: '46px' }} onClick={()=>setShowReview(true)}>Write Weekly Review</button>
           </div>
           
@@ -2330,23 +2610,64 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
           {/* Reflection Review log list */}
           {reviews.length > 0 && (
             <div style={{ marginTop: 24 }}>
-              <h3 className="section-header" style={{ marginBottom: 12 }}>Reflection Logs</h3>
-              {reviews.map(r => (
-                <div className="premium-card" key={r.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <span className="ios-badge ios-badge-blue">{r.weekStart}</span>
-                    <span className="caption">{r.createdAt?.slice(0,10)}</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-emerald)' }}>Accomplished</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.completed}</p></div>
-                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-orange)' }}>Obstacles</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.failed || 'None logged.'}</p></div>
-                    <div><h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-indigo)' }}>Strategy</h4><p className="body-text" style={{ fontSize: '14px', marginTop: 2 }}>{r.nextMission || '—'}</p></div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14, borderTop: '1px solid var(--border-system)', paddingTop: 10 }}>
-                    <button className="btn-danger-text" onClick={() => deleteReview(r.id)}>🗑️ Delete Review</button>
-                  </div>
-                </div>
-              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 className="section-header" style={{ margin: 0 }}>📦 Weekly Reviews Inventory & Archive</h3>
+                <span className="ios-badge ios-badge-purple" style={{ fontSize: '11px' }}>{reviews.length} {reviews.length === 1 ? 'Log' : 'Logs'}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {reviews.map(r => {
+                  const isExpanded = !!expandedReviewIds[r.id];
+                  return (
+                    <div 
+                      className="premium-card" 
+                      key={r.id} 
+                      style={{ padding: '16px 20px', cursor: 'pointer', marginBottom: 0 }} 
+                      onClick={() => toggleReviewExpand(r.id)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: '1.2rem' }}>📝</span>
+                          <span className="ios-badge ios-badge-blue" style={{ fontSize: '11px', margin: 0 }}>{r.weekStart}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span className="caption" style={{ fontSize: '11px' }}>{r.createdAt?.slice(0, 10)}</span>
+                          <span style={{ fontSize: '12px', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+                        </div>
+                      </div>
+                      
+                      {isExpanded && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16, borderTop: '1px solid var(--border-system)', paddingTop: 16 }} onClick={(e) => e.stopPropagation()}>
+                          <div>
+                            <h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-emerald)', fontSize: '10px', textTransform: 'uppercase' }}>Accomplished</h4>
+                            <p className="body-text" style={{ fontSize: '13px', marginTop: 4, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{r.completed}</p>
+                          </div>
+                          <div>
+                            <h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-orange)', fontSize: '10px', textTransform: 'uppercase' }}>Obstacles</h4>
+                            <p className="body-text" style={{ fontSize: '13px', marginTop: 4, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{r.failed || 'None logged.'}</p>
+                          </div>
+                          <div>
+                            <h4 className="caption" style={{ fontWeight: 700, color: 'var(--accent-indigo)', fontSize: '10px', textTransform: 'uppercase' }}>Strategy</h4>
+                            <p className="body-text" style={{ fontSize: '13px', marginTop: 4, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{r.nextMission || '—'}</p>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, borderTop: '1px solid var(--border-system)', paddingTop: 10 }}>
+                            <button 
+                              className="btn-danger-text" 
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 0', border: 'none', background: 'none', color: 'var(--accent-pink)', cursor: 'pointer', fontSize: '12px' }}
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this weekly review log? This cannot be undone.')) {
+                                  deleteReview(r.id);
+                                }
+                              }}
+                            >
+                              🗑️ Delete Review
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -2355,13 +2676,17 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             <h3 className="section-header" style={{ color: 'var(--accent-pink)', marginBottom: 16 }}>⚠️ System Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button 
-                type="button"
+                type="button" 
                 className="btn-secondary" 
                 style={{ color: 'var(--text-primary)', fontWeight: 600 }} 
                 onClick={() => {
-                  if (confirm('Are you sure you want to sign out? Your profile settings will be cleared so you can log back in.')) {
-                    localStorage.removeItem('irisquest_profile');
-                    window.location.reload();
+                  if (confirm('Are you sure you want to sign out? Your active session will be closed.')) {
+                    if (onSignOut) {
+                      onSignOut();
+                    } else {
+                      localStorage.removeItem('irisquest_profile');
+                      window.location.reload();
+                    }
                   }
                 }}
               >
@@ -2391,7 +2716,7 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
               <label className="form-label">What is next week's mission?</label>
               <textarea className="form-textarea" value={next} onChange={e=>setNext(e.target.value)} placeholder="e.g. Draft Odyssey visual map layouts" required />
             </div>
-            <button className="btn-primary" type="submit">📝 Log Reflection & Earn +50 XP</button>
+            <button className="btn-primary" type="submit">📝 Log Reflection</button>
           </form>
         </div>
       )}
@@ -2477,18 +2802,16 @@ function App() {
     }
   }, []);
 
-  // Google OAuth Sign In & Account Switcher
-  const handleGoogleSignIn = async (promptSelect = false) => {
+  // Google OAuth Sign In & Account Switcher (Always triggers select_account prompt)
+  const handleGoogleSignIn = async (promptSelect = true) => {
     if (!supabaseClient) {
       alert("Supabase client is not initialized. Verify connection configuration.");
       return;
     }
     const options = {
-      redirectTo: window.location.origin + window.location.pathname
+      redirectTo: window.location.origin + window.location.pathname,
+      queryParams: { prompt: 'select_account' }
     };
-    if (promptSelect) {
-      options.queryParams = { prompt: 'select_account' };
-    }
     try {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
@@ -2498,6 +2821,32 @@ function App() {
     } catch (err) {
       alert(`Google Authentication Error: ${err.message}`);
     }
+  };
+
+  const handleSignOut = async () => {
+    if (supabaseClient) {
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+    }
+    // Clean all session & local state
+    localStorage.removeItem('irisquest_profile');
+    localStorage.removeItem('irisquest_goals');
+    localStorage.removeItem('irisquest_tasks');
+    localStorage.removeItem('irisquest_rewards');
+    localStorage.removeItem('irisquest_reviews');
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('sb-') || k.includes('supabase')) {
+        localStorage.removeItem(k);
+      }
+    });
+    setSession(null);
+    setProfile(null);
+    setCachedProfile(null);
+    setShowContinueCard(false);
+    setPage('home');
   };
 
   React.useEffect(() => {
@@ -2569,7 +2918,7 @@ function App() {
               cursor: 'pointer',
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
             }}
-            onClick={() => handleGoogleSignIn(false)}
+            onClick={() => handleGoogleSignIn(true)}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" style={{ display: 'block' }}>
               <path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z" fill="#4285F4" />
@@ -2677,6 +3026,7 @@ function App() {
           isStandalone={isStandalone}
           theme={theme}
           setTheme={setTheme}
+          onSignOut={handleSignOut}
         />
       )}
 

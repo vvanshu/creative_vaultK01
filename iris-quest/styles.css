@@ -753,19 +753,29 @@ html, body {
 /* Coupon Tickets - Perks Wallet */
 .coupon-card {
   position: relative;
-  background: radial-gradient(circle at left, transparent 8px, #ffffff 8px) left,
-              radial-gradient(circle at right, transparent 8px, #ffffff 8px) right;
+  background: radial-gradient(circle at left, transparent 8px, var(--bg-card) 8px) left,
+              radial-gradient(circle at right, transparent 8px, var(--bg-card) 8px) right;
   background-size: 51% 100%;
   background-repeat: no-repeat;
+  background-color: var(--bg-card);
   border-radius: 16px;
   padding: 16px 20px;
   margin-bottom: 14px;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.03));
-  border: 1px solid rgba(0,0,0,0.04);
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.04));
+  border: 1px solid var(--border-system);
+  color: var(--text-primary);
+}
+
+.coupon-card .title {
+  color: var(--text-primary) !important;
+}
+
+.coupon-card .caption {
+  color: var(--text-secondary);
 }
 
 .coupon-dashed-border {
-  border-left: 2px dashed rgba(0, 0, 0, 0.08);
+  border-left: 2px dashed var(--border-system);
   height: 100%;
   position: absolute;
   left: 72%;
