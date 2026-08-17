@@ -414,7 +414,7 @@ function Onboarding({ onComplete, session }) {
   };
 
   // Compile final state to enter dashboard
-  const finalizeOdyssey = () => {
+  const finalizeOdyssey = async () => {
     const profileData = {
       name: name.trim() || 'Alex',
       avatar: avatarEmoji,
@@ -482,7 +482,30 @@ function Onboarding({ onComplete, session }) {
     LS.set('irisquest_rewards', allRewards);
     LS.set('irisquest_reviews', []);
 
-    onComplete(profileData);
+    if (supabaseClient && session && session.user) {
+      try {
+        await supabaseClient.from('profiles').upsert({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: profileData.name,
+          avatar_url: session.user.user_metadata?.avatar_url || profileData.avatar,
+          current_identity: profileData.currentIdentity,
+          future_identity: profileData.futureIdentity,
+          total_xp: 0,
+          spent_xp: 0,
+          onboarding_completed: true,
+          profile_data: profileData,
+          goals_data: goalsData,
+          tasks_data: tasksData,
+          rewards_data: allRewards,
+          updated_at: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn('Failed to upsert profile to database:', e);
+      }
+    }
+
+    onComplete(profileData, goalsData, tasksData, allRewards);
   };
 
   return (
@@ -2923,18 +2946,10 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 function App() {
   const [session, setSession] = React.useState(null);
   const [authLoading, setAuthLoading] = React.useState(true);
-  const [showContinueCard, setShowContinueCard] = React.useState(false);
-  const [cachedProfile, setCachedProfile] = React.useState(() => {
-    const p = LS.get('irisquest_profile');
-    if (p && !p.avatarType) {
-      localStorage.removeItem('irisquest_profile');
-      return null;
-    }
-    return p;
-  });
+  const [isOnboarded, setIsOnboarded] = React.useState(false);
 
-  const [profile, setProfile] = React.useState(null);
-  const [goals, setGoals] = React.useState(LS.get('irisquest_goals') || []);
+  const [profile, setProfile] = React.useState(() => LS.get('irisquest_profile'));
+  const [goals, setGoals] = React.useState(() => LS.get('irisquest_goals') || []);
   const [tasks, setTasks] = React.useState(() => {
     const cached = LS.get('irisquest_tasks') || [];
     const { newTasks, updated } = checkRecurringTasks(cached);
@@ -2943,8 +2958,8 @@ function App() {
     }
     return newTasks;
   });
-  const [rewards, setRewards] = React.useState(LS.get('irisquest_rewards') || []);
-  const [reviews, setReviews] = React.useState(LS.get('irisquest_reviews') || []);
+  const [rewards, setRewards] = React.useState(() => LS.get('irisquest_rewards') || []);
+  const [reviews, setReviews] = React.useState(() => LS.get('irisquest_reviews') || []);
   const [page, setPage] = React.useState('home');
   const [toastMsg, setToastMsg] = React.useState(null);
   const [confirmState, setConfirmState] = React.useState(null);
@@ -2975,40 +2990,123 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [isStandalone, setIsStandalone] = React.useState(false);
 
+  // Hydrate full app state from Supabase / localStorage record
+  const hydrateAppState = (dbProfile) => {
+    if (!dbProfile) return;
+
+    let pData = dbProfile.profile_data || {
+      name: dbProfile.full_name || 'Alex',
+      avatar: dbProfile.avatar_url || '👤',
+      avatarType: 'Minimal Human',
+      currentIdentity: dbProfile.current_identity || 'Student',
+      futureIdentity: dbProfile.future_identity || 'Product Designer',
+      totalXp: dbProfile.total_xp || 0,
+      spentXp: dbProfile.spent_xp || 0,
+      createdAt: dbProfile.created_at || new Date().toISOString()
+    };
+
+    const localP = LS.get('irisquest_profile');
+    if (localP && localP.name) {
+      pData = { ...pData, ...localP };
+    }
+
+    LS.set('irisquest_profile', pData);
+    setProfile(pData);
+
+    if (dbProfile.goals_data && Array.isArray(dbProfile.goals_data) && dbProfile.goals_data.length > 0) {
+      const localGoals = LS.get('irisquest_goals');
+      const goalsToUse = (localGoals && localGoals.length > 0) ? localGoals : dbProfile.goals_data;
+      LS.set('irisquest_goals', goalsToUse);
+      setGoals(goalsToUse);
+    }
+
+    if (dbProfile.tasks_data && Array.isArray(dbProfile.tasks_data) && dbProfile.tasks_data.length > 0) {
+      const localTasks = LS.get('irisquest_tasks');
+      const tasksToUse = (localTasks && localTasks.length > 0) ? localTasks : dbProfile.tasks_data;
+      const { newTasks } = checkRecurringTasks(tasksToUse);
+      LS.set('irisquest_tasks', newTasks);
+      setTasks(newTasks);
+    }
+
+    if (dbProfile.rewards_data && Array.isArray(dbProfile.rewards_data) && dbProfile.rewards_data.length > 0) {
+      const localRewards = LS.get('irisquest_rewards');
+      const rewardsToUse = (localRewards && localRewards.length > 0) ? localRewards : dbProfile.rewards_data;
+      LS.set('irisquest_rewards', rewardsToUse);
+      setRewards(rewardsToUse);
+    }
+  };
+
+  // Persistent Profile Check & Hydration
+  const checkUserProfile = async (user) => {
+    if (!user) {
+      setIsOnboarded(false);
+      setAuthLoading(false);
+      return;
+    }
+
+    let foundProfile = null;
+
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (data && (data.onboarding_completed || data.current_identity || data.profile_data)) {
+          foundProfile = data;
+        }
+      } catch (err) {
+        console.warn('Supabase profile query fallback to local storage:', err);
+      }
+    }
+
+    if (foundProfile) {
+      hydrateAppState(foundProfile);
+      setIsOnboarded(true);
+    } else {
+      const localProfile = LS.get('irisquest_profile');
+      if (localProfile && localProfile.name && localProfile.currentIdentity) {
+        setProfile(localProfile);
+        setIsOnboarded(true);
+      } else {
+        setIsOnboarded(false);
+      }
+    }
+    setAuthLoading(false);
+  };
+
   // Supabase Auth Mount Check and Listener
   React.useEffect(() => {
     if (supabaseClient) {
       supabaseClient.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
-        if (session) {
-          syncUserProfile(session.user);
-          const cached = LS.get('irisquest_profile');
-          if (cached) {
-            setCachedProfile(cached);
-            setShowContinueCard(true);
-          }
+        if (session && session.user) {
+          checkUserProfile(session.user);
+        } else {
+          setAuthLoading(false);
         }
-        setAuthLoading(false);
       });
 
       const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
         setSession(session);
-        if (session) {
-          syncUserProfile(session.user);
-          const cached = LS.get('irisquest_profile');
-          if (cached) {
-            setCachedProfile(cached);
-          }
+        if (session && session.user) {
+          checkUserProfile(session.user);
         } else {
           setProfile(null);
-          setCachedProfile(null);
-          setShowContinueCard(false);
+          setIsOnboarded(false);
+          setAuthLoading(false);
         }
-        setAuthLoading(false);
       });
 
       return () => subscription.unsubscribe();
     } else {
+      const localProfile = LS.get('irisquest_profile');
+      if (localProfile && localProfile.name) {
+        setProfile(localProfile);
+        setIsOnboarded(true);
+      }
       setAuthLoading(false);
     }
   }, []);
@@ -3055,8 +3153,7 @@ function App() {
     });
     setSession(null);
     setProfile(null);
-    setCachedProfile(null);
-    setShowContinueCard(false);
+    setIsOnboarded(false);
     setPage('home');
   };
 
@@ -3099,13 +3196,13 @@ function App() {
     );
   }
 
-  // Auth Gate 1: No Sign-in = No Entry
+  // Returning User Flow / Clean Auth Gate: Unauthenticated or Logged Out
   if (!session) {
     return (
       <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <div className="premium-card" style={{ width: '100%', maxWidth: '400px', padding: '36px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: '3rem', marginBottom: 16 }}>🧭</div>
-          <h1 className="large-title" style={{ fontSize: '28px', marginBottom: 8, letterSpacing: '-0.8px' }}>ODYSSEY RPG</h1>
+          <h1 className="large-title" style={{ fontSize: '28px', marginBottom: 8, letterSpacing: '-0.8px' }}>ODYSSEY</h1>
           <p className="caption" style={{ marginBottom: 28, fontSize: '13px', lineHeight: '1.6' }}>
             Transform your goals into quests, actions into progress, and progress into identity. Join the productivity adventure.
           </p>
@@ -3118,16 +3215,16 @@ function App() {
               alignItems: 'center', 
               justifyContent: 'center', 
               gap: 12, 
-              height: '46px', 
-              minHeight: '46px', 
+              height: '48px', 
+              minHeight: '48px', 
               width: '100%',
               background: 'var(--text-primary)',
               color: 'var(--bg-system)',
               fontWeight: 700,
               border: 'none',
-              borderRadius: '23px',
+              borderRadius: '24px',
               cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
             }}
             onClick={() => handleGoogleSignIn(true)}
           >
@@ -3144,68 +3241,17 @@ function App() {
     );
   }
 
-  // Auth Gate 2: Instagram-Style "Continue as [Account]" Welcome Card
-  if (showContinueCard && cachedProfile) {
-    const meta = session.user?.user_metadata;
-    const gName = meta?.full_name || meta?.name || cachedProfile.name;
-    const gEmail = session.user?.email || "";
-    const gAvatar = meta?.avatar_url || "";
-
-    return (
-      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div className="premium-card" style={{ width: '100%', maxWidth: '400px', padding: '36px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.2rem', marginBottom: 16 }}>🧭</div>
-          <h2 className="title" style={{ fontSize: '22px', marginBottom: 24, letterSpacing: '-0.5px' }}>Welcome back to Odyssey</h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-            <div className="avatar-wrapper" style={{ width: 80, height: 80, margin: '0 auto' }}>
-              <div className="avatar-ring lvl-creator" style={{ width: 80, height: 80, borderRadius: '50%' }}>
-                {gAvatar ? (
-                  <img src={gAvatar} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', display: 'block' }} alt="Avatar" />
-                ) : (
-                  <div className="avatar-main" style={{ fontSize: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{cachedProfile.avatar || "👤"}</div>
-                )}
-              </div>
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{gName}</div>
-              <div className="caption" style={{ fontSize: '12px', marginTop: 2 }}>{gEmail}</div>
-            </div>
-          </div>
-
-          <button 
-            type="button" 
-            className="btn-primary" 
-            style={{ width: '100%', height: '46px', minHeight: '46px', fontWeight: 700, borderRadius: '23px', marginBottom: 14 }}
-            onClick={() => {
-              setProfile(cachedProfile);
-              setPage('home');
-              setShowContinueCard(false);
-            }}
-          >
-            Continue as {gName.split(' ')[0]}
-          </button>
-          
-          <button 
-            type="button" 
-            className="btn-secondary" 
-            style={{ width: '100%', height: '44px', minHeight: '44px', fontWeight: 600, borderRadius: '22px', color: 'var(--text-secondary)' }}
-            onClick={() => handleGoogleSignIn(true)}
-          >
-            Switch Account
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Auth Gate 3: Complete Onboarding (If authenticated but no cached profile exists)
-  if (!profile) {
+  // Initial Onboarding Screen: Shown only once for completely new users without existing profile
+  if (!isOnboarded || !profile) {
     return (
       <Onboarding 
         session={session}
-        onComplete={(p) => { 
+        onComplete={(p, g, t, r) => { 
           setProfile(p); 
+          if (g) setGoals(g);
+          if (t) setTasks(t);
+          if (r) setRewards(r);
+          setIsOnboarded(true);
           setPage('home'); 
         }} 
       />
