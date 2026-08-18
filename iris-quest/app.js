@@ -476,6 +476,19 @@ function Onboarding({ onComplete, session }) {
 
     const allRewards = [...selectedPresetsData, ...customRewards];
 
+    const userPayload = {
+      profile: profileData,
+      goals: goalsData,
+      tasks: tasksData,
+      rewards: allRewards,
+      reviews: [],
+      updatedAt: new Date().toISOString()
+    };
+
+    if (session && session.user && session.user.id) {
+      LS.set(`odyssey_profile_${session.user.id}`, userPayload);
+    }
+    LS.set('lifeos_saved_profile', userPayload);
     LS.set('irisquest_profile', profileData);
     LS.set('irisquest_goals', goalsData);
     LS.set('irisquest_tasks', tasksData);
@@ -498,6 +511,7 @@ function Onboarding({ onComplete, session }) {
           goals_data: goalsData,
           tasks_data: tasksData,
           rewards_data: allRewards,
+          reviews_data: [],
           updated_at: new Date().toISOString()
         });
       } catch (e) {
@@ -2990,51 +3004,47 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [isStandalone, setIsStandalone] = React.useState(false);
 
-  // Hydrate full app state from Supabase / localStorage record
-  const hydrateAppState = (dbProfile) => {
-    if (!dbProfile) return;
+  // Auto-sync active state under user-specific storage key and Supabase profiles table
+  React.useEffect(() => {
+    if (session && session.user && session.user.id && profile && isOnboarded) {
+      const userKey = `odyssey_profile_${session.user.id}`;
+      const payload = {
+        profile,
+        goals,
+        tasks,
+        rewards,
+        reviews,
+        updatedAt: new Date().toISOString()
+      };
+      LS.set(userKey, payload);
+      LS.set('lifeos_saved_profile', payload);
+      LS.set('irisquest_profile', profile);
+      LS.set('irisquest_goals', goals);
+      LS.set('irisquest_tasks', tasks);
+      LS.set('irisquest_rewards', rewards);
+      LS.set('irisquest_reviews', reviews);
 
-    let pData = dbProfile.profile_data || {
-      name: dbProfile.full_name || 'Alex',
-      avatar: dbProfile.avatar_url || '👤',
-      avatarType: 'Minimal Human',
-      currentIdentity: dbProfile.current_identity || 'Student',
-      futureIdentity: dbProfile.future_identity || 'Product Designer',
-      totalXp: dbProfile.total_xp || 0,
-      spentXp: dbProfile.spent_xp || 0,
-      createdAt: dbProfile.created_at || new Date().toISOString()
-    };
-
-    const localP = LS.get('irisquest_profile');
-    if (localP && localP.name) {
-      pData = { ...pData, ...localP };
+      if (supabaseClient) {
+        supabaseClient.from('profiles').upsert({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: profile.name,
+          avatar_url: session.user.user_metadata?.avatar_url || profile.avatar,
+          current_identity: profile.currentIdentity,
+          future_identity: profile.futureIdentity,
+          total_xp: profile.totalXp || 0,
+          spent_xp: profile.spentXp || 0,
+          onboarding_completed: true,
+          profile_data: profile,
+          goals_data: goals,
+          tasks_data: tasks,
+          rewards_data: rewards,
+          reviews_data: reviews,
+          updated_at: new Date().toISOString()
+        }).then(() => {}).catch(err => console.warn('Supabase sync warning:', err));
+      }
     }
-
-    LS.set('irisquest_profile', pData);
-    setProfile(pData);
-
-    if (dbProfile.goals_data && Array.isArray(dbProfile.goals_data) && dbProfile.goals_data.length > 0) {
-      const localGoals = LS.get('irisquest_goals');
-      const goalsToUse = (localGoals && localGoals.length > 0) ? localGoals : dbProfile.goals_data;
-      LS.set('irisquest_goals', goalsToUse);
-      setGoals(goalsToUse);
-    }
-
-    if (dbProfile.tasks_data && Array.isArray(dbProfile.tasks_data) && dbProfile.tasks_data.length > 0) {
-      const localTasks = LS.get('irisquest_tasks');
-      const tasksToUse = (localTasks && localTasks.length > 0) ? localTasks : dbProfile.tasks_data;
-      const { newTasks } = checkRecurringTasks(tasksToUse);
-      LS.set('irisquest_tasks', newTasks);
-      setTasks(newTasks);
-    }
-
-    if (dbProfile.rewards_data && Array.isArray(dbProfile.rewards_data) && dbProfile.rewards_data.length > 0) {
-      const localRewards = LS.get('irisquest_rewards');
-      const rewardsToUse = (localRewards && localRewards.length > 0) ? localRewards : dbProfile.rewards_data;
-      LS.set('irisquest_rewards', rewardsToUse);
-      setRewards(rewardsToUse);
-    }
-  };
+  }, [profile, goals, tasks, rewards, reviews, session, isOnboarded]);
 
   // Persistent Profile Check & Hydration
   const checkUserProfile = async (user) => {
@@ -3044,8 +3054,11 @@ function App() {
       return;
     }
 
-    let foundProfile = null;
+    const userKey = `odyssey_profile_${user.id}`;
+    const existingSavedData = LS.get(userKey) || LS.get('lifeos_saved_profile');
+    const legacyProfile = LS.get('irisquest_profile');
 
+    let dbProfile = null;
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient
@@ -3053,27 +3066,82 @@ function App() {
           .select('*')
           .eq('id', user.id)
           .single();
-
-        if (data && (data.onboarding_completed || data.current_identity || data.profile_data)) {
-          foundProfile = data;
+        if (data && (data.onboarding_completed || data.current_identity || data.profile_data || data.full_name)) {
+          dbProfile = data;
         }
       } catch (err) {
-        console.warn('Supabase profile query fallback to local storage:', err);
+        console.warn('Supabase profile query fallback:', err);
       }
     }
 
-    if (foundProfile) {
-      hydrateAppState(foundProfile);
+    // 1. Check user-specific localStorage or lifeos_saved_profile
+    if (existingSavedData && (existingSavedData.profile || existingSavedData.name)) {
+      const p = existingSavedData.profile || existingSavedData;
+      const g = existingSavedData.goals || LS.get('irisquest_goals') || [];
+      const t = existingSavedData.tasks || LS.get('irisquest_tasks') || [];
+      const r = existingSavedData.rewards || LS.get('irisquest_rewards') || [];
+      const rev = existingSavedData.reviews || LS.get('irisquest_reviews') || [];
+
+      const { newTasks } = checkRecurringTasks(t);
+
+      setProfile(p);
+      setGoals(g);
+      setTasks(newTasks);
+      setRewards(r);
+      setReviews(rev);
       setIsOnboarded(true);
-    } else {
-      const localProfile = LS.get('irisquest_profile');
-      if (localProfile && localProfile.name && localProfile.currentIdentity) {
-        setProfile(localProfile);
-        setIsOnboarded(true);
-      } else {
-        setIsOnboarded(false);
-      }
+    } 
+    // 2. Check Supabase database profile
+    else if (dbProfile) {
+      let p = dbProfile.profile_data || {
+        name: dbProfile.full_name || 'Alex',
+        avatar: dbProfile.avatar_url || '👤',
+        avatarType: 'Minimal Human',
+        currentIdentity: dbProfile.current_identity || 'Student',
+        futureIdentity: dbProfile.future_identity || 'Product Designer',
+        totalXp: dbProfile.total_xp || 0,
+        spentXp: dbProfile.spent_xp || 0,
+        createdAt: dbProfile.created_at || new Date().toISOString()
+      };
+      let g = (dbProfile.goals_data && Array.isArray(dbProfile.goals_data)) ? dbProfile.goals_data : (LS.get('irisquest_goals') || []);
+      let t = (dbProfile.tasks_data && Array.isArray(dbProfile.tasks_data)) ? dbProfile.tasks_data : (LS.get('irisquest_tasks') || []);
+      let r = (dbProfile.rewards_data && Array.isArray(dbProfile.rewards_data)) ? dbProfile.rewards_data : (LS.get('irisquest_rewards') || []);
+      let rev = (dbProfile.reviews_data && Array.isArray(dbProfile.reviews_data)) ? dbProfile.reviews_data : (LS.get('irisquest_reviews') || []);
+
+      const { newTasks } = checkRecurringTasks(t);
+
+      setProfile(p);
+      setGoals(g);
+      setTasks(newTasks);
+      setRewards(r);
+      setReviews(rev);
+      setIsOnboarded(true);
+
+      LS.set(userKey, { profile: p, goals: g, tasks: newTasks, rewards: r, reviews: rev });
+    } 
+    // 3. Check legacy generic profile
+    else if (legacyProfile && legacyProfile.name && (legacyProfile.currentIdentity || legacyProfile.avatarType)) {
+      const g = LS.get('irisquest_goals') || [];
+      const t = LS.get('irisquest_tasks') || [];
+      const r = LS.get('irisquest_rewards') || [];
+      const rev = LS.get('irisquest_reviews') || [];
+
+      const { newTasks } = checkRecurringTasks(t);
+
+      setProfile(legacyProfile);
+      setGoals(g);
+      setTasks(newTasks);
+      setRewards(r);
+      setReviews(rev);
+      setIsOnboarded(true);
+
+      LS.set(userKey, { profile: legacyProfile, goals: g, tasks: newTasks, rewards: r, reviews: rev });
+    } 
+    // 4. Truly first-time user ever: show onboarding
+    else {
+      setIsOnboarded(false);
     }
+
     setAuthLoading(false);
   };
 
@@ -3102,8 +3170,12 @@ function App() {
 
       return () => subscription.unsubscribe();
     } else {
+      const savedUserPayload = LS.get('lifeos_saved_profile');
       const localProfile = LS.get('irisquest_profile');
-      if (localProfile && localProfile.name) {
+      if (savedUserPayload && savedUserPayload.profile) {
+        setProfile(savedUserPayload.profile);
+        setIsOnboarded(true);
+      } else if (localProfile && localProfile.name) {
         setProfile(localProfile);
         setIsOnboarded(true);
       }
@@ -3132,6 +3204,7 @@ function App() {
     }
   };
 
+  // Logout Handler (Preserves user profile data permanently, only clears active auth tokens)
   const handleSignOut = async () => {
     if (supabaseClient) {
       try {
@@ -3140,19 +3213,13 @@ function App() {
         console.error("Sign out error:", err);
       }
     }
-    // Clean all session & local state
-    localStorage.removeItem('irisquest_profile');
-    localStorage.removeItem('irisquest_goals');
-    localStorage.removeItem('irisquest_tasks');
-    localStorage.removeItem('irisquest_rewards');
-    localStorage.removeItem('irisquest_reviews');
+    // Only purge active authentication tokens (sb-* or supabase tokens), preserving all saved user data
     Object.keys(localStorage).forEach(k => {
-      if (k.startsWith('sb-') || k.includes('supabase')) {
+      if (k.startsWith('sb-') || k.includes('supabase-auth-token')) {
         localStorage.removeItem(k);
       }
     });
     setSession(null);
-    setProfile(null);
     setIsOnboarded(false);
     setPage('home');
   };
