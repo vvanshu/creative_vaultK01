@@ -1,4 +1,4 @@
-const CACHE_NAME = 'odyssey-v3';
+const CACHE_NAME = 'odyssey-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

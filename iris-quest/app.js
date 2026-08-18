@@ -2547,7 +2547,7 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestC
 }
 
 /* ===== PROFILE & TIMELINE PAGE ===== */
-function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme, onSignOut, requestConfirm }) {
+function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme, onSignOut, onFullReset, requestConfirm }) {
   const [ci, setCi] = React.useState(profile.currentIdentity);
   const [fi, setFi] = React.useState(profile.futureIdentity);
 
@@ -2604,15 +2604,19 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
   const fullReset = () => {
     const executeFormat = () => {
-      ['irisquest_profile','irisquest_goals','irisquest_tasks','irisquest_rewards','irisquest_reviews'].forEach(k=>localStorage.removeItem(k));
-      window.location.reload();
+      if (onFullReset) {
+        onFullReset();
+      } else {
+        localStorage.clear();
+        window.location.reload();
+      }
     };
 
     if (requestConfirm) {
       requestConfirm({
         title: "🚨 Full System Format?",
-        message: "This will permanently wipe all profile settings, campaigns, quests, and rewards. Are you sure?",
-        confirmText: "Format All Data",
+        message: "This will permanently wipe all profile settings, campaigns, quests, and rewards, sign you out, and restart with a fresh setup. Are you sure?",
+        confirmText: "Format & Restart",
         cancelText: "Cancel",
         isDestructive: true,
         icon: "🚨",
@@ -3224,6 +3228,70 @@ function App() {
     setPage('home');
   };
 
+  // Full System Format Handler: Wipes user data in DB & local storage, signs out, and restarts fresh on Google Sign-In with setup prompts
+  const handleFullReset = async () => {
+    const userId = session?.user?.id;
+    const userEmail = session?.user?.email;
+
+    // 1. Wipe remote database record in Supabase profiles table
+    if (supabaseClient && userId) {
+      try {
+        await supabaseClient.from('profiles').upsert({
+          id: userId,
+          email: userEmail,
+          full_name: null,
+          avatar_url: null,
+          current_identity: null,
+          future_identity: null,
+          total_xp: 0,
+          spent_xp: 0,
+          onboarding_completed: false,
+          profile_data: null,
+          goals_data: [],
+          tasks_data: [],
+          rewards_data: [],
+          reviews_data: [],
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Could not reset Supabase profile record:', err);
+      }
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+    }
+
+    // 2. Wipe all local user storage keys
+    if (userId) {
+      localStorage.removeItem(`odyssey_profile_${userId}`);
+    }
+    localStorage.removeItem('lifeos_saved_profile');
+    localStorage.removeItem('irisquest_profile');
+    localStorage.removeItem('irisquest_goals');
+    localStorage.removeItem('irisquest_tasks');
+    localStorage.removeItem('irisquest_rewards');
+    localStorage.removeItem('irisquest_reviews');
+
+    // Purge auth session tokens
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('sb-') || k.includes('supabase')) {
+        localStorage.removeItem(k);
+      }
+    });
+
+    // 3. Reset app state completely to restart at Google Sign-In
+    setSession(null);
+    setProfile(null);
+    setGoals([]);
+    setTasks([]);
+    setRewards([]);
+    setReviews([]);
+    setIsOnboarded(false);
+    setPage('home');
+  };
+
   React.useEffect(() => {
     const root = document.documentElement;
     root.classList.remove('theme-light', 'theme-dark');
@@ -3352,6 +3420,7 @@ function App() {
           theme={theme}
           setTheme={setTheme}
           onSignOut={handleSignOut}
+          onFullReset={handleFullReset}
           requestConfirm={requestConfirm}
         />
       )}
