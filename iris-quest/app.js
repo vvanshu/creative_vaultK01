@@ -2548,8 +2548,30 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestC
 
 /* ===== PROFILE & TIMELINE PAGE ===== */
 function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards, reviews, setReviews, toast, deferredPrompt, setDeferredPrompt, isStandalone, theme, setTheme, onSignOut, onFullReset, requestConfirm }) {
-  const [ci, setCi] = React.useState(profile.currentIdentity);
-  const [fi, setFi] = React.useState(profile.futureIdentity);
+  const [isEditingProfile, setIsEditingProfile] = React.useState(false);
+  const [editName, setEditName] = React.useState(profile.name || 'Alex');
+  const [editAvatar, setEditAvatar] = React.useState(profile.avatar || '👤');
+  const [editAvatarType, setEditAvatarType] = React.useState(profile.avatarType || 'Minimal Human');
+  const [ci, setCi] = React.useState(profile.currentIdentity || 'Student');
+  const [fi, setFi] = React.useState(profile.futureIdentity || 'Product Designer');
+
+  const avatarOptions = [
+    { type: 'Minimal Human', emoji: '👤' },
+    { type: 'Creative Designer', emoji: '🎨' },
+    { type: 'Explorer', emoji: '🧭' },
+    { type: 'Builder', emoji: '🛠️' },
+    { type: 'Entrepreneur', emoji: '📈' },
+    { type: 'AI Creator', emoji: '🤖' }
+  ];
+
+  // Sync edit form if profile updates
+  React.useEffect(() => {
+    setEditName(profile.name || 'Alex');
+    setEditAvatar(profile.avatar || '👤');
+    setEditAvatarType(profile.avatarType || 'Minimal Human');
+    setCi(profile.currentIdentity || 'Student');
+    setFi(profile.futureIdentity || 'Product Designer');
+  }, [profile]);
 
   const [showReview, setShowReview] = React.useState(false);
   const [expandedReviewIds, setExpandedReviewIds] = React.useState({});
@@ -2569,11 +2591,24 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
   const completedTasks = tasks.filter(t=>t.isCompleted);
   const autoSummary = completedTasks.slice(0,8).map(t => '• ' + t.title + ' (+' + t.xpValue + ' XP)').join('\n') || 'No completed quests yet.';
 
-  const updateIdentity = (e) => {
+  const handleSaveProfile = (e) => {
     e.preventDefault();
-    const np = { ...profile, currentIdentity: ci, futureIdentity: fi };
-    LS.set('irisquest_profile', np); setProfile(np);
-    toast('Profile and Identity customization updated.');
+    if (!editName.trim()) {
+      toast('Please enter a valid hero name.');
+      return;
+    }
+    const updated = {
+      ...profile,
+      name: editName.trim(),
+      avatar: editAvatar,
+      avatarType: editAvatarType,
+      currentIdentity: ci.trim() || 'Student',
+      futureIdentity: fi.trim() || 'Product Designer'
+    };
+    LS.set('irisquest_profile', updated);
+    setProfile(updated);
+    setIsEditingProfile(false);
+    toast('✨ Profile details updated successfully!');
   };
 
   const softReset = () => {
@@ -2714,18 +2749,132 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
       {!showReview ? (
         <>
           {/* Identity customization display */}
-          <div className="premium-card" style={{ textAlign: 'center' }}>
+          <div className="premium-card" style={{ textAlign: 'center', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -6 }}>
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                style={{ 
+                  padding: '6px 14px', 
+                  fontSize: '12px', 
+                  borderRadius: '16px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 6,
+                  color: 'var(--text-primary)',
+                  fontWeight: 600
+                }}
+                onClick={() => setIsEditingProfile(!isEditingProfile)}
+              >
+                {isEditingProfile ? '✕ Cancel' : '✏️ Edit Profile'}
+              </button>
+            </div>
+
             <div className="avatar-wrapper" style={{ margin: '0 auto 16px' }}>
               <div className={`avatar-ring ${lv.rankClass}`}>
-                <div className="avatar-main">{profile.avatar}</div>
+                <div className="avatar-main">{profile.avatar || '👤'}</div>
               </div>
             </div>
             <h2 className="title" style={{ fontSize: '22px' }}>{profile.name}</h2>
-            <p className="caption" style={{ marginTop: 4 }}>{profile.currentIdentity} ➔ <span style={{ color: 'var(--accent-indigo)', fontWeight: 600 }}>{profile.futureIdentity}</span></p>
-            <div style={{ marginTop: 12 }}>
-              <span className="ios-badge ios-badge-purple" style={{ fontSize: '13px' }}>Total XP Earned: {profile.totalXp}</span>
+            <p className="caption" style={{ marginTop: 4 }}>
+              {profile.currentIdentity} ➔ <span style={{ color: 'var(--accent-indigo)', fontWeight: 600 }}>{profile.futureIdentity}</span>
+            </p>
+            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span className="ios-badge ios-badge-purple" style={{ fontSize: '12px' }}>Rank: {lv.title}</span>
+              <span className="ios-badge ios-badge-blue" style={{ fontSize: '12px' }}>Total XP: {profile.totalXp}</span>
             </div>
           </div>
+
+          {/* Edit Profile & Identity Form Card */}
+          {isEditingProfile && (
+            <div className="premium-card" style={{ border: '1.5px solid var(--accent-indigo)', background: 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 className="section-header" style={{ margin: 0, color: 'var(--accent-indigo)' }}>✏️ Edit Profile & Identity</h3>
+                <button className="btn-icon" onClick={() => setIsEditingProfile(false)}>✕</button>
+              </div>
+
+              <form onSubmit={handleSaveProfile}>
+                <div className="form-group">
+                  <label className="form-label">Hero / Display Name</label>
+                  <input 
+                    className="form-input" 
+                    value={editName} 
+                    onChange={e => setEditName(e.target.value)} 
+                    placeholder="Enter your name"
+                    required 
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Choose Avatar Archetype</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, margin: '10px 0' }}>
+                    {avatarOptions.map(opt => (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        className={'premium-card' + (editAvatarType === opt.type ? ' active' : '')}
+                        style={{
+                          padding: '12px 6px',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          marginBottom: 0,
+                          border: editAvatarType === opt.type ? '2px solid var(--accent-indigo)' : '1px solid var(--border-system)',
+                          background: editAvatarType === opt.type ? 'rgba(88,86,214,0.1)' : 'var(--bg-system)'
+                        }}
+                        onClick={() => {
+                          setEditAvatarType(opt.type);
+                          setEditAvatar(opt.emoji);
+                        }}
+                      >
+                        <div style={{ fontSize: '1.8rem', marginBottom: 4 }}>{opt.emoji}</div>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>{opt.type}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Current Identity</label>
+                  <input 
+                    className="form-input" 
+                    value={ci} 
+                    onChange={e => setCi(e.target.value)} 
+                    placeholder="e.g. Student, Explorer, Junior Developer" 
+                    required 
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Future Identity Target</label>
+                  <input 
+                    className="form-input" 
+                    value={fi} 
+                    onChange={e => setFi(e.target.value)} 
+                    placeholder="e.g. Creative Director, Lead Architect" 
+                    required 
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                  <button 
+                    type="button" 
+                    className="btn-secondary" 
+                    style={{ flex: 1, height: '44px' }} 
+                    onClick={() => setIsEditingProfile(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-primary" 
+                    style={{ flex: 1, height: '44px' }}
+                  >
+                    💾 Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
           {/* PWA Install Prompt Card */}
           {!isStandalone && deferredPrompt && (
@@ -2791,21 +2940,25 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
             </div>
           </div>
 
-          {/* Edit Identity mapping form */}
-          <div className="premium-card">
-            <h3 className="section-header" style={{ marginBottom: 16 }}>Edit Identity Mapping</h3>
-            <form onSubmit={updateIdentity}>
-              <div className="form-group">
-                <label className="form-label">Current Identity</label>
-                <input className="form-input" value={ci} onChange={e=>setCi(e.target.value)} required />
+          {/* Edit Profile & Identity Settings Entry */}
+          {!isEditingProfile && (
+            <div className="premium-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 className="section-header" style={{ margin: 0 }}>👤 Profile & Identity</h3>
+                  <p className="caption" style={{ marginTop: 4 }}>Update display name, avatar persona, and identity goals.</p>
+                </div>
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }} 
+                  onClick={() => setIsEditingProfile(true)}
+                >
+                  ✏️ Edit Profile
+                </button>
               </div>
-              <div className="form-group">
-                <label className="form-label">Future Identity Target</label>
-                <input className="form-input" value={fi} onChange={e=>setFi(e.target.value)} required />
-              </div>
-              <button className="btn-secondary" type="submit">Update Identity Mapping</button>
-            </form>
-          </div>
+            </div>
+          )}
 
           {/* Life Timeline log */}
           <div className="premium-card">
