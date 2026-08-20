@@ -3845,6 +3845,41 @@ function App() {
     }
   };
 
+  // One-tap Direct Continuation for Saved Profile (Bypasses OAuth account chooser to immediately open Dashboard)
+  const handleContinueAsSavedProfile = () => {
+    if (!lastSavedProfile) return;
+    const userPayload = LS.get('lifeos_saved_profile') || {};
+    const p = lastSavedProfile;
+    const g = userPayload.goals || LS.get('irisquest_goals') || [];
+    const t = userPayload.tasks || LS.get('irisquest_tasks') || [];
+    let r = userPayload.rewards || LS.get('irisquest_rewards') || [];
+    if (!Array.isArray(r) || r.length === 0) r = DEFAULT_PERKS_CATALOG;
+    const rev = userPayload.reviews || LS.get('irisquest_reviews') || [];
+
+    const { newTasks } = checkRecurringTasks(t);
+
+    setProfile(p);
+    setGoals(g);
+    setTasks(newTasks);
+    setRewards(r);
+    setReviews(rev);
+
+    const savedSession = {
+      user: {
+        id: p.id || 'odyssey_saved_hero',
+        email: p.email || 'hero@odyssey.app',
+        user_metadata: {
+          full_name: p.name,
+          avatar_url: p.avatar
+        }
+      }
+    };
+    setSession(savedSession);
+    setIsOnboarded(true);
+    setPage('home');
+    showToast(`🧭 Welcome back, ${p.name || 'Hero'}!`);
+  };
+
   // Logout Handler (Preserves user profile data permanently, only clears active auth tokens)
   const handleSignOut = async () => {
     if (supabaseClient) {
@@ -4041,7 +4076,7 @@ function App() {
                   fontSize: '14px',
                   fontWeight: 700
                 }}
-                onClick={() => handleGoogleSignIn(false)}
+                onClick={handleContinueAsSavedProfile}
               >
                 🚀 Continue as {lastSavedProfile.name}
               </button>
