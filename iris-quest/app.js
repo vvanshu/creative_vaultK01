@@ -3930,46 +3930,170 @@ function App() {
     );
   }
 
+  const lastSavedProfile = React.useMemo(() => {
+    try {
+      const saved = LS.get('lifeos_saved_profile') || LS.get('irisquest_profile');
+      if (saved && (saved.profile || saved.name)) {
+        return saved.profile || saved;
+      }
+    } catch (e) {}
+    return null;
+  }, [session]);
+
   // Returning User Flow / Clean Auth Gate: Unauthenticated or Logged Out
   if (!session) {
     return (
-      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div className="premium-card" style={{ width: '100%', maxWidth: '400px', padding: '36px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 16 }}>🧭</div>
-          <h1 className="large-title" style={{ fontSize: '28px', marginBottom: 8, letterSpacing: '-0.8px' }}>ODYSSEY</h1>
-          <p className="caption" style={{ marginBottom: 28, fontSize: '13px', lineHeight: '1.6' }}>
-            Transform your goals into quests, actions into progress, and progress into identity. Join the productivity adventure.
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '20px 16px' }}>
+        <div className="premium-card" style={{ width: '100%', maxWidth: '420px', padding: '36px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3.2rem', marginBottom: 12 }}>🧭</div>
+          <h1 className="large-title" style={{ fontSize: '28px', marginBottom: 6, letterSpacing: '-0.8px' }}>ODYSSEY</h1>
+          <p className="caption" style={{ marginBottom: 24, fontSize: '13px', lineHeight: '1.5' }}>
+            Transform your goals into quests, actions into progress, and progress into identity.
           </p>
-          
-          <button 
-            type="button" 
-            className="btn-primary" 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: 12, 
-              height: '48px', 
-              minHeight: '48px', 
-              width: '100%',
-              background: 'var(--text-primary)',
-              color: 'var(--bg-system)',
-              fontWeight: 700,
-              border: 'none',
-              borderRadius: '24px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
-            }}
-            onClick={() => handleGoogleSignIn(true)}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" style={{ display: 'block' }}>
-              <path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z" fill="#4285F4" />
-              <path d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26A5.58 5.58 0 0 1 9 14.54c-2.34 0-4.33-1.57-5.04-3.71H.92v2.33A9 9 0 0 0 9 18z" fill="#34A853" />
-              <path d="M3.96 10.83a5.39 5.39 0 0 1 0-3.66V4.84H.92a9 9 0 0 0 0 8.32l3.04-2.33z" fill="#FBBC05" />
-              <path d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4A9 9 0 0 0 .92 4.84l3.04 2.33C4.67 5.15 6.66 3.58 9 3.58z" fill="#EA4335" />
-            </svg>
-            Sign in with Google
-          </button>
+
+          {/* Saved Profile on this Device Card */}
+          {lastSavedProfile && lastSavedProfile.name ? (
+            <div 
+              className="premium-card" 
+              style={{ 
+                background: 'var(--bg-system)', 
+                border: '1.5px solid var(--accent-indigo)', 
+                padding: '18px 16px', 
+                marginBottom: 20, 
+                textAlign: 'left' 
+              }}
+            >
+              <div className="caption" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent-indigo)', fontWeight: 700, marginBottom: 10 }}>
+                Saved Profile on this device
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div 
+                  style={{ 
+                    width: '52px', 
+                    height: '52px', 
+                    borderRadius: '50%', 
+                    background: 'rgba(88, 86, 214, 0.12)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: '28px' 
+                  }}
+                >
+                  {lastSavedProfile.avatar || '👤'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 className="title" style={{ fontSize: '17px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {lastSavedProfile.name}
+                  </h3>
+                  <p className="caption" style={{ margin: '3px 0 0', fontSize: '12px' }}>
+                    {lastSavedProfile.currentIdentity} ➔ <span style={{ color: 'var(--accent-indigo)' }}>{lastSavedProfile.futureIdentity}</span>
+                  </p>
+                  {lastSavedProfile.totalXp !== undefined && (
+                    <span className="ios-badge ios-badge-purple" style={{ fontSize: '10px', marginTop: 6 }}>
+                      ⚡ {lastSavedProfile.totalXp} XP · {calcLevel(lastSavedProfile.totalXp).title}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                type="button" 
+                className="btn-primary" 
+                style={{ 
+                  marginTop: 16, 
+                  height: '46px', 
+                  width: '100%', 
+                  background: 'var(--accent-indigo)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: 8,
+                  fontSize: '14px',
+                  fontWeight: 700
+                }}
+                onClick={() => handleGoogleSignIn(false)}
+              >
+                🚀 Continue as {lastSavedProfile.name}
+              </button>
+            </div>
+          ) : null}
+
+          {/* Action options: Google Sign In, Switch Account, or Create New Account */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <button 
+              type="button" 
+              className="btn-primary" 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 12, 
+                height: '48px', 
+                minHeight: '48px', 
+                width: '100%',
+                background: 'var(--text-primary)',
+                color: 'var(--bg-system)',
+                fontWeight: 700,
+                border: 'none',
+                borderRadius: '24px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
+              }}
+              onClick={() => handleGoogleSignIn(true)}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" style={{ display: 'block' }}>
+                <path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z" fill="#4285F4" />
+                <path d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26A5.58 5.58 0 0 1 9 14.54c-2.34 0-4.33-1.57-5.04-3.71H.92v2.33A9 9 0 0 0 9 18z" fill="#34A853" />
+                <path d="M3.96 10.83a5.39 5.39 0 0 1 0-3.66V4.84H.92a9 9 0 0 0 0 8.32l3.04-2.33z" fill="#FBBC05" />
+                <path d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4A9 9 0 0 0 .92 4.84l3.04 2.33C4.67 5.15 6.66 3.58 9 3.58z" fill="#EA4335" />
+              </svg>
+              {lastSavedProfile ? 'Sign in with Google' : 'Sign in with Google'}
+            </button>
+
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              style={{ 
+                height: '44px', 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 8,
+                fontWeight: 600,
+                fontSize: '13px',
+                color: 'var(--text-primary)'
+              }}
+              onClick={() => handleGoogleSignIn(true)}
+            >
+              🔄 Sign in with Another Account
+            </button>
+
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              style={{ 
+                height: '44px', 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 8,
+                fontWeight: 600,
+                fontSize: '13px',
+                color: 'var(--accent-indigo)'
+              }}
+              onClick={() => handleGoogleSignIn(true)}
+            >
+              ➕ Sign Up / Create New Profile
+            </button>
+          </div>
+
+          <div style={{ marginTop: 24, borderTop: '1px solid var(--border-system)', paddingTop: 16 }}>
+            <p className="caption" style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+              🔒 Secured with Google OAuth & Supabase Cloud Sync
+            </p>
+          </div>
         </div>
       </div>
     );
