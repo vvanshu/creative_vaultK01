@@ -3605,6 +3605,16 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = React.useState(null);
   const [isStandalone, setIsStandalone] = React.useState(false);
 
+  const lastSavedProfile = React.useMemo(() => {
+    try {
+      const saved = LS.get('lifeos_saved_profile') || LS.get('irisquest_profile');
+      if (saved && (saved.profile || saved.name)) {
+        return saved.profile || saved;
+      }
+    } catch (e) {}
+    return null;
+  }, [session]);
+
   // Auto-sync active state under user-specific storage key and Supabase profiles table
   React.useEffect(() => {
     if (session && session.user && session.user.id && profile && isOnboarded) {
@@ -3929,16 +3939,6 @@ function App() {
       </div>
     );
   }
-
-  const lastSavedProfile = React.useMemo(() => {
-    try {
-      const saved = LS.get('lifeos_saved_profile') || LS.get('irisquest_profile');
-      if (saved && (saved.profile || saved.name)) {
-        return saved.profile || saved;
-      }
-    } catch (e) {}
-    return null;
-  }, [session]);
 
   // Returning User Flow / Clean Auth Gate: Unauthenticated or Logged Out
   if (!session) {
