@@ -19,6 +19,8 @@ const syncUserProfile = async (user) => {
   } catch (e) {
     console.error('Failed to sync profile to database:', e);
   }
+};
+
 // --- Device / Browser Web Notification System ---
 function sendDeviceNotification(title, body) {
   if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {

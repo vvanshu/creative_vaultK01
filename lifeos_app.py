@@ -86,19 +86,19 @@ def load_bundled_html():
     # Replace relative links with embedded content
     # Remove stylesheet link tag and inject inline style tag
     css_tag = '<style>\n' + css + '\n</style>'
-    html = re.sub(r'<link\s+rel=["\']stylesheet["\']\s+href=["\']styles\.css(?:\?[^"\']*)?["\']\s*/?>', css_tag, html)
+    html = re.sub(r'<link\s+rel=["\']stylesheet["\']\s+href=["\']styles\.css(?:\?[^"\']*)?["\']\s*/?>', lambda _: css_tag, html)
     html = html.replace('<link rel="stylesheet" href="styles.css" />', css_tag)
     html = html.replace('<link rel="stylesheet" href="styles.css">', css_tag)
     
     # Remove app.js src script tag and inject inline script tag
     js_tag = '<script type="text/babel">\n' + js + '\n</script>'
-    html = re.sub(r'<script\s+type=["\']text/babel["\']\s+src=["\']app\.js(?:\?[^"\']*)?["\']\s*></script>', js_tag, html)
+    html = re.sub(r'<script\s+type=["\']text/babel["\']\s+src=["\']app\.js(?:\?[^"\']*)?["\']\s*></script>', lambda _: js_tag, html)
     html = html.replace('<script type="text/babel" src="app.js"></script>', js_tag)
     
     # Embed manifest.json as base64 data URI to support PWA standalone mode inside Streamlit iframes
     manifest_base64 = base64.b64encode(manifest.encode("utf-8")).decode("utf-8")
     manifest_tag = f'<link rel="manifest" href="data:application/json;base64,{manifest_base64}" />'
-    html = re.sub(r'<link\s+rel=["\']manifest["\']\s+href=["\']manifest\.json(?:\?[^"\']*)?["\']\s*/?>', manifest_tag, html)
+    html = re.sub(r'<link\s+rel=["\']manifest["\']\s+href=["\']manifest\.json(?:\?[^"\']*)?["\']\s*/?>', lambda _: manifest_tag, html)
     html = html.replace('<link rel="manifest" href="manifest.json" />', manifest_tag)
     html = html.replace('<link rel="manifest" href="manifest.json">', manifest_tag)
     
