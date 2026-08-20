@@ -19,7 +19,64 @@ const syncUserProfile = async (user) => {
   } catch (e) {
     console.error('Failed to sync profile to database:', e);
   }
-};
+// --- Device / Browser Web Notification System ---
+function sendDeviceNotification(title, body) {
+  if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification(title, {
+        body: body,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png'
+      });
+    } catch (e) {
+      console.warn("Device notification error:", e);
+    }
+  }
+}
+
+async function requestDeviceNotificationPermission(onSuccess, onError) {
+  if (typeof window === "undefined" || !("Notification" in window)) {
+    if (onError) onError("This browser does not support web push notifications.");
+    return false;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      sendDeviceNotification("🔔 Notifications Enabled!", "You will now receive milestone celebration alerts, quest reminders, and perk updates.");
+      if (onSuccess) onSuccess();
+      return true;
+    } else {
+      if (onError) onError("Notification permission was denied or dismissed.");
+      return false;
+    }
+  } catch (err) {
+    if (onError) onError(`Notification request failed: ${err.message}`);
+    return false;
+  }
+}
+
+// --- Dopamine Inventory Perks Catalog ---
+const DEFAULT_PERKS_CATALOG = [
+  { id: 'dp_1', title: 'Food / Snack under ₹20', cost: 10, category: 'Daily Treat', icon: '🍪', cadence: 'daily', expiryDays: 1 },
+  { id: 'dp_2', title: 'Music Listening Session', cost: 15, category: 'Relaxation', icon: '🎧', cadence: 'daily', expiryDays: 1 },
+  { id: 'dp_3', title: 'Guilt-Free YT / Insta Scroll', cost: 20, category: 'Quick Break', icon: '📱', cadence: 'daily', expiryDays: 1 },
+  { id: 'dp_4', title: 'Free Dance Expression', cost: 25, category: 'Movement', icon: '💃', cadence: 'daily', expiryDays: 2 },
+  { id: 'dp_5', title: 'Dress Up / Aesthetic Styling', cost: 35, category: 'Self-Care', icon: '✨', cadence: 'daily', expiryDays: 2 },
+  { id: 'dp_6', title: 'Astrology / Tarot Reading', cost: 45, category: 'Divination', icon: '🔮', cadence: 'daily', expiryDays: 3 },
+  { id: 'dp_7', title: 'Fantasy Fiction Writing', cost: 60, category: 'Creative Flow', icon: '✍️', cadence: 'weekly', expiryDays: 5 },
+  { id: 'dp_8', title: 'Food Treat under ₹80', cost: 80, category: 'Tasty Reward', icon: '🍜', cadence: 'weekly', expiryDays: 5 },
+  { id: 'dp_9', title: 'Gaming Time (1-2 Hours)', cost: 100, category: 'Gaming', icon: '🎮', cadence: 'weekly', expiryDays: 7 },
+  { id: 'dp_10', title: 'K-Drama / Series Episodes', cost: 150, category: 'Binge Watch', icon: '📺', cadence: 'weekly', expiryDays: 7 },
+  { id: 'dp_11', title: 'Creative Hobby Exploration', cost: 175, category: 'Creative', icon: '🎨', cadence: 'weekly', expiryDays: 7 },
+  { id: 'dp_12', title: 'Photoshoot Session', cost: 200, category: 'Aesthetics', icon: '📸', cadence: 'weekly', expiryDays: 10 },
+  { id: 'dp_13', title: 'Full Movie Screening', cost: 250, category: 'Cinema', icon: '🍿', cadence: 'weekly', expiryDays: 10 },
+  { id: 'dp_14', title: 'Fantasy Worldplay / Immersion', cost: 300, category: 'Roleplay', icon: '🐉', cadence: 'weekly', expiryDays: 14 },
+  { id: 'dp_15', title: 'Karaoke Singing Party', cost: 350, category: 'Expression', icon: '🎤', cadence: 'monthly', expiryDays: 14 },
+  { id: 'dp_16', title: 'Half-Day Outing / Exploration', cost: 400, category: 'Adventure', icon: '🗺️', cadence: 'monthly', expiryDays: 21 },
+  { id: 'dp_17', title: 'Guilt-Free Wishlist Purchase', cost: 450, category: 'Shopping', icon: '🛍️', cadence: 'monthly', expiryDays: 30 },
+  { id: 'dp_18', title: 'Full Free Day Off Pass', cost: 500, category: 'Ultimate Pass', icon: '🏖️', cadence: 'monthly', expiryDays: 30 }
+];
+
 /* ===== DATA PERSISTENCE HELPERS ===== */
 const LS = {
   get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
@@ -365,39 +422,32 @@ function Onboarding({ onComplete, session }) {
     });
   };
 
-  // Step 6: Reward Personalization presets
-  const rewardPresets = [
-    { id: 'rp1', name: 'Watch KDrama episode', category: 'Entertainment', type: 'Daily', duration: '30 min', xpCost: 50 },
-    { id: 'rp2', name: 'Gaming session', category: 'Entertainment', type: 'Daily', duration: '1 hour', xpCost: 50 },
-    { id: 'rp3', name: 'Movies session', category: 'Entertainment', type: 'Weekly', duration: '2 hours', xpCost: 150 },
-    { id: 'rp4', name: 'Snack under ₹20', category: 'Food', type: 'Daily', duration: '15 min', xpCost: 50 },
-    { id: 'rp5', name: 'Meal under ₹80', category: 'Food', type: 'Weekly', duration: '1 hour', xpCost: 150 },
-    { id: 'rp6', name: 'Weekend outing', category: 'Experiences', type: 'Monthly', duration: 'Half day', xpCost: 500 },
-    { id: 'rp7', name: 'Tarot reading card pull', category: 'Creative', type: 'Daily', duration: '15 min', xpCost: 50 },
-    { id: 'rp8', name: 'Listening to music session', category: 'Creative', type: 'Daily', duration: '30 min', xpCost: 50 },
-    { id: 'rp9', name: 'Spend on custom shopping gadgets', category: 'Shopping', type: 'Monthly', duration: 'Half day', xpCost: 500 }
-  ];
-
-  const [selectedRewardIds, setSelectedRewardIds] = React.useState(['rp1', 'rp4', 'rp8']);
+  // Step 6: Dopamine Inventory Perks Presets
+  const rewardPresets = DEFAULT_PERKS_CATALOG;
+  const [selectedRewardIds, setSelectedRewardIds] = React.useState(['dp_1', 'dp_2', 'dp_8']);
   const [customRewards, setCustomRewards] = React.useState([]);
 
   // Custom reward creator form state
   const [crName, setCrName] = React.useState('');
-  const [crCat, setCrCat] = React.useState('Entertainment');
-  const [crType, setCrType] = React.useState('Daily');
-  const [crDur, setCrDur] = React.useState('30 min');
+  const [crCat, setCrCat] = React.useState('Daily Treat');
+  const [crCadence, setCrCadence] = React.useState('daily');
+  const [crCost, setCrCost] = React.useState(25);
+  const [crIcon, setCrIcon] = React.useState('🎁');
+  const [crExpiryDays, setCrExpiryDays] = React.useState(2);
 
   const addCustomReward = (e) => {
     e.preventDefault();
     if (!crName.trim()) return;
-    const calcCost = crType === 'Daily' ? 50 : crType === 'Weekly' ? 150 : 500;
     const newCr = {
       id: genId(),
+      title: crName.trim(),
       name: crName.trim(),
       category: crCat,
-      type: crType,
-      duration: crDur,
-      xpCost: calcCost,
+      cadence: crCadence,
+      cost: parseInt(crCost) || 25,
+      xpCost: parseInt(crCost) || 25,
+      icon: crIcon || '🎁',
+      expiryDays: parseInt(crExpiryDays) || 7,
       isClaimed: false,
       claimedAt: null
     };
@@ -462,17 +512,19 @@ function Onboarding({ onComplete, session }) {
       });
     });
 
-    const selectedPresetsData = rewardPresets
-      .filter(rp => selectedRewardIds.includes(rp.id))
-      .map(rp => ({
-        id: rp.id,
-        name: rp.name,
-        category: rp.category,
-        xpCost: rp.xpCost,
-        expiryDate: rp.type,
-        isClaimed: false,
-        claimedAt: null
-      }));
+    const selectedPresetsData = DEFAULT_PERKS_CATALOG.map(rp => ({
+      id: rp.id,
+      title: rp.title,
+      name: rp.title,
+      category: rp.category,
+      icon: rp.icon,
+      cost: rp.cost,
+      xpCost: rp.cost,
+      cadence: rp.cadence,
+      expiryDays: rp.expiryDays,
+      isClaimed: false,
+      claimedAt: null
+    }));
 
     const allRewards = [...selectedPresetsData, ...customRewards];
 
@@ -906,9 +958,9 @@ function Onboarding({ onComplete, session }) {
 
           {/* Presets Library */}
           <div style={{ marginBottom: 20 }}>
-            <h4 className="section-header" style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Library Presets</h4>
+            <h4 className="section-header" style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Dopamine Perk Presets</h4>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, maxHeight: '280px', overflowY: 'auto' }}>
               {rewardPresets.map(preset => {
                 const isSelected = selectedRewardIds.includes(preset.id);
                 return (
@@ -927,11 +979,16 @@ function Onboarding({ onComplete, session }) {
                       transition: 'var(--transition-ios)'
                     }}
                   >
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: 600 }}>{preset.name}</div>
-                      <div className="caption" style={{ fontSize: '11px' }}>{preset.category} · {preset.type} ({preset.duration})</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: '1.4rem' }}>{preset.icon || '🎁'}</span>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 600 }}>{preset.title}</div>
+                        <div className="caption" style={{ fontSize: '11px' }}>
+                          {preset.category} · {preset.cadence?.toUpperCase()} (Expires in {preset.expiryDays}d)
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {preset.xpCost} XP</div>
+                    <div style={{ fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {preset.cost} XP</div>
                   </div>
                 );
               })}
@@ -940,31 +997,31 @@ function Onboarding({ onComplete, session }) {
 
           {/* Add custom reward form */}
           <div className="premium-card" style={{ padding: 14, background: 'rgba(0,0,0,0.01)', marginBottom: 20 }}>
-            <h4 className="section-header" style={{ fontSize: '13px' }}>➕ Create Custom Reward</h4>
+            <h4 className="section-header" style={{ fontSize: '13px' }}>➕ Create Custom Dopamine Perk</h4>
             <form onSubmit={addCustomReward}>
               <div className="form-group">
                 <input 
                   className="form-input" 
                   value={crName} 
                   onChange={e=>setCrName(e.target.value)} 
-                  placeholder="Reward Name (e.g. Afternoon off)" 
+                  placeholder="Perk Title (e.g. 30 min coffee break)" 
                 />
               </div>
-              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" style={{ fontSize: '10px' }}>Category</label>
-                  <select className="form-select" style={{ height: '38px', fontSize: '13px' }} value={crCat} onChange={e=>setCrCat(e.target.value)}>
-                    <option>Entertainment</option><option>Food</option><option>Experiences</option><option>Creative</option><option>Shopping</option>
-                  </select>
+                  <input className="form-input" style={{ height: '38px', fontSize: '12px' }} value={crCat} onChange={e=>setCrCat(e.target.value)} placeholder="Treat / Break" />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '10px' }}>Type</label>
-                  <select className="form-select" style={{ height: '38px', fontSize: '13px' }} value={crType} onChange={e=>setCrType(e.target.value)}>
-                    <option>Daily</option><option>Weekly</option><option>Monthly</option>
-                  </select>
+                  <label className="form-label" style={{ fontSize: '10px' }}>XP Cost</label>
+                  <input type="number" min={10} max={1000} className="form-input" style={{ height: '38px', fontSize: '12px' }} value={crCost} onChange={e=>setCrCost(e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '10px' }}>Expiry Days</label>
+                  <input type="number" min={1} max={90} className="form-input" style={{ height: '38px', fontSize: '12px' }} value={crExpiryDays} onChange={e=>setCrExpiryDays(e.target.value)} />
                 </div>
               </div>
-              <button className="btn-secondary" style={{ height: '38px', fontSize: '13px' }} type="submit">Add Custom Reward</button>
+              <button className="btn-secondary" style={{ height: '38px', fontSize: '13px', width: '100%' }} type="submit">Add Custom Perk</button>
             </form>
 
             {/* Custom rewards created listing */}
@@ -972,7 +1029,7 @@ function Onboarding({ onComplete, session }) {
               <div style={{ marginTop: 12 }}>
                 {customRewards.map(cr => (
                   <div key={cr.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: 'var(--bg-card)', borderRadius: 8, border: '1px solid var(--border-system)', marginBottom: 4, fontSize: '12px' }}>
-                    <span>{cr.name} (⚡ {cr.xpCost} XP)</span>
+                    <span>{cr.icon} {cr.title} (⚡ {cr.cost} XP · {cr.expiryDays}d)</span>
                     <button type="button" onClick={() => setCustomRewards(customRewards.filter(x => x.id !== cr.id))} style={{ border: 'none', background: 'transparent', color: 'var(--accent-pink)', cursor: 'pointer' }}>✕</button>
                   </div>
                 ))}
@@ -1002,6 +1059,24 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
   const [newTitle, setNewTitle] = React.useState('');
   const [newGoalId, setNewGoalId] = React.useState('');
   const [newDiff, setNewDiff] = React.useState('Medium');
+
+  // Daily quest check-in browser notification
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && "Notification" in window && Notification.permission === "granted") {
+      const todayStr = new Date().toDateString();
+      const notifKey = `odyssey_daily_notif_${todayStr}`;
+      if (!sessionStorage.getItem(notifKey)) {
+        const pendingDaily = tasks.filter(t => !t.isCompleted && t.taskType === 'daily').length;
+        if (pendingDaily > 0) {
+          sendDeviceNotification(
+            "🧭 Odyssey Daily Check-In",
+            `Good day, ${profile.name || 'Hero'}! You have ${pendingDaily} daily quests ready on your board.`
+          );
+        }
+        sessionStorage.setItem(notifKey, '1');
+      }
+    }
+  }, []);
 
   const selectedDateStr = selectedDate.toDateString();
   const selectedDateYMD = selectedDate.toISOString().split('T')[0];
@@ -1103,9 +1178,14 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
 
   const toggleTask = (id) => {
     let wasChecked = false;
+    let completedTaskObj = null;
+    const oldLevel = calcLevel(profile.totalXp).level;
+    let nextLevel = oldLevel;
+
     const updated = tasks.map(t => {
       if (t.id !== id) return t;
       wasChecked = !t.isCompleted;
+      completedTaskObj = t;
       const wasCompleted = t.isCompleted;
       const newP = { ...profile };
       if (wasCompleted) {
@@ -1113,6 +1193,7 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
       } else {
         newP.totalXp += t.xpValue;
       }
+      nextLevel = calcLevel(newP.totalXp).level;
       LS.set('irisquest_profile', newP);
       setProfile(newP);
 
@@ -1124,7 +1205,18 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
     });
     LS.set('irisquest_tasks', updated);
     setTasks(updated);
-    toast(wasChecked ? 'Quest cleared! 🎉' : 'Quest status reverted.');
+
+    if (wasChecked && completedTaskObj) {
+      toast('Quest cleared! 🎉');
+      if (nextLevel > oldLevel) {
+        const lvlInfo = calcLevel(profile.totalXp + completedTaskObj.xpValue);
+        sendDeviceNotification("🎉 LEVEL UP: " + lvlInfo.title + "!", "Congratulations! You reached Level " + nextLevel + " (" + (profile.totalXp + completedTaskObj.xpValue) + " XP)!");
+      } else {
+        sendDeviceNotification("⚔️ Quest Cleared! (+" + completedTaskObj.xpValue + " XP)", completedTaskObj.title);
+      }
+    } else {
+      toast('Quest status reverted.');
+    }
   };
 
   const deleteTask = (id) => {
@@ -2133,8 +2225,15 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast, reques
   const [repeatEnd, setRepeatEnd] = React.useState('');
 
   const toggleTask = (id) => {
+    let wasChecked = false;
+    let completedTaskObj = null;
+    const oldLevel = calcLevel(profile.totalXp).level;
+    let nextLevel = oldLevel;
+
     const updated = tasks.map(t => {
       if (t.id !== id) return t;
+      wasChecked = !t.isCompleted;
+      completedTaskObj = t;
       const wasCompleted = t.isCompleted;
       const newP = { ...profile };
       if (wasCompleted) { 
@@ -2145,12 +2244,22 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast, reques
         newP.totalXp += t.xpValue; 
         toast(`🎉 +${t.xpValue} XP Earned!`); 
       }
+      nextLevel = calcLevel(newP.totalXp).level;
       LS.set('irisquest_profile', newP);
       setProfile(newP);
       return { ...t, isCompleted: !wasCompleted, completedAt: wasCompleted ? null : new Date().toISOString() };
     });
     LS.set('irisquest_tasks', updated);
     setTasks(updated);
+
+    if (wasChecked && completedTaskObj) {
+      if (nextLevel > oldLevel) {
+        const lvlInfo = calcLevel(profile.totalXp + completedTaskObj.xpValue);
+        sendDeviceNotification("🎉 LEVEL UP: " + lvlInfo.title + "!", "Congratulations! You reached Level " + nextLevel + " (" + (profile.totalXp + completedTaskObj.xpValue) + " XP)!");
+      } else {
+        sendDeviceNotification("⚔️ Quest Cleared! (+" + completedTaskObj.xpValue + " XP)", completedTaskObj.title);
+      }
+    }
   };
 
   const deleteTask = (id) => {
@@ -2315,33 +2424,108 @@ function QuestsPage({ profile, tasks, goals, setTasks, setProfile, toast, reques
   );
 }
 
-/* ===== REWARDS STORE PAGE ===== */
+/* ===== REWARDS STORE & DOPAMINE INVENTORY PAGE ===== */
 function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestConfirm }) {
   const [tab, setTab] = React.useState('shop');
-  const [filter, setFilter] = React.useState('All');
-  const [rn, setRn] = React.useState('');
-  const [rc, setRc] = React.useState('Treat');
-  const [rxp, setRxp] = React.useState(100);
-  const [rexp, setRexp] = React.useState('');
+  const [cadenceFilter, setCadenceFilter] = React.useState('All');
+  const [showArchivedTickets, setShowArchivedTickets] = React.useState(false);
 
-  const avail = profile.totalXp - profile.spentXp;
+  // Custom Perk form state
+  const [crTitle, setCrTitle] = React.useState('');
+  const [crIcon, setCrIcon] = React.useState('🎁');
+  const [crCategory, setCrCategory] = React.useState('Daily Treat');
+  const [crCadence, setCrCadence] = React.useState('daily');
+  const [crCost, setCrCost] = React.useState(25);
+  const [crExpiryDays, setCrExpiryDays] = React.useState(2);
 
-  const claim = (id) => {
-    const r = rewards.find(r=>r.id===id);
-    if (!r || r.isClaimed || avail < r.xpCost) return;
-    const np = { ...profile, spentXp: profile.spentXp + r.xpCost };
-    LS.set('irisquest_profile', np); setProfile(np);
-    const nr = rewards.map(rw => rw.id===id ? { ...rw, isClaimed: true, claimedAt: new Date().toISOString(), isUsed: false } : rw);
-    LS.set('irisquest_rewards', nr); setRewards(nr);
-    toast('🎁 Perk unlocked and added to ticket wallet!');
+  const avail = profile.totalXp - (profile.spentXp || 0);
+
+  // Ensure default catalog is present if rewards is empty
+  const catalogRewards = React.useMemo(() => {
+    const unclaimed = rewards.filter(r => !r.isClaimed);
+    if (unclaimed.length === 0 && rewards.length === 0) {
+      return DEFAULT_PERKS_CATALOG;
+    }
+    return unclaimed;
+  }, [rewards]);
+
+  // Helper for ticket expiration status
+  const getTicketStatus = (item) => {
+    if (item.isUsed) {
+      const usedDateStr = item.usedAt ? new Date(item.usedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently';
+      return { text: `✓ Claimed & Used (${usedDateStr})`, isExpired: false, isUsed: true, badgeClass: 'ios-badge-green' };
+    }
+    const expiryDays = item.expiryDays || (item.cadence === 'daily' ? 1 : item.cadence === 'monthly' ? 30 : 7);
+    const expiresTime = item.expiresAt ? new Date(item.expiresAt).getTime() : (new Date(item.claimedAt || Date.now()).getTime() + expiryDays * 24 * 3600 * 1000);
+    const diffMs = expiresTime - Date.now();
+    if (diffMs <= 0) {
+      return { text: '⌛ Ticket Expired', isExpired: true, isUsed: false, badgeClass: 'ios-badge-pink' };
+    }
+    const diffDays = Math.floor(diffMs / (24 * 3600 * 1000));
+    const diffHours = Math.floor((diffMs % (24 * 3600 * 1000)) / (3600 * 1000));
+    const expDateStr = new Date(expiresTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (diffDays > 1) {
+      return { text: `⌛ Expires in ${diffDays} days (${expDateStr})`, isExpired: false, isUsed: false, badgeClass: 'ios-badge-orange' };
+    } else if (diffDays === 1) {
+      return { text: `⌛ Expires tomorrow (${diffHours}h left)`, isExpired: false, isUsed: false, badgeClass: 'ios-badge-orange' };
+    } else {
+      return { text: `⌛ Expires in ${Math.max(1, diffHours)} hours`, isExpired: false, isUsed: false, badgeClass: 'ios-badge-pink' };
+    }
   };
 
-  const redeem = (id) => {
+  const claim = (perk) => {
+    const cost = perk.cost || perk.xpCost || 50;
+    if (avail < cost) {
+      toast('⚡ Not enough available XP to unlock this perk!');
+      return;
+    }
+
+    const expiryDays = perk.expiryDays || (perk.cadence === 'daily' ? 1 : perk.cadence === 'monthly' ? 30 : 7);
+    const claimedAt = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + expiryDays * 24 * 3600 * 1000).toISOString();
+    const ticketCode = '#TKT-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+
+    const np = { ...profile, spentXp: (profile.spentXp || 0) + cost };
+    LS.set('irisquest_profile', np);
+    setProfile(np);
+
+    const newTicket = {
+      id: genId(),
+      ticketCode,
+      perkId: perk.id,
+      title: perk.title || perk.name,
+      name: perk.title || perk.name,
+      category: perk.category || 'Perk',
+      icon: perk.icon || '🎁',
+      cost,
+      xpCost: cost,
+      cadence: perk.cadence || 'daily',
+      expiryDays,
+      isClaimed: true,
+      claimedAt,
+      expiresAt,
+      isUsed: false,
+      usedAt: null
+    };
+
+    const nr = [newTicket, ...rewards];
+    LS.set('irisquest_rewards', nr);
+    setRewards(nr);
+
+    sendDeviceNotification(
+      `🎁 Perk Unlocked: ${newTicket.title}`,
+      `Active coupon ticket ${ticketCode} generated! Valid for ${expiryDays} day(s).`
+    );
+    toast(`🎁 ${newTicket.title} unlocked and active in your wallet!`);
+  };
+
+  const redeemTicket = (id) => {
     const nr = rewards.map(rw => {
       if (rw.id === id) {
-        toast(`🎫 Coupon ticket redeemed: ${rw.name}`);
-        // Log redemption event in life timeline history
-        return { ...rw, isUsed: true, redeemedAt: new Date().toISOString() };
+        const title = rw.title || rw.name;
+        sendDeviceNotification("🎟️ Perk Redeemed!", `Coupon ticket for "${title}" marked as used.`);
+        toast(`🎫 Coupon ticket redeemed: ${title}`);
+        return { ...rw, isUsed: true, usedAt: new Date().toISOString() };
       }
       return rw;
     });
@@ -2349,28 +2533,20 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestC
     setRewards(nr);
   };
 
-  const addReward = (e) => {
-    e.preventDefault();
-    if (!rn.trim()) return;
-    const r = { id: genId(), name: rn.trim(), category: rc, xpCost: rxp, expiryDate: rexp.trim() || 'Expires in 7 days', isClaimed: false, claimedAt: null, isUsed: false };
-    const nr = [r, ...rewards];
-    LS.set('irisquest_rewards', nr); setRewards(nr); setRn(''); setRexp('');
-    toast('Reward cataloged.'); setTab('shop');
-  };
-
   const deleteReward = (id) => {
-    const rewardToDelete = rewards.find(r => r.id === id);
+    const itemToDelete = rewards.find(r => r.id === id) || DEFAULT_PERKS_CATALOG.find(r => r.id === id);
     const executeDelete = () => {
       const nr = rewards.filter(r => r.id !== id);
-      LS.set('irisquest_rewards', nr); setRewards(nr);
-      toast('Reward deleted.');
+      LS.set('irisquest_rewards', nr);
+      setRewards(nr);
+      toast('Item removed from catalog.');
     };
 
     if (requestConfirm) {
       requestConfirm({
-        title: "Delete Perk?",
-        message: `Are you sure you want to remove "${rewardToDelete ? rewardToDelete.name : 'this perk'}" from your catalog?`,
-        confirmText: "Delete Perk",
+        title: "Remove Item?",
+        message: `Are you sure you want to remove "${itemToDelete ? (itemToDelete.title || itemToDelete.name) : 'this item'}"?`,
+        confirmText: "Remove",
         cancelText: "Cancel",
         isDestructive: true,
         icon: "🎁",
@@ -2381,40 +2557,63 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestC
     }
   };
 
-  const tierFilter = (r) => {
-    if (filter==='All') return true;
-    if (filter==='Small') return r.xpCost < 100;
-    if (filter==='Medium') return r.xpCost >= 100 && r.xpCost < 500;
-    return r.xpCost >= 500;
+  const addCustomPerk = (e) => {
+    e.preventDefault();
+    if (!crTitle.trim()) return;
+    const cost = parseInt(crCost) || 25;
+    const expiryDays = parseInt(crExpiryDays) || 7;
+    const newPerk = {
+      id: genId(),
+      title: crTitle.trim(),
+      name: crTitle.trim(),
+      category: crCategory.trim() || 'Custom Treat',
+      icon: crIcon.trim() || '🎁',
+      cost,
+      xpCost: cost,
+      cadence: crCadence,
+      expiryDays,
+      isClaimed: false,
+      claimedAt: null
+    };
+    const nr = [newPerk, ...rewards];
+    LS.set('irisquest_rewards', nr);
+    setRewards(nr);
+    setCrTitle('');
+    toast('✨ Custom dopamine perk added to catalog!');
+    setTab('shop');
   };
 
-  // Helper to calculate dynamic ticket expiry date from claimed time
-  const getTicketExpiryStr = (r) => {
-    if (!r.claimedAt) return r.expiryDate || 'Expires in 7 days';
-    const claimDate = new Date(r.claimedAt);
-    
-    // Determine expiration duration: Daily = 1 day, Weekly = 7 days, Monthly = 30 days
-    let daysToAdd = 7;
-    const desc = (r.expiryDate || '').toLowerCase();
-    if (desc.includes('daily') || desc.includes('day')) daysToAdd = 1;
-    else if (desc.includes('monthly') || desc.includes('month')) daysToAdd = 30;
+  // Filter catalog items
+  const filteredCatalog = catalogRewards.filter(r => {
+    if (cadenceFilter === 'All') return true;
+    return (r.cadence || '').toLowerCase() === cadenceFilter.toLowerCase();
+  });
 
-    const expiryDate = new Date(claimDate.getTime() + (daysToAdd * 24 * 3600 * 1000));
-    return expiryDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  };
-
-  const unlockedTickets = rewards.filter(r => r.isClaimed && !r.isUsed);
+  // Segregate claimed tickets
+  const activeTickets = rewards.filter(r => r.isClaimed && !r.isUsed && !getTicketStatus(r).isExpired);
+  const archivedTickets = rewards.filter(r => r.isClaimed && (r.isUsed || getTicketStatus(r).isExpired));
 
   return (
     <div>
       <div className="section-header">
-        <h1 className="large-title" style={{ margin: 0 }}>Perks</h1>
+        <h1 className="large-title" style={{ margin: 0 }}>Dopamine Vault</h1>
       </div>
 
-      <div className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, var(--bg-card), var(--bg-system))', borderColor: 'rgba(88, 86, 214, 0.15)', marginBottom: 16 }}>
+      {/* Available Balance Card */}
+      <div 
+        className="premium-card" 
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          background: 'linear-gradient(135deg, var(--bg-card), var(--bg-system))', 
+          borderColor: 'rgba(255, 149, 0, 0.25)', 
+          marginBottom: 16 
+        }}
+      >
         <div>
-          <span className="ios-badge ios-badge-orange">Perk Vault</span>
-          <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Claim Perks</h2>
+          <span className="ios-badge ios-badge-orange">Perk Inventory</span>
+          <h2 className="title" style={{ fontSize: '18px', marginTop: 4 }}>Dopamine Catalog</h2>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {avail} XP</div>
@@ -2422,18 +2621,25 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestC
         </div>
       </div>
 
+      {/* Navigation Tabs */}
       <div className="segmented-control" style={{ marginBottom: 16 }}>
-        <button className={'segmented-btn'+(tab==='shop'?' active':'')} onClick={()=>setTab('shop')}>Perk Catalog</button>
-        <button className={'segmented-btn'+(tab==='wallet'?' active':'')} onClick={()=>setTab('wallet')}>
-          My Wallet ({unlockedTickets.length})
+        <button className={'segmented-btn' + (tab === 'shop' ? ' active' : '')} onClick={() => setTab('shop')}>
+          Perk Catalog ({filteredCatalog.length})
         </button>
-        <button className={'segmented-btn'+(tab==='add'?' active':'')} onClick={()=>setTab('add')}>Catalog Custom</button>
+        <button className={'segmented-btn' + (tab === 'wallet' ? ' active' : '')} onClick={() => setTab('wallet')}>
+          My Wallet ({activeTickets.length})
+        </button>
+        <button className={'segmented-btn' + (tab === 'add' ? ' active' : '')} onClick={() => setTab('add')}>
+          ＋ Create Perk
+        </button>
       </div>
 
+      {/* TAB 1: PERK CATALOG */}
       {tab === 'shop' && (
         <>
+          {/* Cadence Filters */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-            {['All','Small','Medium','Big'].map(f=>(
+            {['All', 'Daily', 'Weekly', 'Monthly'].map(f => (
               <button 
                 key={f} 
                 className="btn-icon" 
@@ -2444,101 +2650,282 @@ function RewardsPage({ profile, setProfile, rewards, setRewards, toast, requestC
                   padding: '0 16px', 
                   fontSize: '13px', 
                   fontWeight: 600,
-                  background: filter === f ? 'var(--accent-orange)' : 'rgba(0,0,0,0.03)',
-                  color: filter === f ? '#FFFFFF' : 'var(--text-primary)'
+                  background: cadenceFilter === f ? 'var(--accent-orange)' : 'rgba(0,0,0,0.03)',
+                  color: cadenceFilter === f ? '#FFFFFF' : 'var(--text-primary)'
                 }} 
-                onClick={()=>setFilter(f)}
+                onClick={() => setCadenceFilter(f)}
               >
-                {f}
+                {f} {f === 'All' ? `(${catalogRewards.length})` : ''}
               </button>
             ))}
           </div>
 
-          {rewards.filter(r => !r.isClaimed).filter(tierFilter).length === 0 ? (
-            <div className="empty-state"><div className="empty-state-icon">🎁</div><p>No perks in this catalog tier.</p></div>
+          {filteredCatalog.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">🎁</div>
+              <p>No dopamine perks in this catalog tier.</p>
+            </div>
           ) : (
             <div className="responsive-card-grid">
-              {rewards.filter(r => !r.isClaimed).filter(tierFilter).map(r => (
-                <div className="premium-card" key={r.id} style={{ margin: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <span className="ios-badge ios-badge-pink">{r.category}</span>
-                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {r.xpCost} XP</span>
+              {filteredCatalog.map(r => {
+                const cost = r.cost || r.xpCost || 50;
+                const canAfford = avail >= cost;
+                return (
+                  <div className="premium-card" key={r.id} style={{ margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: '1.6rem' }}>{r.icon || '🎁'}</span>
+                          <span className="ios-badge ios-badge-pink">{r.category}</span>
+                        </div>
+                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-orange)' }}>⚡ {cost} XP</span>
+                      </div>
+
+                      <h3 className="title" style={{ fontSize: '17px', marginBottom: 6 }}>{r.title || r.name}</h3>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+                        <span className="ios-badge ios-badge-blue" style={{ fontSize: '10px' }}>{r.cadence?.toUpperCase() || 'PERK'}</span>
+                        <span className="caption" style={{ fontSize: '11px', display: 'flex', alignItems: 'center' }}>
+                          ⌛ Valid {r.expiryDays || 7}d upon unlock
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                      <button 
+                        className="btn-primary" 
+                        style={{ flex: 1, height: '40px', background: 'var(--accent-orange)', boxShadow: 'none' }}
+                        disabled={!canAfford} 
+                        onClick={() => claim(r)}
+                      >
+                        ⚡ Unlock Perk
+                      </button>
+                      <button 
+                        className="btn-secondary" 
+                        style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                        onClick={() => deleteReward(r.id)}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="title" style={{ fontSize: '18px', marginBottom: 4 }}>{r.name}</h3>
-                  <p className="caption" style={{ marginBottom: 16 }}>⌛ {r.expiryDate || 'Permanent'}</p>
-                  <div style={{ display: 'flex', gap: 12 }}>
-                    <button 
-                      className="btn-primary" 
-                      style={{ height: '40px', background: 'var(--accent-orange)', boxShadow: 'none' }}
-                      disabled={avail < r.xpCost} 
-                      onClick={()=>claim(r.id)}
-                    >
-                      Unlock perk
-                    </button>
-                    <button className="btn-secondary" style={{ width: '40px', height: '40px', borderRadius: '10px' }} onClick={()=>deleteReward(r.id)}>✕</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
       )}
 
+      {/* TAB 2: MY TICKET WALLET */}
       {tab === 'wallet' && (
         <>
-          {unlockedTickets.length === 0 ? (
-            <div className="empty-state"><div className="empty-state-icon">🎫</div><p>No active claim tickets. Unlock perks from catalog.</p></div>
+          {activeTickets.length === 0 && archivedTickets.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">🎫</div>
+              <p>No tickets in your wallet yet. Unlock dopamine perks from the catalog!</p>
+            </div>
           ) : (
-            <div className="responsive-card-grid">
-              {unlockedTickets.map(r => (
-                <div className="coupon-card" key={r.id} style={{ margin: 0, position: 'relative' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '68%' }}>
-                    <span className="ios-badge ios-badge-purple" style={{ width: 'fit-content', padding: '2px 8px', fontSize: '10px' }}>{r.category.toUpperCase()} TICKET</span>
-                    <h3 className="title" style={{ fontSize: '16px', marginTop: 4, letterSpacing: '-0.3px' }}>{r.name}</h3>
-                    <span className="caption" style={{ fontSize: '11px', color: 'var(--accent-pink)', fontWeight: 600 }}>⌛ Expiry: {getTicketExpiryStr(r)}</span>
-                  </div>
-                  
-                  <div className="coupon-dashed-border" />
-                  
-                  <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', width: '22%', textAlign: 'center' }}>
-                    <button 
-                      className="btn-primary" 
-                      style={{ height: '36px', minHeight: '36px', fontSize: '12px', padding: '0 8px', background: 'var(--accent-indigo)', borderRadius: '10px', boxShadow: 'none' }}
-                      onClick={()=>redeem(r.id)}
-                    >
-                      Use Claim
-                    </button>
-                  </div>
+            <div>
+              {/* Active Coupons Section */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <h3 className="section-header" style={{ margin: 0 }}>🎟️ Active Passes & Coupons</h3>
+                  <span className="ios-badge ios-badge-green" style={{ fontSize: '11px' }}>{activeTickets.length} Active</span>
                 </div>
-              ))}
+
+                {activeTickets.length === 0 ? (
+                  <div className="premium-card" style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(0,0,0,0.02)' }}>
+                    <p className="caption">No active passes available. Head to the Perk Catalog to redeem one!</p>
+                  </div>
+                ) : (
+                  <div className="responsive-card-grid">
+                    {activeTickets.map(r => {
+                      const status = getTicketStatus(r);
+                      return (
+                        <div className="coupon-card" key={r.id} style={{ margin: 0, position: 'relative' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '68%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: '1.3rem' }}>{r.icon || '🎁'}</span>
+                              <span className="ios-badge ios-badge-purple" style={{ width: 'fit-content', padding: '2px 8px', fontSize: '10px' }}>
+                                {r.ticketCode || '#TKT-PASS'}
+                              </span>
+                            </div>
+                            <h3 className="title" style={{ fontSize: '16px', marginTop: 4, letterSpacing: '-0.3px' }}>
+                              {r.title || r.name}
+                            </h3>
+                            <span className={'caption ' + status.badgeClass} style={{ fontSize: '11px', fontWeight: 600, width: 'fit-content' }}>
+                              {status.text}
+                            </span>
+                          </div>
+                          
+                          <div className="coupon-dashed-border" />
+                          
+                          <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', width: '22%', textAlign: 'center' }}>
+                            <button 
+                              className="btn-primary" 
+                              style={{ 
+                                height: '36px', 
+                                minHeight: '36px', 
+                                fontSize: '12px', 
+                                padding: '0 8px', 
+                                background: 'var(--accent-indigo)', 
+                                borderRadius: '10px', 
+                                boxShadow: 'none' 
+                              }}
+                              onClick={() => redeemTicket(r.id)}
+                            >
+                              ✓ Use
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Archived & Expired Tickets */}
+              {archivedTickets.length > 0 && (
+                <div style={{ marginTop: 24 }}>
+                  <div 
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: 12 }} 
+                    onClick={() => setShowArchivedTickets(!showArchivedTickets)}
+                  >
+                    <h3 className="section-header" style={{ margin: 0 }}>📦 Used & Expired Archive ({archivedTickets.length})</h3>
+                    <span style={{ fontSize: '12px', transform: showArchivedTickets ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+                  </div>
+
+                  {showArchivedTickets && (
+                    <div className="responsive-card-grid">
+                      {archivedTickets.map(r => {
+                        const status = getTicketStatus(r);
+                        return (
+                          <div 
+                            className="coupon-card" 
+                            key={r.id} 
+                            style={{ 
+                              margin: 0, 
+                              opacity: 0.6, 
+                              filter: 'grayscale(0.6)',
+                              position: 'relative' 
+                            }}
+                          >
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '75%' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: '1.2rem' }}>{r.icon || '🎁'}</span>
+                                <span className={'ios-badge ' + status.badgeClass} style={{ fontSize: '10px' }}>
+                                  {status.isUsed ? 'CLAIMED' : 'EXPIRED'}
+                                </span>
+                              </div>
+                              <h3 className="title" style={{ fontSize: '15px', marginTop: 4 }}>{r.title || r.name}</h3>
+                              <span className="caption" style={{ fontSize: '11px' }}>{status.text}</span>
+                            </div>
+
+                            <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)' }}>
+                              <button 
+                                className="btn-icon" 
+                                style={{ width: 28, height: 28, borderRadius: '50%' }} 
+                                onClick={() => deleteReward(r.id)}
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>
       )}
 
+      {/* TAB 3: CREATE CUSTOM PERK */}
       {tab === 'add' && (
         <div className="premium-card">
-          <h3 className="section-header" style={{ marginBottom: 16 }}>Catalog Custom Perk</h3>
-          <form onSubmit={addReward}>
+          <h3 className="section-header" style={{ marginBottom: 16 }}>➕ Catalog Custom Dopamine Perk</h3>
+          <form onSubmit={addCustomPerk}>
             <div className="form-group">
-              <label className="form-label">Reward Name</label>
-              <input className="form-input" value={rn} onChange={e=>setRn(e.target.value)} placeholder="e.g. 15 min rest period" required />
+              <label className="form-label">Perk Title</label>
+              <input 
+                className="form-input" 
+                value={crTitle} 
+                onChange={e => setCrTitle(e.target.value)} 
+                placeholder="e.g. 15 min relaxing coffee break" 
+                required 
+              />
             </div>
-            <div className="form-group">
-              <label className="form-label">Category</label>
-              <select className="form-select" value={rc} onChange={e=>setRc(e.target.value)}>
-                <option>Treat</option><option>Entertainment</option><option>Shopping</option><option>Experience</option><option>Break</option>
-              </select>
+
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="form-group">
+                <label className="form-label">Icon / Emoji</label>
+                <input 
+                  className="form-input" 
+                  value={crIcon} 
+                  onChange={e => setCrIcon(e.target.value)} 
+                  placeholder="🎁" 
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Category</label>
+                <select className="form-select" value={crCategory} onChange={e => setCrCategory(e.target.value)}>
+                  <option>Daily Treat</option>
+                  <option>Relaxation</option>
+                  <option>Quick Break</option>
+                  <option>Self-Care</option>
+                  <option>Creative Flow</option>
+                  <option>Gaming</option>
+                  <option>Binge Watch</option>
+                  <option>Cinema</option>
+                  <option>Shopping</option>
+                  <option>Ultimate Pass</option>
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">XP Cost</label>
-              <input className="form-input" type="number" min={10} value={rxp} onChange={e=>setRxp(+e.target.value)} />
+
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <div className="form-group">
+                <label className="form-label">Cadence Tier</label>
+                <select className="form-select" value={crCadence} onChange={e => setCrCadence(e.target.value)}>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">XP Cost</label>
+                <input 
+                  className="form-input" 
+                  type="number" 
+                  min={10} 
+                  max={1000} 
+                  value={crCost} 
+                  onChange={e => setCrCost(+e.target.value)} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Expiry Days</label>
+                <input 
+                  className="form-input" 
+                  type="number" 
+                  min={1} 
+                  max={90} 
+                  value={crExpiryDays} 
+                  onChange={e => setCrExpiryDays(+e.target.value)} 
+                  required 
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Expiry Restriction</label>
-              <input className="form-input" value={rexp} onChange={e=>setRexp(e.target.value)} placeholder="e.g. Wednesday afternoons only" />
-            </div>
-            <button className="btn-primary" style={{ background: 'var(--accent-orange)', boxShadow: 'none' }} type="submit">🎁 Catalog Perk</button>
+
+            <button 
+              className="btn-primary" 
+              style={{ background: 'var(--accent-orange)', boxShadow: 'none', marginTop: 10 }} 
+              type="submit"
+            >
+              🎁 Add Perk to Catalog
+            </button>
           </form>
         </div>
       )}
@@ -2931,12 +3318,61 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
                 🌙 Dark
               </button>
               <button 
-                type="button"
+                type="button" 
                 className={'segmented-btn' + (theme === 'system' ? ' active' : '')} 
                 onClick={() => { setTheme('system'); toast('System Preference mode active'); }}
               >
                 ⚙️ System
               </button>
+            </div>
+          </div>
+
+          {/* Browser / Device Notifications Card */}
+          <div className="premium-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 className="section-header" style={{ margin: 0 }}>🔔 Browser Notifications</h3>
+                  {typeof window !== 'undefined' && "Notification" in window && Notification.permission === 'granted' ? (
+                    <span className="ios-badge ios-badge-green" style={{ fontSize: '10px' }}>✓ Active</span>
+                  ) : (
+                    <span className="ios-badge ios-badge-orange" style={{ fontSize: '10px' }}>Disabled</span>
+                  )}
+                </div>
+                <p className="caption" style={{ marginTop: 4 }}>
+                  Receive quest milestones, level-up celebration alerts, and coupon expiry reminders.
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+              {typeof window !== 'undefined' && "Notification" in window && Notification.permission === 'granted' ? (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ height: '38px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={() => {
+                    sendDeviceNotification("🧭 Odyssey Test Alert", "Push notifications are working smoothly!");
+                    toast("🔔 Test notification sent!");
+                  }}
+                >
+                  🧪 Test Notification
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ height: '38px', fontSize: '13px', background: 'var(--accent-indigo)', boxShadow: 'none' }}
+                  onClick={() => {
+                    requestDeviceNotificationPermission(
+                      () => toast("🔔 Push Notifications Enabled!"),
+                      (err) => toast(err)
+                    );
+                  }}
+                >
+                  🔔 Enable Push Notifications
+                </button>
+              )}
             </div>
           </div>
 
@@ -3129,7 +3565,13 @@ function App() {
     }
     return newTasks;
   });
-  const [rewards, setRewards] = React.useState(() => LS.get('irisquest_rewards') || []);
+  const [rewards, setRewards] = React.useState(() => {
+    const cached = LS.get('irisquest_rewards');
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      return cached;
+    }
+    return DEFAULT_PERKS_CATALOG;
+  });
   const [reviews, setReviews] = React.useState(() => LS.get('irisquest_reviews') || []);
   const [page, setPage] = React.useState('home');
   const [toastMsg, setToastMsg] = React.useState(null);
@@ -3236,7 +3678,8 @@ function App() {
       const p = existingSavedData.profile || existingSavedData;
       const g = existingSavedData.goals || LS.get('irisquest_goals') || [];
       const t = existingSavedData.tasks || LS.get('irisquest_tasks') || [];
-      const r = existingSavedData.rewards || LS.get('irisquest_rewards') || [];
+      let r = existingSavedData.rewards || LS.get('irisquest_rewards') || [];
+      if (!Array.isArray(r) || r.length === 0) r = DEFAULT_PERKS_CATALOG;
       const rev = existingSavedData.reviews || LS.get('irisquest_reviews') || [];
 
       const { newTasks } = checkRecurringTasks(t);
@@ -3262,7 +3705,7 @@ function App() {
       };
       let g = (dbProfile.goals_data && Array.isArray(dbProfile.goals_data)) ? dbProfile.goals_data : (LS.get('irisquest_goals') || []);
       let t = (dbProfile.tasks_data && Array.isArray(dbProfile.tasks_data)) ? dbProfile.tasks_data : (LS.get('irisquest_tasks') || []);
-      let r = (dbProfile.rewards_data && Array.isArray(dbProfile.rewards_data)) ? dbProfile.rewards_data : (LS.get('irisquest_rewards') || []);
+      let r = (dbProfile.rewards_data && Array.isArray(dbProfile.rewards_data) && dbProfile.rewards_data.length > 0) ? dbProfile.rewards_data : (LS.get('irisquest_rewards') || DEFAULT_PERKS_CATALOG);
       let rev = (dbProfile.reviews_data && Array.isArray(dbProfile.reviews_data)) ? dbProfile.reviews_data : (LS.get('irisquest_reviews') || []);
 
       const { newTasks } = checkRecurringTasks(t);
@@ -3280,7 +3723,8 @@ function App() {
     else if (legacyProfile && legacyProfile.name && (legacyProfile.currentIdentity || legacyProfile.avatarType)) {
       const g = LS.get('irisquest_goals') || [];
       const t = LS.get('irisquest_tasks') || [];
-      const r = LS.get('irisquest_rewards') || [];
+      let r = LS.get('irisquest_rewards') || [];
+      if (!Array.isArray(r) || r.length === 0) r = DEFAULT_PERKS_CATALOG;
       const rev = LS.get('irisquest_reviews') || [];
 
       const { newTasks } = checkRecurringTasks(t);
