@@ -21,6 +21,30 @@ const syncUserProfile = async (user) => {
   }
 };
 
+/* ===== AVATAR DISPLAY HELPER ===== */
+function AvatarDisplay({ avatar, name = 'Hero', size = '100%', style = {} }) {
+  if (typeof avatar === 'string' && (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:image'))) {
+    return (
+      <img 
+        src={avatar} 
+        alt={name || 'Avatar'} 
+        style={{ 
+          width: size, 
+          height: size, 
+          borderRadius: '50%', 
+          objectFit: 'cover', 
+          display: 'block',
+          ...style 
+        }} 
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    );
+  }
+  return <span style={style}>{avatar || '👤'}</span>;
+}
+
 // --- Device / Browser Web Notification System ---
 function sendDeviceNotification(title, body) {
   if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
@@ -1309,7 +1333,9 @@ function HomePage({ profile, setProfile, tasks, setTasks, goals, rewards, setPag
 
           <div className="avatar-wrapper">
             <div className={`avatar-ring ${lv.rankClass}`}>
-              <div className="avatar-main">{profile.avatar}</div>
+              <div className="avatar-main">
+                <AvatarDisplay avatar={profile.avatar} name={profile.name} size="80px" />
+              </div>
             </div>
           </div>
         </div>
@@ -3161,7 +3187,9 @@ function ProfilePage({ profile, setProfile, tasks, setTasks, rewards, setRewards
 
             <div className="avatar-wrapper" style={{ margin: '0 auto 16px' }}>
               <div className={`avatar-ring ${lv.rankClass}`}>
-                <div className="avatar-main">{profile.avatar || '👤'}</div>
+                <div className="avatar-main">
+                  <AvatarDisplay avatar={profile.avatar || '👤'} name={profile.name} size="80px" />
+                </div>
               </div>
             </div>
             <h2 className="title" style={{ fontSize: '22px' }}>{profile.name}</h2>
@@ -3971,15 +3999,17 @@ function App() {
                   style={{ 
                     width: '52px', 
                     height: '52px', 
+                    minWidth: '52px',
                     borderRadius: '50%', 
                     background: 'rgba(88, 86, 214, 0.12)', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    fontSize: '28px' 
+                    fontSize: '28px',
+                    overflow: 'hidden' 
                   }}
                 >
-                  {lastSavedProfile.avatar || '👤'}
+                  <AvatarDisplay avatar={lastSavedProfile.avatar} name={lastSavedProfile.name} size="52px" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 className="title" style={{ fontSize: '17px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
